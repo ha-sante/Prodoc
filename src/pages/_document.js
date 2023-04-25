@@ -7,6 +7,9 @@ export default function Document() {
 
   return (
     <Html lang="en">
+      <head>
+        <title>The Prodoc Documentation Site</title>
+      </head>
       <Head />
       <body>
         <Main />

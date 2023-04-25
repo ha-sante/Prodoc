@@ -10,3 +10,10 @@ How to get started
 ``
 CODE TO CALL EDITOR FOR DATA REGARDING THE PAGE
 ``
+
+### Notes
+- This app does not use a file-system based routing and instead uses a path rewrite in the ``next.config.js` file.
+
+
+## Environments needed
+- Password: Editor password for logging into your service/secret and validated via API 
