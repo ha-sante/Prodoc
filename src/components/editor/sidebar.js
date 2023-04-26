@@ -43,9 +43,9 @@ export default function EditorSidebar() {
         const [isExpanded, toggleExpanded] = useState(pageOpened);
         const pages = [...AppState.productContent];
 
-        console.log("files", files);
-        console.warn("pagination", pagination);
-        console.warn("mapping", mapping);
+        // console.log("files", files);
+        // console.warn("pagination", pagination);
+        // console.warn("mapping", mapping);
 
         if (files.children.length > 0) {
             return (
