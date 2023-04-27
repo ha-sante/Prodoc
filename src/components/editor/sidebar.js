@@ -78,7 +78,7 @@ export default function EditorSidebar() {
                     </div>
 
                     <br />
-                    {isExpanded == true && files.children.map((id) => < Directory files={pages.find(page => page.id === id)} />)}
+                    {isExpanded == true && files.children.map((id) => < Directory key={id} files={pages.find(page => page.id === id)} />)}
                 </div>
             )
         }

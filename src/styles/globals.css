@@ -66,3 +66,14 @@ body {
   padding: 0; */
   margin-left: 15px;
 }
+
+
+.ce-header{
+  font-size: revert;
+  font-weight: revert;
+}
+
+
+.codex-editor__redactor{
+  padding-bottom: 50px !important;
+}
