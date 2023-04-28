@@ -21,6 +21,7 @@ const components = { Alert, Avatar }
 const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
 
 import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
+import ReactPlayer from 'react-player'
 
 export default function Editor() {
 
@@ -46,6 +47,11 @@ export default function Editor() {
     });
   };
 
+  const onSaveHandler = () => {
+
+  }
+
+
   useEffect(() => {
     // makes a request to the authentication child 
     let valid = localStorage.getItem("authenticated");
@@ -55,8 +61,8 @@ export default function Editor() {
     }
   }, []);
 
-
   useEffect(() => {
+    console.log("slug", slug);
     // IF THE PAGE CHANGES
     // GET THE PAGE_ID
     // FIND ITS DATA
@@ -140,6 +146,7 @@ export default function Editor() {
     EditorEditing();
   }, [example]);
 
+
   function AuthenticationPage() {
     return (
       <div className="w-[50vw] lg:w-96 mx-auto mt-60">
@@ -164,6 +171,92 @@ export default function Editor() {
     )
   }
 
+  function PageEditorPage() {
+    return (
+      <div className="p-4 sm:ml-64 flex flex-row justify-between">
+
+        <div className="p-4 w-[80%] mx-auto">
+          <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
+
+            <div className='flex flex-row items-center justify-between mb-3'>
+              <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
+              <Button size="xs">
+                Save
+                <CloudPlus size="16" className="ml-2" color="#fff" />
+              </Button>
+            </div>
+
+            <div className='border shadow-sm rounded-lg pt-3 pb-3'>
+              <BlocksEditor
+                onSave={(editorData, title, description) =>
+                  onSaveHandler(editorData, title, description)
+                }
+              />
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    )
+  }
+
+  function EditorHomePage() {
+    return (
+      <div className="p-5 pt-0 sm:ml-64 flex flex-row justify-between">
+
+        <div className="p-4 w-[60%] mx-auto">
+          <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
+
+            <div className='flex flex-row items-center justify-between mb-3'>
+              <h2 for="helper-text" class="block text-lg font-medium text-gray-900 dark:text-white">Welcome Home 👋</h2>
+            </div>
+
+            <div className='border shadow-sm rounded-lg p-3 w-auto'>
+              <ReactPlayer width={'100%'} url='https://www.youtube.com/watch?v=zAS9Dpf7YuM' />
+            </div>
+
+
+            <div className='mt-3 p-3 text-left'>
+
+              <div className='flex'>
+                <Avatar
+                  img="https://pbs.twimg.com/profile_images/1531031797252882433/YCkCRjKe_400x400.jpg"
+                  rounded={true}
+                  bordered={true}
+                />
+              </div>
+              <p className='pt-2 text-sm'>
+                Welcome to Prodoc, an open source product and api documentation tool.
+                My name is Henry and I am the first author of the prodoc open source tool.</p>
+
+              <p className='pt-2 text-sm'>
+                I built Prodoc as a solution to the lack of customizability offered in current documentation tools.
+                I built it over 2 weeks, given I already had experience with building content systems.
+                I am the founder of another productivity tool for content management.
+              </p>
+
+              <p className='pt-2 text-sm'>
+                My goal with Prodoc is for everyone to have a solid tool to setup their documentation websites and to get the best
+                of both worlds whiles doing it.
+                I hope you enjoy and if anything, do reach out to the Open Source team 
+                <a href="https://github.com/ha-sante/Prodoc" target='_blank' className='underline'> here</a> (Opens in new tab).
+              </p>
+
+
+              <p className='pt-2 text-sm'>
+               This place will be replaced with analytics data soon. 📊
+              </p>
+            </div>
+
+
+          </div>
+        </div>
+
+      </div>
+    )
+  }
+
   return (
     <main className="min-h-screen flex-col items-center border justify-between">
       {!authenticated ?
@@ -171,41 +264,17 @@ export default function Editor() {
         :
         <div className="w-100">
 
-          <button data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" className="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-            <span className="sr-only">Open sidebar</span>
-            <svg className="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-              <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
-            </svg>
-          </button>
-
-          <EditorSidebar />
-
-          <div className="p-4 sm:ml-64 flex flex-row justify-between">
-
-            <div className="p-4 w-[80%] mx-auto">
-              <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-
-                <div className='flex flex-row items-center justify-between mb-3'>
-                  <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
-                  <Button size="xs">
-                    Save
-                    <CloudPlus size="16" className="ml-2" color="#fff"/>
-                  </Button>
-                </div>
-
-                <div className='border shadow-sm rounded-lg pt-3 pb-3'>
-                  <BlocksEditor
-                  // onSave={(editorData, title, description) =>
-                  //   // onSaveHandler(editorData, title, description)
-                  // }
-                  />
-                </div>
-
-              </div>
+          {slug == undefined ?
+            <div className="w-100">
+              <EditorSidebar />
+              {EditorHomePage()}
             </div>
-
-          </div>
-
+            :
+            <div className="w-100">
+              <EditorSidebar />
+              {PageEditorPage()}
+            </div>
+          }
         </div>
       }
     </main>

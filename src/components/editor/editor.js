@@ -39,7 +39,7 @@ const DEFAULT_INITIAL_DATA = {
     {
       "type": "paragraph",
       "data": {
-        "text": "This is the description of your page",
+        "text": "<i>This is the description of your page</i>",
         "level": 1
       }
     },
