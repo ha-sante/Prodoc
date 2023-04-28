@@ -1,9 +1,8 @@
 import { DocumentUpload, CloudAdd, Code1 } from 'iconsax-react';
-import { Tabs, Accordion, Card } from "flowbite-react";
 import ReactDOM from 'react-dom';
 import { renderToString } from 'react-dom/server';
 
-import { ComponentsWrapper } from './wrapper';
+import Wrapper from './wrapper';
 
 // Advanced components - Tool box setup
 export default class AdvancedComponents {
@@ -47,14 +46,14 @@ export default class AdvancedComponents {
         rootNode.setAttribute('class', this.CSS.wrapper);
         this.nodes.holder = rootNode;
 
-        const onDataChange = (newData) => {
+        const onDataChange = (data) => {
             this.data = {
-                ...newData
+                content: data.replace(/\s+/g, ' ').trim()
             };
         }
 
         ReactDOM.render(
-            (<ComponentsWrapper onDataChange={onDataChange} readOnly={this.readOnly} data={this.data} />),
+            (<Wrapper onDataChange={onDataChange} readOnly={this.readOnly} data={this.data} />),
             rootNode
         );
 

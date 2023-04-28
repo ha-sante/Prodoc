@@ -61,7 +61,7 @@ const EditorComponent = () => {
       onChange: async () => {
         let content = await editor.saver.save();
 
-        console.log(content);
+        console.log("output data for saving", content);
       },
       tools: {
         header: {

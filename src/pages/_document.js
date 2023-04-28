@@ -14,6 +14,7 @@ export default function Document() {
       <body>
         <Main />
         <NextScript />
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
       </body>
     </Html>
   )
