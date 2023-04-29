@@ -17,9 +17,6 @@ export default function handler(req, res) {
             break;
         case "GET":
             // Process a GET request
-            
-            
-            
             break;
     }
 }
