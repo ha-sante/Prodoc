@@ -48,27 +48,9 @@ export default function Editor() {
   };
 
   const onSaveHandler = () => {
-
   }
 
-
-  useEffect(() => {
-    // makes a request to the authentication child 
-    let valid = localStorage.getItem("authenticated");
-    console.log("authenticated", valid);
-    if (valid) {
-      setAuthenticated(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    console.log("slug", slug);
-    // IF THE PAGE CHANGES
-    // GET THE PAGE_ID
-    // FIND ITS DATA
-    // TRANSFORM ITS CONTENT FIELD
-    // SET IT AS DATA
-    // MDX text - can be from a local file, database, anywhere
+  const computeMDXContent = () => {
     const EditorEditing = async () => {
       const source = `Some **mdx** text, with a component 
       <Avatar
@@ -116,8 +98,27 @@ export default function Editor() {
       })
       setMdxSource(mdxSource)
     }
-
     EditorEditing();
+  }
+
+
+  useEffect(() => {
+    // makes a request to the authentication child 
+    let valid = localStorage.getItem("authenticated");
+    console.log("authenticated", valid);
+    if (valid) {
+      setAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log("slug", slug);
+
+    // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
+    if(slug){
+
+    }
+
   }, [slug]);
 
 
