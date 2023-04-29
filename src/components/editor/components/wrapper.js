@@ -14,15 +14,21 @@ import StringToReactComponent from 'string-to-react-component';
 
 
 export default function Wrapper(props) {
-    const [content, setContent] = React.useState('// Paste & Edit the component code here (Delete this whiles doing so)');
-    const [mode, setMode] = React.useState('edit');
+    const [content, setContent] = React.useState(` ${props.data?.content?.content ? props.data?.content?.content : '// Paste & Edit the component code here (Delete this whiles doing so)'}`);
+    const [mode, setMode] = React.useState('preview');
 
     React.useEffect(() => {
         if (props.onDataChange) {
             // Inform editorjs about data change
             props.onDataChange(content);
-          }
+        }
     }, [content]);
+
+    // React.useEffect(() => {
+    //     if (props.data?.content?.content) {
+    //         setContent(props.data?.content.content)
+    //     }
+    // }, []);
 
     const changeEditingMode = (option) => {
         setMode(option);
@@ -47,7 +53,14 @@ export default function Wrapper(props) {
                 <Editor
                     value={content}
                     onValueChange={code => setContent(code)}
-                    highlight={code => highlight(code, languages.js)}
+                    highlight={code => {
+                        console.log("code.to.be.highlighted", code);
+                        if (typeof code == 'string') {
+                            return highlight(code, languages.js)
+                        } else {
+                            return highlight('', languages.js)
+                        }
+                    }}
                     padding={10}
                     style={{
                         fontFamily: '"Fira code", "Fira Mono", monospace',

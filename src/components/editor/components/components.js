@@ -21,8 +21,9 @@ export default class AdvancedComponents {
     }
 
     constructor({ data, api, config, readOnly, block }) {
+        console.warn("passed.to.component", data);
         this.data = {
-            content: data.content || {},
+            content: data || {},
         };
         this.settings = [];
         this.CSS = {

@@ -25,22 +25,22 @@ import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 import AdvancedComponents from './components/components'
 import { AppStateContext } from '../../context/state';
 
-const EditorComponent = () => {
+const EditorComponent = (props) => {
   const ejInstance = useRef();
   const AppState = useContext(AppStateContext);
 
   const initEditor = () => {
+    console.log("Page Editor Refreshed");
     const editor = new EditorJS({
       holder: 'editorjs',
       onReady: () => {
         ejInstance.current = editor;
       },
       autofocus: false,
-      data: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
+      data: AppState.page !== undefined ? AppState.page?.content?.editor : AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
       onChange: async () => {
         let content = await editor.saver.save();
-
-        console.log("output data for saving", content);
+        props.onSave(content, content.blocks[0]?.data?.text, content.blocks[1]?.data?.text);
       },
       tools: {
         header: {
@@ -115,7 +115,7 @@ const EditorComponent = () => {
       ejInstance?.current?.destroy();
       ejInstance.current = null;
     };
-  }, []);
+  }, [AppState.page]);
 
   return <><div id='editorjs'></div></>;
 }

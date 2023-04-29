@@ -17,10 +17,9 @@ import { AppStateContext } from '../../context/state';
 import { serialize } from 'next-mdx-remote/serialize'
 import { MDXRemote } from 'next-mdx-remote'
 
-const components = { Alert, Avatar }
 const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
 
-import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
+import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2 } from 'iconsax-react';
 import ReactPlayer from 'react-player'
 
 export default function Editor() {
@@ -32,9 +31,7 @@ export default function Editor() {
   const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [mdxSource, setMdxSource] = useState();
-
   const [example, setExample] = useState('');
-
 
   const authenticate = () => {
     axios.post('/api/auth', { password }).then(response => {
@@ -47,7 +44,14 @@ export default function Editor() {
     });
   };
 
-  const onSaveHandler = () => {
+  const editorOnSaveHandler = (editor, title, description) => {
+    console.log("Editor Data to Save::", { editor, title, description });
+
+    // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
+    let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
+    let anew = AppState.content;
+    anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
+    AppState.setContent([...anew]);
   }
 
   const computeMDXContent = () => {
@@ -112,10 +116,11 @@ export default function Editor() {
   }, []);
 
   useEffect(() => {
-    console.log("slug", slug);
+    let data = { slug, page: router.query.page };
+    console.warn("route.change.data", data);
 
     // LOAD THE PRODUCT BOOK CONTENT
-    if (slug === undefined) {
+    if (data.slug === undefined) {
       // GET ALL THE LATEST CONTENT
       AppState.ContentAPIHandler('GET').then(response => {
         AppState.setContent(response.data);
@@ -123,12 +128,18 @@ export default function Editor() {
       }).catch(error => {
         console.log('error', error);
       })
+    } else {
+      AppState.setPage('');
     }
 
     // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
-    if (slug) {
-
+    if (data.page) {
+      let page = AppState.content.find(page => page.id == data.page);
+      AppState.setPage({ ...page });
+    } else {
+      AppState.setPage();
     }
+
   }, [slug]);
 
 
@@ -186,27 +197,42 @@ export default function Editor() {
     return (
       <div className="p-4 sm:ml-64 flex flex-row justify-between">
 
-        <div className="p-4 w-[80%] mx-auto">
-          <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
+        {AppState.page != undefined ?
+          <div className="p-4 w-[80%] mx-auto">
+            <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
 
-            <div className='flex flex-row items-center justify-between mb-3'>
-              <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
-              <Button size="xs">
-                Save
-                <CloudPlus size="16" className="ml-2" color="#fff" />
-              </Button>
+              <div className='flex flex-row items-center justify-between mb-3'>
+                <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
+                <Button size="xs">
+                  Save
+                  <CloudPlus size="16" className="ml-2" color="#fff" />
+                </Button>
+              </div>
+
+              <div className='border shadow-sm rounded-lg pt-3 pb-3'>
+                <BlocksEditor
+                  onSave={(editorData, title, description) =>
+                    editorOnSaveHandler(editorData, title, description)
+                  }
+                />
+              </div>
+
             </div>
-
-            <div className='border shadow-sm rounded-lg pt-3 pb-3'>
-              <BlocksEditor
-                onSave={(editorData, title, description) =>
-                  onSaveHandler(editorData, title, description)
-                }
-              />
-            </div>
-
           </div>
-        </div>
+          :
+          <div className="p-4 w-[80%] mx-auto">
+            <div className="p-4 rounded-lg dark:border-gray-700">
+
+              <div className='flex flex-row items-center justify-between mb-3 mt-6 text-center'>
+                <p class="block text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
+                  <ArrowLeft2 size="16" className="mr-2" />
+                  Click/Create a new page to start editing
+                </p>
+              </div>
+
+            </div>
+          </div>
+        }
 
       </div>
     )

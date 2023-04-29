@@ -15,6 +15,7 @@ export function AppStateProvider({ children }) {
     // { id: "7", title: "Sub2 Docu Page 7", content: "", children: [] },
   ]);
   const [pagination, setPagination] = useState({});
+  const [page, setPage] = useState();
   const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
     "time": new Date().getTime(),
     "blocks": [
@@ -53,7 +54,7 @@ export function AppStateProvider({ children }) {
     }
   }
 
-  const data = { content, setContent, pagination, setPagination, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA };
+  const data = { content, setContent, pagination, setPagination, page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA, };
   return (
     <AppContext.Provider value={data}> {children} </AppContext.Provider>
   );
