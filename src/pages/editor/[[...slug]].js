@@ -114,11 +114,21 @@ export default function Editor() {
   useEffect(() => {
     console.log("slug", slug);
 
-    // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
-    if(slug){
-
+    // LOAD THE PRODUCT BOOK CONTENT
+    if (slug === undefined) {
+      // GET ALL THE LATEST CONTENT
+      AppState.ContentAPIHandler('GET').then(response => {
+        AppState.setContent(response.data);
+        console.log('response', response.data);
+      }).catch(error => {
+        console.log('error', error);
+      })
     }
 
+    // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
+    if (slug) {
+
+    }
   }, [slug]);
 
 
@@ -240,13 +250,13 @@ export default function Editor() {
               <p className='pt-2 text-sm'>
                 My goal with Prodoc is for everyone to have a solid tool to setup their documentation websites and to get the best
                 of both worlds whiles doing it.
-                I hope you enjoy and if anything, do reach out to the Open Source team 
+                I hope you enjoy and if anything, do reach out to the Open Source team
                 <a href="https://github.com/ha-sante/Prodoc" target='_blank' className='underline'> here</a> (Opens in new tab).
               </p>
 
 
               <p className='pt-2 text-sm'>
-               This place will be replaced with analytics data soon. 📊
+                This place will be replaced with analytics data soon. 📊
               </p>
             </div>
 

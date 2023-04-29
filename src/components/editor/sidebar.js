@@ -14,11 +14,10 @@ import { AppStateContext } from '../../context/state';
 
 export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
-
     const router = useRouter();
     const { slug } = router.query;
-
     const [route, setRoute] = useState('main');
+    const [processing, setProcessing] = useState(false);
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
@@ -26,41 +25,57 @@ export default function EditorSidebar() {
         { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
 
-    function HandleAddPage(option) {
-        // AppState.setProductContent([...AppState.productContent, { id: "", title: "Example Documentation Page", content: "", children: [] }])
+    function HandleAddPage(position) {
+        let page = {
+            type: 'product',
+            position: position,
+            title: position == 'chapter' ? "Added Chapter Page" : "Added Page",
+            content: { editor: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
+            children: []
+        };
+        console.log(page);
+
+        // GET ALL THE LATEST CONTENT
+        AppState.ContentAPIHandler('POST', page).then(response => {
+            AppState.setContent([...AppState.content, response.data])
+            console.log('response', response.data);
+        }).catch(error => {
+            console.log('error', error);
+            alert('Error creating the page')
+        })
     }
 
-    const Directory = ({ files }) => {
+    const Directory = ({ page }) => {
 
         // KNOW IF THIS PAGE IS OPENED OR NOT
         let pagination = JSON.parse(localStorage.getItem('pagination'));
-        let mapping = pagination[files.id];
+        let mapping = pagination[page.id];
         let pageOpened = mapping !== undefined ? mapping : false;
-        if (files.id.includes('doc')) {
+        if (page.id == 'book') {
             pageOpened = true;
         }
 
         const [isExpanded, toggleExpanded] = useState(pageOpened);
-        const pages = [...AppState.productContent];
+        const pages = [...AppState.content];
 
-        // console.log("files", files);
+        // console.log("page", page);
         // console.warn("pagination", pagination);
         // console.warn("mapping", mapping);
 
-        if (files.children.length > 0) {
+        if (page.children.length > 0) {
             return (
-                <div className={files.id.includes('doc') ? '' : 'folder'}>
+                <div className={page.id == 'book' ? '' : 'folder'}>
 
                     <div className='flex flex-row w-100'>
                         {/* // rendering the drop or right icons */}
-                        {!files.id.includes('doc') && <h2 className="folder-title text-sm font-medium flex items-center p-1 border mr-2"
+                        {page.id != 'book' && <h2 className="folder-title text-sm font-medium flex items-center p-1 border mr-2"
                             onClick={() => {
                                 let change = !isExpanded;
                                 toggleExpanded(change);
 
                                 // cold store
                                 let toStore = { ...JSON.parse(localStorage.getItem('pagination')) };
-                                toStore[files.id] = change;
+                                toStore[page.id] = change;
                                 localStorage.setItem('pagination', JSON.stringify(toStore));
                             }}>
                             {isExpanded == true ? <ArrowDown2 size="16" color="#111827" /> : <ArrowRight2 size="16" color="#111827" />}
@@ -68,26 +83,31 @@ export default function EditorSidebar() {
 
                         {/* rendering the textual part of it */}
                         <h2
-                            className={`folder-title flex flex-1 justify-between items-center w-100 ${files.id.includes('doc') ? 'text-md font-normal' : 'text-sm font-medium'}`}
+                            className={`folder-title flex flex-1 justify-between items-center w-100 ${page.id === 'book' ? 'text-md font-normal' : 'text-sm font-medium'}`}
                             onClick={() => {
-                                router.push(`/editor/product/?page=${files.id}`, undefined, { shallow: true })
+                                router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
                             }}>
-                            {files.title}
-                            {files.id.includes('doc') && <Button size="xs" className='' onClick={() => { HandleAddPage("parent") }}>+</Button>}
+                            {page.title}
+                            {page.id === 'book' && <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>}
                         </h2>
                     </div>
 
                     <br />
-                    {isExpanded == true && files.children.map((id) => < Directory key={id} files={pages.find(page => page.id === id)} />)}
+                    {isExpanded == true && page.children.map((id) => < Directory key={id} page={pages.find(paged => paged.id === id)} />)}
                 </div>
             )
         }
 
         return (
             <>
-                <h3 className="file-name text-sm cursor-pointer" onClick={() => {
-                    router.push(`/editor/product/?page=${files.id}`, undefined, { shallow: true })
-                }}>{files.title}</h3><br />
+                <h3 className="file-name text-sm cursor-pointer flex justify-between items-center"
+                    onClick={() => {
+                        router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
+                    }}>
+                    {page.title}
+                    {page.id === 'book' && <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>}
+                </h3>
+                <br />
             </>
         )
     }
@@ -138,17 +158,18 @@ export default function EditorSidebar() {
 
     function SubPageNavigation() {
 
-        let mainPages = AppState.productContent.filter(child => child.id.includes('main'))
-        let pages = { id: "doc-product-documentation", title: "Product Documentation", content: "", children: mainPages.map(main => main.id) };
+        // GET ALL THE FIRST PARENTS UNDER THIS PAGE
+        let productChapters = AppState.content.filter(child => child?.type === 'product' && child?.position === 'chapter')
+        let pages = { id: "book", title: "Product Documentation", content: "", children: productChapters.map(main => main.id) };
 
-        // checking
+        // CHECK IF WE HAVE A NAVIGATION STYLING DATA ALREADY
         if (localStorage.getItem('pagination') == null) {
             localStorage.setItem('pagination', JSON.stringify({}));
         }
 
-        // rendering
+        // IF YES, SET FOR EACH PARENT, THAT THEY SHOULD BE OPENED
         let toStore = {};
-        mainPages.map(child => { if (child.id.includes('main')) { toStore[child.id] = true } });
+        productChapters.map(child => { if (child.position.includes('chapter')) { toStore[child.id] = true } });
         try {
             if (Object.keys(JSON.parse(localStorage.getItem('pagination'))).length === 0) {
                 localStorage.setItem('pagination', JSON.stringify(toStore));
@@ -156,7 +177,6 @@ export default function EditorSidebar() {
         } catch (error) {
             console.log("error", error);
         }
-
 
         return (
             <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 justify-between">
@@ -171,7 +191,7 @@ export default function EditorSidebar() {
                 </ul>
 
                 <div className="mt-4 mb-4" id="navigation">
-                    <Directory files={pages} />
+                    <Directory page={pages} />
                 </div>
             </div>
         )

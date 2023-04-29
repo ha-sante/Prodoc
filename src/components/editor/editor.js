@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useContext } from "react";
 import dynamic from 'next/dynamic';
 
 import EditorJS from "@editorjs/editorjs";
-
 import Embed from '@editorjs/embed'
 import Table from '@editorjs/table'
 import Paragraph from '@editorjs/paragraph'
@@ -20,35 +19,15 @@ import Delimiter from '@editorjs/delimiter'
 import InlineCode from '@editorjs/inline-code'
 import SimpleImage from '@editorjs/simple-image'
 
-
 import { uploadFile } from '@uploadcare/upload-client'
 import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 
 import AdvancedComponents from './components/components'
-
-const DEFAULT_INITIAL_DATA = {
-  "time": new Date().getTime(),
-  "blocks": [
-    {
-      "type": "header",
-      "data": {
-        "text": "This is the Title of your page!",
-        "level": 1
-      }
-    },
-    {
-      "type": "paragraph",
-      "data": {
-        "text": "<i>This is the description of your page</i>",
-        "level": 1
-      }
-    },
-  ]
-}
-
+import { AppStateContext } from '../../context/state';
 
 const EditorComponent = () => {
   const ejInstance = useRef();
+  const AppState = useContext(AppStateContext);
 
   const initEditor = () => {
     const editor = new EditorJS({
@@ -57,7 +36,7 @@ const EditorComponent = () => {
         ejInstance.current = editor;
       },
       autofocus: false,
-      data: DEFAULT_INITIAL_DATA,
+      data: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
       onChange: async () => {
         let content = await editor.saver.save();
 
