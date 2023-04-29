@@ -4,11 +4,11 @@ let q = fauna.q;
 export default function handler(req, res) {
     const method = req.method;
     const body = req.body;
+    const params = req.query;
 
     switch (method) {
         case "POST":
             // Process a POST request
-            // CREATE A DOCUMENT/PAGE
             fauna.client.query(
                 q.Let({
                     create: q.Create(q.Collection('Content'), { data: body }),
@@ -34,6 +34,28 @@ export default function handler(req, res) {
             }).catch(error => {
                 res.status(404).send(error)
             });
+            break;
+        case "PUT":
+            // Process a PUT request
+            fauna.client.query(
+                q.Update(q.Ref(q.Collection('Content'), body.id), { data: { ...body } })
+            ).then(result => {
+                res.status(200).send(result.data);
+            }).catch(error => {
+                res.status(404).send(error)
+            });
+            break;
+
+        case "DELETE":
+            // Process a DELETE request
+            fauna.client.query(
+                q.Delete(q.Ref(q.Collection('Content'), params.id))
+            ).then(result => {
+                res.status(200).send(result.data);
+            }).catch(error => {
+                res.status(404).send(error)
+            });
+
             break;
     }
 
