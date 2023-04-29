@@ -1,11 +1,9 @@
-// Any type of initiations on app build - e.g Database etc
-import fauna from './fauna'
-
+const fauna = require('./fauna.js');
 
 function FaunaDatabaseInitiations() {
     // CREACTE COLLECTIONS - ACCOUNTS, CONTENT, CONFIGURATIONS
     fauna.client.query(
-        q.CreateCollection({ name: 'Accounts' })
+        fauna.q.CreateCollection({ name: 'Accounts' })
     ).then((ret) => console.log(ret)).catch((err) => console.error(
         'Error: [%s] %s: %s',
         err.name,
@@ -14,7 +12,7 @@ function FaunaDatabaseInitiations() {
     ));
 
     fauna.client.query(
-        q.CreateCollection({ name: 'Content' })
+        fauna.q.CreateCollection({ name: 'Content' })
     ).then((ret) => console.log(ret)).catch((err) => console.error(
         'Error: [%s] %s: %s',
         err.name,
@@ -23,17 +21,30 @@ function FaunaDatabaseInitiations() {
     ));
 
     fauna.client.query(
-        q.CreateCollection({ name: 'Configurations' })
+        fauna.q.CreateCollection({ name: 'Configurations' })
     ).then((ret) => console.log(ret)).catch((err) => console.error(
         'Error: [%s] %s: %s',
         err.name,
         err.message,
         err.errors()[0].description,
     ));
+
+
+    // CREATE INDEXES - find_(object)_by_id
 }
 
-function Initiations() {
-    FaunaDatabaseInitiations();
-}
+export default function handler(req, res) {
+    const method = req.method;
+    const body = req.body;
 
-Initiations();
+    switch (method) {
+        case "POST":
+            // Process a POST request
+            FaunaDatabaseInitiations();
+            res.status(200).json({ name: 'Initiations Complete' })
+            break;
+        case "GET":
+            // Process a GET request
+            break;
+    }
+}

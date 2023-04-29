@@ -1,11 +1,16 @@
-var faunadb = require('faunadb');
-var q = faunadb.query;
+let faunadb = require('faunadb');
+let q = faunadb.query;
 
-var client = new faunadb.Client({
+console.log(process.env.EDITOR_FAUNA_DATABASE_SERVER_KEY);
+
+if (!process.env.EDITOR_FAUNA_DATABASE_SERVER_KEY) {
+    throw new Error('Add EDITOR_FAUNA_DATABASE_SERVER_KEY to environment keys')
+}
+
+let client = new faunadb.Client({
     secret: process.env.EDITOR_FAUNA_DATABASE_SERVER_KEY,
     // NOTE: Use the correct endpoint for your database's Region Group.
     endpoint: 'https://db.fauna.com/',
 })
 
-
-export default { q, client };
+module.exports = { q, client }
