@@ -1,8 +1,6 @@
 let faunadb = require('faunadb');
 let q = faunadb.query;
 
-console.log(process.env.EDITOR_FAUNA_DATABASE_SERVER_KEY);
-
 if (!process.env.EDITOR_FAUNA_DATABASE_SERVER_KEY) {
     throw new Error('Add EDITOR_FAUNA_DATABASE_SERVER_KEY to environment keys')
 }
