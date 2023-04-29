@@ -21,9 +21,9 @@ export default class AdvancedComponents {
     }
 
     constructor({ data, api, config, readOnly, block }) {
-        console.warn("passed.to.component", data);
+        console.log("init.a.component.with.this.data", data);
         this.data = {
-            content: data || {},
+            code: data.code || '',
         };
         this.settings = [];
         this.CSS = {
@@ -44,10 +44,12 @@ export default class AdvancedComponents {
 
         const onDataChange = (data) => {
             this.data = {
-                content: data.replace(/\s+/g, ' ').trim()
+                ...this.data,
+                code: data
             };
-        }
+        };
 
+        console.log("components.parent.data", this.data);
         ReactDOM.render(
             (<Wrapper onDataChange={onDataChange} readOnly={this.readOnly} data={this.data} />),
             rootNode

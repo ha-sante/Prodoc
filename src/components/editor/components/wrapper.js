@@ -9,26 +9,19 @@ import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism.css'; //Example style, you can use another
-
 import StringToReactComponent from 'string-to-react-component';
 
 
 export default function Wrapper(props) {
-    const [content, setContent] = React.useState(` ${props.data?.content?.content ? props.data?.content?.content : '// Paste & Edit the component code here (Delete this whiles doing so)'}`);
+    const [code, setCode] = React.useState(`${props.data.code}`);
     const [mode, setMode] = React.useState('preview');
 
     React.useEffect(() => {
+        console.log('wrapper.code.changed', code);
         if (props.onDataChange) {
-            // Inform editorjs about data change
-            props.onDataChange(content);
+            props.onDataChange(code);
         }
-    }, [content]);
-
-    // React.useEffect(() => {
-    //     if (props.data?.content?.content) {
-    //         setContent(props.data?.content.content)
-    //     }
-    // }, []);
+    }, [code]);
 
     const changeEditingMode = (option) => {
         setMode(option);
@@ -40,7 +33,7 @@ export default function Wrapper(props) {
                 {`(props)=>{
                const {Tabs}=props;
                return (<>
-                ${content}
+                ${code}
                </>);
              }`}
             </StringToReactComponent>
@@ -51,8 +44,8 @@ export default function Wrapper(props) {
         return (
             <div className='w-100'>
                 <Editor
-                    value={content}
-                    onValueChange={code => setContent(code)}
+                    value={code}
+                    onValueChange={code => setCode(code)}
                     highlight={code => {
                         console.log("code.to.be.highlighted", code);
                         if (typeof code == 'string') {

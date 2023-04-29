@@ -22,7 +22,7 @@ import SimpleImage from '@editorjs/simple-image'
 import { uploadFile } from '@uploadcare/upload-client'
 import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 
-import AdvancedComponents from './components/components'
+import Components from './components/components'
 import { AppStateContext } from '../../context/state';
 
 const EditorComponent = (props) => {
@@ -39,8 +39,8 @@ const EditorComponent = (props) => {
       autofocus: false,
       data: AppState.page !== undefined ? AppState.page?.content?.editor : AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
       onChange: async () => {
-        let content = await editor.saver.save();
-        props.onSave(content, content.blocks[0]?.data?.text, content.blocks[1]?.data?.text);
+        let output = await editor.saver.save();
+        props.onSave(output, output.blocks[0]?.data?.text, output.blocks[1]?.data?.text);
       },
       tools: {
         header: {
@@ -96,10 +96,7 @@ const EditorComponent = (props) => {
         marker: Marker,
         delimiter: Delimiter,
         components: {
-          class: AdvancedComponents,
-          config: {
-            placeholder: 'Edit component data'
-          }
+          class: Components,
         }
       },
     });

@@ -19,7 +19,7 @@ import { MDXRemote } from 'next-mdx-remote'
 
 const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
 
-import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2 } from 'iconsax-react';
+import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2, CloudChange } from 'iconsax-react';
 import ReactPlayer from 'react-player'
 
 export default function Editor() {
@@ -32,6 +32,8 @@ export default function Editor() {
   const [authenticated, setAuthenticated] = useState(false);
   const [mdxSource, setMdxSource] = useState();
   const [example, setExample] = useState('');
+  const [edited, setEdited] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const authenticate = () => {
     axios.post('/api/auth', { password }).then(response => {
@@ -52,6 +54,25 @@ export default function Editor() {
     let anew = AppState.content;
     anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
     AppState.setContent([...anew]);
+    setEdited(true);
+  }
+
+  const saveEditedPage = () => {
+    // GET THE DATA FOR THE UPDATED PAGE 
+    let page = AppState.content.find(page => page.id == AppState?.page?.id);
+    if (page) {
+      setProcessing(true);
+      AppState.ContentAPIHandler('PUT', page).then(response => {
+        // AppState.setContent(response.data);
+        console.log('response', response.data);
+        setEdited(false);
+        setProcessing(false);
+        alert('Page Updated')
+      }).catch(error => {
+        console.log('error', error);
+        setProcessing(false);
+      });
+    }
   }
 
   const computeMDXContent = () => {
@@ -136,12 +157,12 @@ export default function Editor() {
     if (data.page) {
       let page = AppState.content.find(page => page.id == data.page);
       AppState.setPage({ ...page });
+      setEdited(false);
     } else {
       AppState.setPage();
     }
 
   }, [slug]);
-
 
   useEffect(() => {
     const EditorEditing = async () => {
@@ -203,10 +224,17 @@ export default function Editor() {
 
               <div className='flex flex-row items-center justify-between mb-3'>
                 <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
-                <Button size="xs">
-                  Save
-                  <CloudPlus size="16" className="ml-2" color="#fff" />
-                </Button>
+                {edited ?
+                  <Button size="xs" isProcessing={processing} color="warning" onClick={() => saveEditedPage()}>
+                    Save Update
+                    <CloudChange size="16" className="ml-2" color="#fff" />
+                  </Button>
+                  :
+                  <Button size="xs" isProcessing={processing} onClick={() => saveEditedPage()}>
+                    Save
+                    <CloudPlus size="16" className="ml-2" color="#fff" />
+                  </Button>
+                }
               </div>
 
               <div className='border shadow-sm rounded-lg pt-3 pb-3'>
