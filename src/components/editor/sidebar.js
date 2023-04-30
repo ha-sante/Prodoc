@@ -12,6 +12,62 @@ import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, Arro
 
 import { AppStateContext } from '../../context/state';
 import toast, { Toaster } from 'react-hot-toast';
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
+
+
+const StrictModeDroppable = ({ children, ...props }) => {
+    const [enabled, setEnabled] = useState(false);
+    useEffect(() => {
+        const animation = requestAnimationFrame(() => setEnabled(true));
+        return () => {
+            cancelAnimationFrame(animation);
+            setEnabled(false);
+        };
+    }, []);
+    if (!enabled) {
+        return null;
+    }
+    return <Droppable {...props}>{children}</Droppable>;
+};
+
+// fake data generator
+const getItems = count =>
+    Array.from({ length: count }, (v, k) => k).map(k => ({
+        id: `item-${k}`,
+        content: `item ${k}`
+    }));
+
+// a little function to help us with reordering the result
+const reorder = (list, startIndex, endIndex) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+
+    return result;
+};
+
+const grid = 2;
+
+
+const getItemStyle = (isDragging, draggableStyle) => ({
+    // some basic styles to make the items look a bit nicer
+    userSelect: "none",
+    padding: grid * 2,
+    margin: `0 0 ${grid}px 0`,
+
+    // change background colour if dragging
+    background: isDragging ? "lightgreen" : "grey",
+
+    // styles we need to apply on draggables
+    ...draggableStyle
+});
+const getListStyle = isDraggingOver => ({
+    background: isDraggingOver ? "lightblue" : "lightgrey",
+    padding: grid,
+    width: 'auto'
+});
+
 
 export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
@@ -21,6 +77,8 @@ export default function EditorSidebar() {
     const [processing, setProcessing] = useState(false);
     const [opened, setOpened] = useState('');
     const [permission, setPermission] = useState(false);
+
+    const [items, setItems] = useState([...getItems(10)]);
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
@@ -86,6 +144,44 @@ export default function EditorSidebar() {
         });
     }
 
+    function swap(arr, from, to) {
+        return arr.splice(from, 1, arr.splice(to, 1, arr[from])[0]);
+    }
+
+
+    function HandleOnDragEnd(result) {
+        console.log("sorting.result.data", { result });
+        // dropped outside the list
+        if (!result.destination) {
+            return;
+        }
+        let startIndex = result.source.index;
+        let endIndex = result.destination.index;
+        console.log("sorting.operational.data", { startIndex, endIndex });
+
+        // let result = Array.from(AppState.content);
+        // let removed = result.splice(startIndex, 1);
+        // result.splice(endIndex, 0, removed);
+        // console.log("Sorted.list", result);
+
+        // FIND THE PARENT
+        // MOVE THE ID AT THE END TO THE DROPED INDEX
+        let parent_page = AppState.content.find((page, index) => page.id == result.destination.droppableId);
+        let parent_page_index = AppState.content.findIndex((page, index) => page.id == result.destination.droppableId);
+
+        let dragged_page = AppState.content.find(page => page.id == result.draggableId);
+        let dropped_on_page = AppState.content.find((page) => page.id == parent_page.children[endIndex]);
+
+        parent_page.children[endIndex] = dragged_page.id;
+        parent_page.children[startIndex] = dropped_on_page.id;
+
+        let newContent = [...AppState.content];
+        newContent[parent_page_index] = parent_page;
+        AppState.setContent([...newContent]);
+
+        console.log("The new Page structure", { parent_page, parent_page_index, newContent });
+    }
+
     const Directory = ({ page }) => {
 
         // KNOW IF THIS PAGE IS OPENED OR NOT
@@ -106,57 +202,98 @@ export default function EditorSidebar() {
         if (page?.id) {
             if (page?.children.length > 0) {
                 return (
-                    <div className={`${page.id == 'book' ? '' : ''} ${page.position == 'child' ? 'folder' : ''}`}>
-                        <div className={`${page.position === 'child' ? 'folder flex flex-row w-100 justify-between items-center cursor-pointer' : 'flex justify-between items-center cursor-pointer'} border-red-400`}
-                            onMouseEnter={() => setIsShown(true)} onMouseLeave={() => setIsShown(false)}>
+                    <DragDropContext onDragEnd={HandleOnDragEnd}>
+                        <StrictModeDroppable droppableId={`${page.id}`}>
+                            {(provided, snapshot) => (
+                                <div
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                    className={`${snapshot.isDraggingOver == true ? '' : ''}`}>
 
-                            <div className='flex flex-row items-center border-blue-500'>
-                                {page.id != 'book' &&
-                                    <h2 className="folder-title text-sm font-medium flex items-center p-1 border ml-2"
-                                        onClick={() => {
-                                            let change = !isExpanded;
-                                            toggleExpanded(change);
+                                    <div className={`${page.id == 'book' ? '' : ''} ${page.position == 'child' ? 'folder' : ''}`}>
+                                        <div className={`${page.position === 'child' ? 'folder flex flex-row w-100 justify-between items-center cursor-pointer' : 'flex justify-between items-center cursor-pointer'} `}
+                                            onMouseEnter={() => setIsShown(true)} onMouseLeave={() => setIsShown(false)}
+                                        >
 
-                                            // cold store
-                                            let toStore = { ...JSON.parse(localStorage.getItem('pagination')) };
-                                            toStore[page.id] = change;
-                                            localStorage.setItem('pagination', JSON.stringify(toStore));
-                                        }}>
-                                        {isExpanded == true ?
-                                            <ArrowDown2 size="16" color="#111827" />
-                                            :
-                                            <ArrowRight2 size="16" color="#111827" />
-                                        }
-                                    </h2>
-                                }
-                                <h3 className={`${page.id == 'book' ? '' : 'file-name font-normal'} text-sm overflow-hidden text-ellipsis flex`}
-                                    onClick={() => {
-                                        router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
-                                    }}>
-                                    {page.title}
-                                </h3>
-                            </div>
+                                            <div className='flex flex-row items-center'>
+                                                {page.id != 'book' &&
+                                                    <h2 className="folder-title text-sm font-medium flex items-center p-1 border ml-2"
+                                                        onClick={() => {
+                                                            let change = !isExpanded;
+                                                            toggleExpanded(change);
+                                                            console.log("clicked.on.for.moving.id", page.id);
 
-                            {page.id === 'book' ?
-                                <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
-                                :
-                                <div className='flex flex-row w-100 items-center'>
-                                    <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                        onClick={() => { console.log("open more options") }}>
-                                        <span className='leading-none'><More size={'12px'} /></span>
+                                                            // cold store
+                                                            let toStore = { ...JSON.parse(localStorage.getItem('pagination')) };
+                                                            toStore[page.id] = change;
+                                                            localStorage.setItem('pagination', JSON.stringify(toStore));
+                                                        }}>
+                                                        {isExpanded == true ?
+                                                            <ArrowDown2 size="16" color="#111827" />
+                                                            :
+                                                            <ArrowRight2 size="16" color="#111827" />
+                                                        }
+                                                    </h2>
+                                                }
+                                                <h3 className={`${page.id == 'book' ? '' : 'file-name font-normal'} text-sm overflow-hidden text-ellipsis flex`}
+                                                    onClick={() => {
+                                                        router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
+                                                    }}>
+                                                    {page.title}
+                                                </h3>
+                                            </div>
+
+                                            {page.id === 'book' ?
+                                                <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
+                                                :
+                                                <div className='flex flex-row w-100 items-center'>
+                                                    <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                                        onClick={() => { console.log("open more options") }}>
+                                                        <span className='leading-none'><More size={'12px'} /></span>
+                                                    </div>
+                                                    <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                                        onClick={() => { HandleAddPage("child", page.id) }}>
+                                                        <span className='leading-none'>+</span>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                        </div>
+
+                                        <br />
+                                        {/* {isExpanded == true && page.children.map((id) => < Directory key={id} page={pages.find(paged => paged.id === id)} />)} */}
+                                        {isExpanded == true && page.children.filter(id => pages.some(paged => paged.id === id)).map((id, index) => {
+                                            let found = pages.find(paged => paged.id === id);
+                                            // console.log("child.directory.listing", { id, found });
+                                            if (found) {
+                                                return (
+                                                    <Draggable key={found.id} draggableId={found.id} index={index}
+                                                        isDragDisabled={found.position == "book" || found.position == "chapter" ? true : false}>
+                                                        {(provided, snapshot) => (
+                                                            <div
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                                className={`${snapshot.isDragging == true ? 'bg-gray-100' : ''} `}
+                                                            >
+                                                                {/* {page.title} */}
+                                                                < Directory key={found.id} page={found} />
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                )
+                                            } else {
+                                                return <div key={index}></div>
+                                            }
+                                        })}
+
                                     </div>
-                                    <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                        onClick={() => { HandleAddPage("child", page.id) }}>
-                                        <span className='leading-none'>+</span>
-                                    </div>
-                                </div>
-                            }
-
-                        </div>
-
-                        <br />
-                        {isExpanded == true && page.children.map((id) => < Directory key={id} page={pages.find(paged => paged.id === id)} />)}
-                    </div >
+                                    {/* // End of draggable */}
+                                    {provided.placeholder}
+                                </div >
+                            )}
+                        </StrictModeDroppable>
+                    </DragDropContext>
                 )
             }
 
@@ -168,7 +305,7 @@ export default function EditorSidebar() {
                         onMouseEnter={() => { setIsShown(true); }} onMouseLeave={() => { setIsShown(false) }}>
                         <div className='flex flex-row w-100 items-center'>
                             {allowed &&
-                                <h2 className="folder-title text-sm font-medium flex items-center p-1 border ml-2"
+                                <h2 className="folder-title border text-sm font-medium flex items-center p-1 ml-2"
                                     onClick={() => {
                                         let change = !isExpanded;
                                         toggleExpanded(change);
@@ -222,7 +359,6 @@ export default function EditorSidebar() {
                     <br />
                 </>
             )
-
         }
     }
 
@@ -266,7 +402,8 @@ export default function EditorSidebar() {
                         </a>
                     </li>
                 </ul>
-            </div>
+
+            </div >
         )
     }
 
@@ -292,9 +429,10 @@ export default function EditorSidebar() {
             console.log("error", error);
         }
 
-        console.log("pages.to.be.edited", pages);
+        console.log("sidebar.pages.menu.refreshed", pages);
+
         return (
-            <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 justify-between">
+            <div className="h-full px-3 py-4 overflow-x-hidden bg-gray-50 dark:bg-gray-800 justify-between">
 
                 <ul className="font-medium mb-4">
                     <li>
