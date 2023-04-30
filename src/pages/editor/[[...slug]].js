@@ -21,6 +21,7 @@ const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false 
 
 import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2, CloudChange } from 'iconsax-react';
 import ReactPlayer from 'react-player'
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function Editor() {
 
@@ -37,11 +38,12 @@ export default function Editor() {
 
   const authenticate = () => {
     axios.post('/api/auth', { password }).then(response => {
-      alert("Welcome 👋🏄‍♂️👍")
+      toast.success("Welcome 👋🏄‍♂️👍");
       localStorage.setItem("authenticated", true);
       setAuthenticated(true);
     }).catch(error => {
-      alert(error);
+      console.log(error);
+      toast.error('Could not authenticate you');
       setAuthenticated(false);
     });
   };
@@ -67,7 +69,7 @@ export default function Editor() {
         console.log('response', response.data);
         setEdited(false);
         setProcessing(false);
-        alert('Page Updated')
+        toast.success("Page Updated");
       }).catch(error => {
         console.log('error', error);
         setProcessing(false);

@@ -7,10 +7,11 @@ import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
-import { Label, TextInput, Checkbox, Button } from "flowbite-react";
+import { Label, TextInput, Checkbox, Button, Dropdown } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows } from 'iconsax-react';
 
 import { AppStateContext } from '../../context/state';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
@@ -18,6 +19,8 @@ export default function EditorSidebar() {
     const { slug } = router.query;
     const [route, setRoute] = useState('main');
     const [processing, setProcessing] = useState(false);
+    const [opened, setOpened] = useState('');
+    const [permission, setPermission] = useState(false);
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
@@ -39,7 +42,7 @@ export default function EditorSidebar() {
         // GET ALL THE LATEST CONTENT
         AppState.ContentAPIHandler('POST', page).then(response => {
             console.log('response', response.data);
-            alert('Child Page Created')
+            toast.success('Child Page created & saved');
 
             if (parent_id) {
                 // AFTER CREATION, OF THE CHILD PAGE
@@ -56,7 +59,7 @@ export default function EditorSidebar() {
                     newContent[parent_page_index] = response2.data;
 
                     AppState.setContent([...newContent, response.data])
-                    alert('Parent Page Updated')
+                    toast.success('Parent Page updated & saved');
                 }).catch(error => {
                     console.log('error', error);
                 });
@@ -67,9 +70,20 @@ export default function EditorSidebar() {
 
         }).catch(error => {
             console.log('error', error);
-            alert('Error creating the page')
+            toast.error('Got an error saving this page!');
         })
 
+    }
+
+    function HandleDeletePage(page) {
+        AppState.ContentAPIHandler('DELETE', page).then(response2 => {
+            let newContent = AppState.content.filter((block) => block.id !== page.id);
+            AppState.setContent([...newContent])
+            toast.success('Page deleted');
+        }).catch(error => {
+            console.log('error', error);
+            toast.error('Got an error deleting this page!');
+        });
     }
 
     const Directory = ({ page }) => {
@@ -115,7 +129,7 @@ export default function EditorSidebar() {
                                         }
                                     </h2>
                                 }
-                                <h3 className={`${page.id == 'book' ? '' : 'file-name'} text-sm overflow-hidden text-ellipsis flex`}
+                                <h3 className={`${page.id == 'book' ? '' : 'file-name font-normal'} text-sm overflow-hidden text-ellipsis flex`}
                                     onClick={() => {
                                         router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
                                     }}>
@@ -150,7 +164,8 @@ export default function EditorSidebar() {
             let allowed = page?.id == 'book' || page?.position == 'chapter';
             return (
                 <>
-                    <div className={`${page.position === 'child' ? 'ml-5' : ''} flex flex-row w-100 justify-between items-center cursor-pointer`} onMouseEnter={() => setIsShown(true)} onMouseLeave={() => setIsShown(false)}>
+                    <div className={`${page.position === 'child' ? 'ml-5' : ''} flex flex-row w-100 justify-between items-center cursor-pointer`}
+                        onMouseEnter={() => { setIsShown(true); }} onMouseLeave={() => { setIsShown(false) }}>
                         <div className='flex flex-row w-100 items-center'>
                             {allowed &&
                                 <h2 className="folder-title text-sm font-medium flex items-center p-1 border ml-2"
@@ -170,6 +185,7 @@ export default function EditorSidebar() {
                                     }
                                 </h2>
                             }
+
                             <h3 className="file-name text-sm overflow-hidden text-ellipsis"
                                 onClick={() => {
                                     router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
@@ -179,10 +195,23 @@ export default function EditorSidebar() {
                         </div>
 
                         <div className='flex flex-row w-100 items-center'>
-                            <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                onClick={() => { console.log("open more options") }}>
-                                <span className='leading-none'><More size={'12px'} /></span>
-                            </div>
+                            <Dropdown
+                                label={<div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                    onClick={() => { console.log("open more options") }}>
+                                    <span className='leading-none' id="dropdownOffsetButton" data-dropdown-toggle="dropdownOffset" data-dropdown-offset-distance="10" data-dropdown-offset-skidding="100" data-dropdown-placement="right">
+                                        <More size={'12px'} />
+                                    </span>
+                                </div>}
+                                inline={true}
+                                arrowIcon={false}
+                                floatingArrow={false}
+                                trigger='hover'
+                                dismissOnClick={true}>
+                                <Dropdown.Item onClick={() => HandleDeletePage(page)}>
+                                    Delete
+                                </Dropdown.Item>
+                            </Dropdown>
+
                             <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
                                 onClick={() => { HandleAddPage("child", page.id) }}>
                                 <span className='leading-none'>+</span>
