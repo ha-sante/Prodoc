@@ -18,6 +18,7 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const StrictModeDroppable = ({ children, ...props }) => {
     const [enabled, setEnabled] = useState(false);
+
     useEffect(() => {
         const animation = requestAnimationFrame(() => setEnabled(true));
         return () => {
@@ -31,43 +32,6 @@ const StrictModeDroppable = ({ children, ...props }) => {
     return <Droppable {...props}>{children}</Droppable>;
 };
 
-// fake data generator
-const getItems = count =>
-    Array.from({ length: count }, (v, k) => k).map(k => ({
-        id: `item-${k}`,
-        content: `item ${k}`
-    }));
-
-// a little function to help us with reordering the result
-const reorder = (list, startIndex, endIndex) => {
-    const result = Array.from(list);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
-
-    return result;
-};
-
-const grid = 2;
-
-
-const getItemStyle = (isDragging, draggableStyle) => ({
-    // some basic styles to make the items look a bit nicer
-    userSelect: "none",
-    padding: grid * 2,
-    margin: `0 0 ${grid}px 0`,
-
-    // change background colour if dragging
-    background: isDragging ? "lightgreen" : "grey",
-
-    // styles we need to apply on draggables
-    ...draggableStyle
-});
-const getListStyle = isDraggingOver => ({
-    background: isDraggingOver ? "lightblue" : "lightgrey",
-    padding: grid,
-    width: 'auto'
-});
-
 
 export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
@@ -75,10 +39,6 @@ export default function EditorSidebar() {
     const { slug } = router.query;
     const [route, setRoute] = useState('main');
     const [processing, setProcessing] = useState(false);
-    const [opened, setOpened] = useState('');
-    const [permission, setPermission] = useState(false);
-
-    const [items, setItems] = useState([...getItems(10)]);
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
@@ -96,6 +56,7 @@ export default function EditorSidebar() {
             children: []
         };
         console.log({ page, parent_id, position });
+        let toastId = toast.loading('Adding the new Page...');
 
         // GET ALL THE LATEST CONTENT
         AppState.ContentAPIHandler('POST', page).then(response => {
@@ -115,15 +76,17 @@ export default function EditorSidebar() {
                     let newContent = [...AppState.content];
                     let parent_page_index = AppState.content.findIndex((page) => page.id == parent_id);
                     newContent[parent_page_index] = response2.data;
-
-                    AppState.setContent([...newContent, response.data])
+                    let anew = [...newContent, response.data];
+                    AppState.setContent(anew)
+                    toast.dismiss(toastId);
                     toast.success('Parent Page updated & saved');
                 }).catch(error => {
                     console.log('error', error);
                 });
 
             } else {
-                AppState.setContent([...AppState.content, response.data])
+                let anew = [...AppState.content, response.data];
+                AppState.setContent(anew)
             }
 
         }).catch(error => {
@@ -134,9 +97,13 @@ export default function EditorSidebar() {
     }
 
     function HandleDeletePage(page) {
+        let toastId = toast.loading('Deleting this Page...');
+
         AppState.ContentAPIHandler('DELETE', page).then(response2 => {
             let newContent = AppState.content.filter((block) => block.id !== page.id);
-            AppState.setContent([...newContent])
+            let anew = [...newContent];
+            AppState.setContent(anew);
+            toast.dismiss(toastId);
             toast.success('Page deleted');
         }).catch(error => {
             console.log('error', error);
@@ -144,13 +111,8 @@ export default function EditorSidebar() {
         });
     }
 
-    function swap(arr, from, to) {
-        return arr.splice(from, 1, arr.splice(to, 1, arr[from])[0]);
-    }
-
-
     function HandleOnDragEnd(result) {
-        console.log("sorting.result.data", { result });
+        console.log("sorting.result.data", { result, content: AppState.content });
         // dropped outside the list
         if (!result.destination) {
             return;
@@ -169,21 +131,26 @@ export default function EditorSidebar() {
         let parent_page = AppState.content.find((page, index) => page.id == result.destination.droppableId);
         let parent_page_index = AppState.content.findIndex((page, index) => page.id == result.destination.droppableId);
 
+        let active_pages = parent_page?.children.filter(id => AppState.content.some(page => page.id == id));
         let dragged_page = AppState.content.find(page => page.id == result.draggableId);
-        let dropped_on_page = AppState.content.find((page) => page.id == parent_page.children[endIndex]);
+        let dropped_on_page = AppState.content.find((page) => page.id == active_pages[endIndex]);
 
-        parent_page.children[endIndex] = dragged_page.id;
-        parent_page.children[startIndex] = dropped_on_page.id;
+        console.warn("side.bar.navigation.pages.before.refresh", { parent_page, parent_page_index, dragged_page, dropped_on_page });
+        if (dropped_on_page) {
+            parent_page.children = active_pages;
+            parent_page.children[endIndex] = dragged_page.id;
+            parent_page.children[startIndex] = dropped_on_page.id;
 
-        let newContent = [...AppState.content];
-        newContent[parent_page_index] = parent_page;
-        AppState.setContent([...newContent]);
+            let newContent = [...AppState.content];
+            newContent[parent_page_index] = parent_page;
+            AppState.setContent(newContent);
+            console.warn("side.bar.navigation.pages.refreshed", { parent_page, parent_page_index, newContent });
+        }
 
-        console.log("The new Page structure", { parent_page, parent_page_index, newContent });
     }
 
-    const Directory = ({ page }) => {
 
+    const Directory = ({ page }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
         let pagination = JSON.parse(localStorage.getItem('pagination'));
         let mapping = pagination[page?.id];
@@ -196,11 +163,10 @@ export default function EditorSidebar() {
         const [isShown, setIsShown] = useState(false);
         const pages = [...AppState.content];
 
-        // console.log("page", page);
-        // console.warn("pagination", pagination);
-        // console.warn("mapping", mapping);
         if (page?.id) {
+            {/* Page name > Then children pages */ }
             if (page?.children.length > 0) {
+                let activeChildrenPages = page.children.filter(id => pages.some(paged => paged.id === id));
                 return (
                     <DragDropContext onDragEnd={HandleOnDragEnd}>
                         <StrictModeDroppable droppableId={`${page.id}`}>
@@ -262,13 +228,15 @@ export default function EditorSidebar() {
 
                                         <br />
                                         {/* {isExpanded == true && page.children.map((id) => < Directory key={id} page={pages.find(paged => paged.id === id)} />)} */}
-                                        {isExpanded == true && page.children.filter(id => pages.some(paged => paged.id === id)).map((id, index) => {
+                                        {isExpanded == true && activeChildrenPages.map((id, index) => {
                                             let found = pages.find(paged => paged.id === id);
-                                            // console.log("child.directory.listing", { id, found });
                                             if (found) {
                                                 return (
-                                                    <Draggable key={found.id} draggableId={found.id} index={index}
-                                                        isDragDisabled={found.position == "book" || found.position == "chapter" ? true : false}>
+                                                    <Draggable
+                                                        key={found.id}
+                                                        draggableId={found.id}
+                                                        index={index}
+                                                        isDragDisabled={found.children.length > 0 ? true : false}>
                                                         {(provided, snapshot) => (
                                                             <div
                                                                 ref={provided.innerRef}
@@ -297,8 +265,8 @@ export default function EditorSidebar() {
                 )
             }
 
-            {/* Directory/Page name */ }
-            let allowed = page?.id == 'book' || page?.position == 'chapter';
+            {/* Page name */ }
+            let allowed = page?.position == 'chapter';
             return (
                 <>
                     <div className={`${page.position === 'child' ? 'ml-5' : ''} flex flex-row w-100 justify-between items-center cursor-pointer`}
@@ -331,29 +299,34 @@ export default function EditorSidebar() {
                             </h3>
                         </div>
 
-                        <div className='flex flex-row w-100 items-center'>
-                            <Dropdown
-                                label={<div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                    onClick={() => { console.log("open more options") }}>
-                                    <span className='leading-none' id="dropdownOffsetButton" data-dropdown-toggle="dropdownOffset" data-dropdown-offset-distance="10" data-dropdown-offset-skidding="100" data-dropdown-placement="right">
-                                        <More size={'12px'} />
-                                    </span>
-                                </div>}
-                                inline={true}
-                                arrowIcon={false}
-                                floatingArrow={false}
-                                trigger='hover'
-                                dismissOnClick={true}>
-                                <Dropdown.Item onClick={() => HandleDeletePage(page)}>
-                                    Delete
-                                </Dropdown.Item>
-                            </Dropdown>
 
-                            <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                onClick={() => { HandleAddPage("child", page.id) }}>
-                                <span className='leading-none'>+</span>
+                        {page.id === 'book' ?
+                            <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
+                            :
+                            <div className='flex flex-row w-100 items-center'>
+                                <Dropdown
+                                    label={<div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                        onClick={() => { console.log("open more options") }}>
+                                        <span className='leading-none' id="dropdownOffsetButton" data-dropdown-toggle="dropdownOffset" data-dropdown-offset-distance="10" data-dropdown-offset-skidding="100" data-dropdown-placement="right">
+                                            <More size={'12px'} />
+                                        </span>
+                                    </div>}
+                                    inline={true}
+                                    arrowIcon={false}
+                                    floatingArrow={false}
+                                    trigger='hover'
+                                    dismissOnClick={true}>
+                                    <Dropdown.Item onClick={() => HandleDeletePage(page)}>
+                                        Delete
+                                    </Dropdown.Item>
+                                </Dropdown>
+
+                                <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                    onClick={() => { HandleAddPage("child", page.id) }}>
+                                    <span className='leading-none'>+</span>
+                                </div>
                             </div>
-                        </div>
+                        }
 
                     </div>
                     <br />
@@ -411,7 +384,14 @@ export default function EditorSidebar() {
 
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
         let productChapters = AppState.content.filter(child => child?.type === 'product' && child?.position === 'chapter')
-        let pages = { id: "book", title: "Product Documentation", content: "", children: productChapters.map(main => main.id) };
+        let pages = {
+            id: "book",
+            position: 'book',
+            title: "Product Documentation",
+            description: "The book itself (The page for it)",
+            content: { editor: "", mdx: "" },
+            children: productChapters.map(main => main.id)
+        };
 
         // CHECK IF WE HAVE A NAVIGATION STYLING DATA ALREADY
         if (localStorage.getItem('pagination') == null) {

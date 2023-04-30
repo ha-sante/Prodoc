@@ -37,7 +37,9 @@ export default function Editor() {
   const [processing, setProcessing] = useState(false);
 
   const authenticate = () => {
+    let toastId = toast.loading('Authenticating...');
     axios.post('/api/auth', { password }).then(response => {
+      toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
       localStorage.setItem("authenticated", true);
       setAuthenticated(true);
@@ -55,7 +57,7 @@ export default function Editor() {
     let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
     let anew = AppState.content;
     anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
-    AppState.setContent([...anew]);
+    AppState.setContent(anew);
     setEdited(true);
   }
 
@@ -64,11 +66,13 @@ export default function Editor() {
     let page = AppState.content.find(page => page.id == AppState?.page?.id);
     if (page) {
       setProcessing(true);
+      let toastId = toast.loading('Saving this Page...');
       AppState.ContentAPIHandler('PUT', page).then(response => {
         // AppState.setContent(response.data);
         console.log('response', response.data);
         setEdited(false);
         setProcessing(false);
+        toast.dismiss(toastId);
         toast.success("Page Updated");
       }).catch(error => {
         console.log('error', error);
@@ -228,12 +232,12 @@ export default function Editor() {
                 <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
                 {edited ?
                   <Button size="xs" isProcessing={processing} color="warning" onClick={() => saveEditedPage()}>
-                    Save Update
+                    Save Page Data Update
                     <CloudChange size="16" className="ml-2" color="#fff" />
                   </Button>
                   :
                   <Button size="xs" isProcessing={processing} onClick={() => saveEditedPage()}>
-                    Save
+                    Save Page Data
                     <CloudPlus size="16" className="ml-2" color="#fff" />
                   </Button>
                 }
