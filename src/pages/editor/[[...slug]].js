@@ -43,7 +43,7 @@ export default function Editor() {
       AppState.setAuthenticated(true);
     }).catch(error => {
       console.log(error);
-      toast.error('Could not authenticate you');
+      toast.error('Invalid auth details.');
       toast.dismiss(toastId);
       AppState.setAuthenticated(false);
     });
@@ -165,14 +165,6 @@ export default function Editor() {
         console.log('get.all.content', { content: response.data, page_id: router.query.page });
         AppState.setContent(response.data);
 
-        // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
-        // if (router.query.page != undefined) {
-        //   let page = AppState.content.find(page => page.id == route_data.page);
-        //   console.log("checking.page.matched", page);
-        //   AppState.setPage({ ...page });
-        //   AppState.setEdited(false);
-        //   // page is not there
-        // }
         // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
         if (route_data.page != undefined) {
           let page = response.data.find(page => page.id == route_data.page);
