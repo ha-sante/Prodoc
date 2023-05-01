@@ -29,11 +29,9 @@ export default function Editor() {
   const AppState = useContext(AppStateContext);
   const router = useRouter();
   const { slug } = router.query;
-
   const [password, setPassword] = useState('');
   const [mdxSource, setMdxSource] = useState();
   const [example, setExample] = useState('');
-  const [edited] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   const authenticate = () => {
@@ -95,7 +93,7 @@ export default function Editor() {
       });
     }
   }
-  
+
   const computeMDXContent = () => {
     const EditorEditing = async () => {
       const source = `Some **mdx** text, with a component 
@@ -157,29 +155,38 @@ export default function Editor() {
   }, []);
 
   useEffect(() => {
-    let data = { slug, page: router.query.page };
-    console.warn("route.change.data", data);
+    let route_data = { slug, page: router.query.page };
+    console.log("route.change.data", route_data);
 
     // LOAD THE PRODUCT BOOK CONTENT
-    if (data.slug === undefined) {
+    if (route_data.slug !== undefined) {
       // GET ALL THE LATEST CONTENT
       AppState.ContentAPIHandler('GET').then(response => {
+        console.log('get.all.content', { content: response.data, page_id: router.query.page });
         AppState.setContent(response.data);
-        console.log('response', response.data);
+
+        // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
+        // if (router.query.page != undefined) {
+        //   let page = AppState.content.find(page => page.id == route_data.page);
+        //   console.log("checking.page.matched", page);
+        //   AppState.setPage({ ...page });
+        //   AppState.setEdited(false);
+        //   // page is not there
+        // }
+        // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
+        if (route_data.page != undefined) {
+          let page = response.data.find(page => page.id == route_data.page);
+          console.log("slug.page.matched", page);
+          AppState.setPage({ ...page });
+          AppState.setEdited(false);
+          // page is not there
+        } else {
+          // AppState.setPage();
+        }
+
       }).catch(error => {
         console.log('error', error);
       })
-    } else {
-      AppState.setPage();
-    }
-
-    // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
-    if (data.page) {
-      let page = AppState.content.find(page => page.id == data.page);
-      AppState.setPage({ ...page });
-      AppState.setEdited(false);
-    } else {
-      AppState.setPage();
     }
 
   }, [slug]);
@@ -212,7 +219,7 @@ export default function Editor() {
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {AppState.page != undefined ?
+        {AppState.page?.id !== undefined ?
           <div className="p-4 w-[80%] mx-auto">
             <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
 

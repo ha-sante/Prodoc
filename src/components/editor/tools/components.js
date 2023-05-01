@@ -21,7 +21,7 @@ export default class AdvancedComponents {
     }
 
     constructor({ data, api, config, readOnly, block }) {
-        console.log("init.a.component.with.this.data", data);
+        console.log("editor.custom.components.executed", data);
         this.data = {
             code: data.code || '',
         };

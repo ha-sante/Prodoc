@@ -35,7 +35,7 @@ export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
     const router = useRouter();
     const { slug } = router.query;
-    const [route, setRoute] = useState('main');
+    const [navigation, setNavigation] = useState('main');
     const [processing, setProcessing] = useState(false);
 
     let defaultRoutes = [
@@ -391,16 +391,20 @@ export default function EditorSidebar() {
     }
 
     useEffect(() => {
-        if (slug && slug !== route) {
-            console.log("sidebar.slug.changed", { slug });
+        if (slug && slug !== navigation) {
+            console.log("sidebar.slug.changed", { slug, navigation, page_id: router.query.page });
             switch (slug[0]) {
                 case 'product':
                     console.warn("sidebar.content.set.to.product.documentation");
-                    setRoute(slug)
+                    setNavigation(slug)
+                    break;
+                case 'api':
+                    console.warn("sidebar.content.set.to.api.documentation");
+                    setNavigation(slug)
                     break;
             }
         } else {
-            setRoute('main')
+            setNavigation('main')
         }
     }, [slug]);
 
@@ -465,7 +469,7 @@ export default function EditorSidebar() {
             console.log("error", error);
         }
 
-        console.log("sidebar.book.menu.refreshed", book);
+        // console.log("sidebar.book.menu.refreshed", book);
 
         return (
             <div className="h-full px-3 py-4 overflow-x-hidden bg-gray-50 dark:bg-gray-800 justify-between">
@@ -488,7 +492,7 @@ export default function EditorSidebar() {
 
     return (
         <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-            {route == 'main' ? MainNavigation() : SubPageNavigation()}
+            {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
         </aside>
     )
 }
