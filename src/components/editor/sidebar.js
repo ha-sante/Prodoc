@@ -169,10 +169,16 @@ export default function EditorSidebar() {
 
             switch (permission) {
                 case true:
+                    // RESET THE PAGE'S OLD DATA BEFORE ROUTING
+                    // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
+                    let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
+                    let anew = AppState.content;
+                    anew[index] = AppState?.page;
+                    AppState.setContent(anew);
+                    AppState.setEdited(false);
                     router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
                     break;
                 case false:
-                    // toast("Understood, do your prechecks and save.");
                     break;
             }
 
@@ -418,7 +424,7 @@ export default function EditorSidebar() {
 
                 <ul className="space-y-2 font-medium">
                     <li >
-                        <p onClick={HandleLogOut}  className="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <p onClick={HandleLogOut} className="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <Logout size="16" color="#111827" />
                             <span className="ml-3"> Log out</span>
                         </p>

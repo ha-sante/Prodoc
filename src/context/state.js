@@ -60,6 +60,7 @@ export function AppStateProvider({ children }) {
     configure, setConfigure, content, setContent, pagination, setPagination,
     page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
   };
+  
   return (
     <AppContext.Provider value={data}> {children} </AppContext.Provider>
   );
