@@ -34,7 +34,7 @@ export default function Editor() {
   const [authenticated, setAuthenticated] = useState(false);
   const [mdxSource, setMdxSource] = useState();
   const [example, setExample] = useState('');
-  const [edited, setEdited] = useState(false);
+  const [edited] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   const authenticate = () => {
@@ -59,10 +59,10 @@ export default function Editor() {
     let anew = AppState.content;
     anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
     AppState.setContent(anew);
-    setEdited(true);
+    AppState.setEdited(true);
   }
 
-  const saveEditedPage = () => {
+  const updateEditedPage = () => {
     // GET THE DATA FOR THE UPDATED PAGE 
     let page = AppState.content.find(page => page.id == AppState?.page?.id);
     if (page) {
@@ -71,7 +71,7 @@ export default function Editor() {
       AppState.ContentAPIHandler('PUT', page).then(response => {
         // AppState.setContent(response.data);
         console.log('response', response.data);
-        setEdited(false);
+        AppState.setEdited(false);
         setProcessing(false);
         toast.dismiss(toastId);
         toast.success("Page Updated");
@@ -163,7 +163,7 @@ export default function Editor() {
     if (data.page) {
       let page = AppState.content.find(page => page.id == data.page);
       AppState.setPage({ ...page });
-      setEdited(false);
+      AppState.setEdited(false);
     } else {
       AppState.setPage();
     }
@@ -206,21 +206,21 @@ export default function Editor() {
                 <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
 
                 <div className='flex flex-row'>
-                  <Button size="xs" className="mr-4" color="light" onClick={() => saveEditedPage()}>
-                    Import
+                  <Button size="xs" className="mr-4" disabled={true} color="light" onClick={() => updateEditedPage()}>
+                    Import (Coming Soon)
                   </Button>
 
                   <Button size="xs" className="mr-4" color="light" onClick={() => AppState.setConfigure(true)}>
                     Configure
                   </Button>
 
-                  {edited ?
-                    <Button size="xs" isProcessing={processing} color="warning" onClick={() => saveEditedPage()}>
+                  {AppState.edited ?
+                    <Button size="xs" isProcessing={processing} color="warning" onClick={() => updateEditedPage()}>
                       Save Page Data Update
                       <CloudChange size="16" className="ml-2" color="#fff" />
                     </Button>
                     :
-                    <Button size="xs" isProcessing={processing} onClick={() => saveEditedPage()}>
+                    <Button size="xs" isProcessing={processing} onClick={() => updateEditedPage()}>
                       Save Page Data
                       <CloudPlus size="16" className="ml-2" color="#fff" />
                     </Button>
@@ -314,9 +314,18 @@ export default function Editor() {
     )
   }
 
-  const HandleConfigurationChange = (code) => {
-    console.log("handling.change.via.props", { code });
-    AppState.setCode(code);
+  const HandleConfigurationChange = (configuration) => {
+    console.log("handling.change.via.props", { configuration });
+
+    let newContent = [...AppState.content];
+    let current_in_edit_page_index = AppState.content.findIndex((page) => AppState?.page?.id == page.id);
+    let page = AppState.content.find((page) => AppState?.page?.id == page.id);
+
+    newContent[current_in_edit_page_index] = { ...page, configuration };
+
+    AppState.setContent(newContent);
+    AppState.setConfigure(false);
+    AppState.setEdited(true);
   }
 
   return (

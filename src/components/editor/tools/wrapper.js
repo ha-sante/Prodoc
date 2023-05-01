@@ -145,7 +145,9 @@ export default function Wrapper(props) {
             <div className='w-100'>
                 <Editor
                     value={code}
-                    onValueChange={code => setCode(code)}
+                    onValueChange={code => {
+                        setCode(code);
+                    }}
                     highlight={code => {
                         console.log("code.to.be.highlighted", code);
                         if (typeof code == 'string') {

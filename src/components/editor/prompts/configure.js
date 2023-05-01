@@ -18,21 +18,22 @@ export default function ConfigurePagePrompt(props) {
     const AppState = React.useContext(AppStateContext);
     const [code, setCode] = React.useState('');
 
-    const typingRef = React.useRef();
+    const inputRef = React.useRef();
     const editorRef = React.useRef();
 
     React.useEffect(() => {
         // console.log('state.code.changed', { code, type: typeof code });
-        if (typingRef?.current) {
-            typingRef.current.focus();
+        if (inputRef?.current) {
+            inputRef.current.focus();
         }
     }, [code]);
 
 
     React.useEffect(() => {
-        // console.log("config.started", typingRef);
-        if (typingRef.current && code == "") {
-            typingRef.current.value = AppState.code;
+        // console.log("config.started", inputRef);
+        if (inputRef.current && code == "") {
+            let page = AppState.content.find(page => AppState.page?.id == page.id);
+            inputRef.current.value = JSON.stringify(page?.configuration, undefined, 4);
         }
     }, [AppState.configure]);
 
@@ -44,7 +45,7 @@ export default function ConfigurePagePrompt(props) {
                     // value={AppState.code}
                     onValueChange={code => console.log(code)}
                     highlight={code => {
-                        let update = typingRef.current?.value;
+                        let update = inputRef.current?.value;
                         console.log("code.to.be.highlighted", update);
                         return highlight(update ? update : '', languages.js)
 
@@ -65,14 +66,18 @@ export default function ConfigurePagePrompt(props) {
     }
 
     const HandleSetConfiguration = () => {
-        console.log("configuration.typingRef", { value: typingRef.current.value, props });
-        if (typingRef.current && props?.HandleConfigurationChange) {
-            let update = typingRef.current.value;
+        console.log("configuration.inputRef", { value: inputRef.current.value, props });
+        if (inputRef.current && props?.HandleConfigurationChange) {
+            let update = inputRef.current.value;
             console.log("configuration.updated", update);
 
-            // check if this page
-            props?.HandleConfigurationChange(update)
-        }else{
+            // SET IT TO CONTENT LIST (PAGE)
+            let new_configuration = eval('(' + update + ')');
+            console.log("configuration.new_configuration", new_configuration);
+
+            // CALL FOR UPDATE INDICATORS ETC
+            props?.HandleConfigurationChange(new_configuration)
+        } else {
             toast.error("Unable to save this data")
         }
     }
@@ -91,11 +96,11 @@ export default function ConfigurePagePrompt(props) {
                         your site designer will use in designing the documentation website (for this page only).
                     </p>
                     <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                        The required data types include, privacy=public/hidden, purpose=page/external_link, external_link=url, seo=object(title, image, slug)
+                        The required data types include, privacy=public/hidden, purpose=page/external_link, external_link=url, seo=object(image,title,description,slug)
                     </p>
 
                     <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                        The content below should be a complaint javascript object 
+                        The content below should be a complaint javascript object
                         (<a className='text-blue-600' target="_blank" href='https://www.w3schools.com/js/js_objects.asp'>Help</a>)
                     </p>
 
@@ -105,7 +110,7 @@ export default function ConfigurePagePrompt(props) {
                         required={true}
                         rows={4}
                         className='text-sm'
-                        ref={typingRef}
+                        ref={inputRef}
                     />
 
                 </div>

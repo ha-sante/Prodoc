@@ -52,7 +52,13 @@ export default function EditorSidebar() {
             title: position == 'chapter' ? "Added Chapter Page" : "Added Child Page",
             content: { editor: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
             children: [],
-            configuration: {}
+            configuration: {
+                privacy: "public", // or hidden
+                purpose: "page", // or external_link
+                depricated: false,
+                external_link: { url: "" },
+                seo: { image: "", title: "", description: "", slug: "" },
+            }
         };
         console.log({ page, parent_id, position });
         let toastId = toast.loading('Adding the new Page...');
@@ -145,9 +151,7 @@ export default function EditorSidebar() {
             AppState.setContent(newContent);
             console.warn("side.bar.navigation.pages.refreshed", { parent_page, parent_page_index, newContent });
         }
-
     }
-
 
     const Directory = ({ page }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
@@ -163,9 +167,9 @@ export default function EditorSidebar() {
         const pages = [...AppState.content];
 
         if (page?.id) {
+            let activeChildrenPages = page.children.filter(id => pages.some(paged => paged.id === id));
             {/* Page name > Then children pages */ }
-            if (page?.children.length > 0) {
-                let activeChildrenPages = page.children.filter(id => pages.some(paged => paged.id === id));
+            if (activeChildrenPages.length > 0) {
                 return (
                     <DragDropContext onDragEnd={HandleOnDragEnd}>
                         <StrictModeDroppable droppableId={`${page.id}`}>
@@ -212,30 +216,43 @@ export default function EditorSidebar() {
                                                 <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
                                                 :
                                                 <div className='flex flex-row w-100 items-center'>
-                                                    <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                                        onClick={() => { console.log("open more options") }}>
-                                                        <span className='leading-none'><More size={'12px'} /></span>
-                                                    </div>
+                                                    <Dropdown
+                                                        label={<div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                                            onClick={() => { console.log("open more options") }}>
+                                                            <span className='leading-none' id="dropdownOffsetButton" data-dropdown-toggle="dropdownOffset" data-dropdown-offset-distance="10" data-dropdown-offset-skidding="100" data-dropdown-placement="right">
+                                                                <More size={'12px'} />
+                                                            </span>
+                                                        </div>}
+                                                        inline={true}
+                                                        arrowIcon={false}
+                                                        floatingArrow={false}
+                                                        trigger='hover'
+                                                        dismissOnClick={true}>
+                                                        <Dropdown.Item onClick={() => HandleDeletePage(page)}>
+                                                            Delete
+                                                        </Dropdown.Item>
+                                                    </Dropdown>
+
                                                     <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
                                                         onClick={() => { HandleAddPage("child", page.id) }}>
                                                         <span className='leading-none'>+</span>
                                                     </div>
                                                 </div>
                                             }
-
                                         </div>
 
                                         <br />
                                         {/* {isExpanded == true && page.children.map((id) => < Directory key={id} page={pages.find(paged => paged.id === id)} />)} */}
                                         {isExpanded == true && activeChildrenPages.map((id, index) => {
                                             let found = pages.find(paged => paged.id === id);
+                                            let activeFoundPages = found.children.filter(id => pages.some(paged => paged.id === id));
                                             if (found) {
                                                 return (
                                                     <Draggable
                                                         key={found.id}
                                                         draggableId={found.id}
                                                         index={index}
-                                                        isDragDisabled={found.children.length > 0 ? true : false}>
+                                                        isDragDisabled={activeFoundPages.length > 0 ? true : false}>
                                                         {(provided, snapshot) => (
                                                             <div
                                                                 ref={provided.innerRef}
@@ -336,7 +353,7 @@ export default function EditorSidebar() {
 
     useEffect(() => {
         if (slug && slug !== route) {
-            console.log("sidebar.slug.changed", {slug});
+            console.log("sidebar.slug.changed", { slug });
             switch (slug[0]) {
                 case 'product':
                     console.warn("sidebar.content.set.to.product.documentation");
