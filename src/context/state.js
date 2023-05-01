@@ -11,7 +11,7 @@ export function AppStateProvider({ children }) {
   const [configure, setConfigure] = useState(false);
   const [code, setCode] = useState('{ privacy: "public" }');
   const [edited, setEdited] = useState(false);
-
+  const [authenticated, setAuthenticated] = useState(false);
   const [permission, setPermission] = useState();
 
   const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
@@ -56,6 +56,7 @@ export function AppStateProvider({ children }) {
     edited, setEdited,
     permission, setPermission,
     code, setCode,
+    authenticated, setAuthenticated,
     configure, setConfigure, content, setContent, pagination, setPagination,
     page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
   };

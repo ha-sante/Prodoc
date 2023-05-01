@@ -31,7 +31,6 @@ export default function Editor() {
   const { slug } = router.query;
 
   const [password, setPassword] = useState('');
-  const [authenticated, setAuthenticated] = useState(false);
   const [mdxSource, setMdxSource] = useState();
   const [example, setExample] = useState('');
   const [edited] = useState(false);
@@ -43,11 +42,12 @@ export default function Editor() {
       toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
       localStorage.setItem("authenticated", true);
-      setAuthenticated(true);
+      AppState.setAuthenticated(true);
     }).catch(error => {
       console.log(error);
       toast.error('Could not authenticate you');
-      setAuthenticated(false);
+      toast.dismiss(toastId);
+      AppState.setAuthenticated(false);
     });
   };
 
@@ -152,7 +152,7 @@ export default function Editor() {
     let valid = localStorage.getItem("authenticated");
     console.log("authenticated", valid);
     if (valid) {
-      setAuthenticated(true);
+      AppState.setAuthenticated(true);
     }
   }, []);
 
@@ -328,13 +328,12 @@ export default function Editor() {
     )
   }
 
-
   return (
     <>
       <main className="min-h-screen flex-col items-center border justify-between">
         <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
 
-        {!authenticated ?
+        {!AppState.authenticated ?
           AuthenticationPage()
           :
           <div className="w-100">

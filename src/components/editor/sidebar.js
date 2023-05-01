@@ -178,6 +178,11 @@ export default function EditorSidebar() {
         }
     }
 
+    const HandleLogOut = () => {
+        localStorage.removeItem("authenticated");
+        AppState.setAuthenticated(false);
+    }
+
     const Directory = ({ page }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
         let pagination = JSON.parse(localStorage.getItem('pagination'));
@@ -409,11 +414,11 @@ export default function EditorSidebar() {
                 </ul>
 
                 <ul className="space-y-2 font-medium">
-                    <li>
-                        <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <li >
+                        <p onClick={HandleLogOut}  className="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <Logout size="16" color="#111827" />
                             <span className="ml-3"> Log out</span>
-                        </a>
+                        </p>
                     </li>
                 </ul>
 
