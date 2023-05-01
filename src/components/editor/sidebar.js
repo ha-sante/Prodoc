@@ -89,15 +89,18 @@ export default function EditorSidebar() {
                     toast.success('Parent Page updated & saved');
                 }).catch(error => {
                     console.log('error', error);
+                    toast.dismiss(toastId);
                 });
 
             } else {
                 let anew = [...AppState.content, response.data];
-                AppState.setContent(anew)
+                AppState.setContent(anew);
+                toast.dismiss(toastId);
             }
 
         }).catch(error => {
             console.log('error', error);
+            toast.dismiss(toastId);
             toast.error('Got an error saving this page!');
         })
 
