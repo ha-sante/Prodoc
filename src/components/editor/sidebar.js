@@ -335,11 +335,11 @@ export default function EditorSidebar() {
     }
 
     useEffect(() => {
-        if (slug) {
-            console.log(slug);
+        if (slug && slug !== route) {
+            console.log("sidebar.slug.changed", {slug});
             switch (slug[0]) {
                 case 'product':
-                    console.log("product section of documentation");
+                    console.warn("sidebar.content.set.to.product.documentation");
                     setRoute(slug)
                     break;
             }

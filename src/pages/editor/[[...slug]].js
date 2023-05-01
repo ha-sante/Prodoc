@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useState, useEffect, useContext, useRef } from "react";
 import { useRouter } from 'next/router'
 
-import { Label, TextInput, Checkbox, Button, Alert, Avatar } from "flowbite-react";
+import { Label, TextInput, Checkbox, Button, Alert, Avatar, Modal } from "flowbite-react";
 import axios from 'axios';
 
 import EditorSidebar from '@/components/editor/sidebar';
@@ -133,7 +133,6 @@ export default function Editor() {
     EditorEditing();
   }
 
-
   useEffect(() => {
     // makes a request to the authentication child 
     let valid = localStorage.getItem("authenticated");
@@ -157,7 +156,7 @@ export default function Editor() {
         console.log('error', error);
       })
     } else {
-      AppState.setPage('');
+      AppState.setPage();
     }
 
     // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
@@ -170,32 +169,6 @@ export default function Editor() {
     }
 
   }, [slug]);
-
-  useEffect(() => {
-    const EditorEditing = async () => {
-      const source = example;
-
-      try {
-        const mdxSource = await serialize(source, {
-          mdxOptions: {
-            remarkPlugins: [],
-            rehypePlugins: [],
-            development: process.env.NODE_ENV === 'development',
-          },
-        })
-
-        setMdxSource(mdxSource)
-      } catch (error) {
-        console.log("error.generating.mdx.page", error);
-        // Expected output: ReferenceError: nonExistentFunction is not defined
-        // (Note: the exact output may be browser-dependent)
-      }
-
-    }
-
-    EditorEditing();
-  }, [example]);
-
 
   function AuthenticationPage() {
     return (
@@ -341,28 +314,35 @@ export default function Editor() {
     )
   }
 
+  const HandleConfigurationChange = (code) => {
+    console.log("handling.change.via.props", { code });
+    AppState.setCode(code);
+  }
+
   return (
-    <main className="min-h-screen flex-col items-center border justify-between">
-      <ConfigurePrompt />
+    <>
+      <main className="min-h-screen flex-col items-center border justify-between">
+        <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={HandleConfigurationChange} />
 
-      {!authenticated ?
-        AuthenticationPage()
-        :
-        <div className="w-100">
+        {!authenticated ?
+          AuthenticationPage()
+          :
+          <div className="w-100">
 
-          {slug == undefined ?
-            <div className="w-100">
-              <EditorSidebar />
-              {EditorHomePage()}
-            </div>
-            :
-            <div className="w-100">
-              <EditorSidebar />
-              {PageEditorPage()}
-            </div>
-          }
-        </div>
-      }
-    </main>
+            {slug == undefined ?
+              <div className="w-100">
+                <EditorSidebar />
+                {EditorHomePage()}
+              </div>
+              :
+              <div className="w-100">
+                <EditorSidebar />
+                {PageEditorPage()}
+              </div>
+            }
+          </div>
+        }
+      </main>
+    </>
   )
 }

@@ -50,7 +50,7 @@ export default function Wrapper(props) {
     const [mode, setMode] = React.useState('preview');
 
     React.useEffect(() => {
-        console.log('wrapper.code.changed', code);
+        // console.log('wrapper.code.changed', code);
         if (props.onDataChange) {
             props.onDataChange(code);
         }
