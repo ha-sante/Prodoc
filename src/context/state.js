@@ -12,6 +12,8 @@ export function AppStateProvider({ children }) {
   const [code, setCode] = useState('{ privacy: "public" }');
   const [edited, setEdited] = useState(false);
 
+  const [permission, setPermission] = useState();
+
   const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
     "time": new Date().getTime(),
     "blocks": [
@@ -52,6 +54,7 @@ export function AppStateProvider({ children }) {
 
   const data = {
     edited, setEdited,
+    permission, setPermission,
     code, setCode,
     configure, setConfigure, content, setContent, pagination, setPagination,
     page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA,

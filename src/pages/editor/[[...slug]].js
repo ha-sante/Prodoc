@@ -62,7 +62,21 @@ export default function Editor() {
     AppState.setEdited(true);
   }
 
-  const updateEditedPage = () => {
+  const handlePageConfigChange = (configuration) => {
+    console.log("handling.change.via.props", { configuration });
+
+    let newContent = [...AppState.content];
+    let current_in_edit_page_index = AppState.content.findIndex((page) => AppState?.page?.id == page.id);
+    let page = AppState.content.find((page) => AppState?.page?.id == page.id);
+
+    newContent[current_in_edit_page_index] = { ...page, configuration };
+
+    AppState.setContent(newContent);
+    AppState.setConfigure(false);
+    AppState.setEdited(true);
+  }
+
+  const handleSavePageData = () => {
     // GET THE DATA FOR THE UPDATED PAGE 
     let page = AppState.content.find(page => page.id == AppState?.page?.id);
     if (page) {
@@ -81,7 +95,7 @@ export default function Editor() {
       });
     }
   }
-
+  
   const computeMDXContent = () => {
     const EditorEditing = async () => {
       const source = `Some **mdx** text, with a component 
@@ -206,7 +220,7 @@ export default function Editor() {
                 <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
 
                 <div className='flex flex-row'>
-                  <Button size="xs" className="mr-4" disabled={true} color="light" onClick={() => updateEditedPage()}>
+                  <Button size="xs" className="mr-4" disabled={true} color="light" onClick={() => handleSavePageData()}>
                     Import (Coming Soon)
                   </Button>
 
@@ -215,12 +229,12 @@ export default function Editor() {
                   </Button>
 
                   {AppState.edited ?
-                    <Button size="xs" isProcessing={processing} color="warning" onClick={() => updateEditedPage()}>
+                    <Button size="xs" isProcessing={processing} color="warning" onClick={() => handleSavePageData()}>
                       Save Page Data Update
                       <CloudChange size="16" className="ml-2" color="#fff" />
                     </Button>
                     :
-                    <Button size="xs" isProcessing={processing} onClick={() => updateEditedPage()}>
+                    <Button size="xs" isProcessing={processing} onClick={() => handleSavePageData()}>
                       Save Page Data
                       <CloudPlus size="16" className="ml-2" color="#fff" />
                     </Button>
@@ -314,24 +328,11 @@ export default function Editor() {
     )
   }
 
-  const HandleConfigurationChange = (configuration) => {
-    console.log("handling.change.via.props", { configuration });
-
-    let newContent = [...AppState.content];
-    let current_in_edit_page_index = AppState.content.findIndex((page) => AppState?.page?.id == page.id);
-    let page = AppState.content.find((page) => AppState?.page?.id == page.id);
-
-    newContent[current_in_edit_page_index] = { ...page, configuration };
-
-    AppState.setContent(newContent);
-    AppState.setConfigure(false);
-    AppState.setEdited(true);
-  }
 
   return (
     <>
       <main className="min-h-screen flex-col items-center border justify-between">
-        <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={HandleConfigurationChange} />
+        <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
 
         {!authenticated ?
           AuthenticationPage()

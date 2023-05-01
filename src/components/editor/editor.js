@@ -30,7 +30,7 @@ const EditorComponent = (props) => {
   const AppState = useContext(AppStateContext);
 
   const initEditor = () => {
-    console.log("Page Editor Refreshed");
+    console.log("page.editor.refreshed");
     const editor = new EditorJS({
       holder: 'editorjs',
       onReady: () => {

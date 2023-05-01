@@ -44,6 +44,8 @@ export default function EditorSidebar() {
         { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
 
+
+
     function HandleAddPage(position, parent_id) {
         // PAGE IS SOMETHING
         let page = {
@@ -153,6 +155,29 @@ export default function EditorSidebar() {
         }
     }
 
+    const HandleMoveToAPage = (page) => {
+        // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
+        // TAKE PERMISSION FROM HIM BEFORE MOVING 
+        // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
+        // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF 
+        if (AppState.edited == true) {
+            let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
+            console.log("permission.after.clicking.div", permission);
+
+            switch (permission) {
+                case true:
+                    router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
+                    break;
+                case false:
+                    // toast("Understood, do your prechecks and save.");
+                    break;
+            }
+
+        } else {
+            router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
+        }
+    }
+
     const Directory = ({ page }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
         let pagination = JSON.parse(localStorage.getItem('pagination'));
@@ -206,7 +231,7 @@ export default function EditorSidebar() {
                                                 }
                                                 <h3 className={`${page.id == 'book' ? '' : 'file-name font-normal'} text-sm overflow-hidden text-ellipsis flex`}
                                                     onClick={() => {
-                                                        router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
+                                                        HandleMoveToAPage(page);
                                                     }}>
                                                     {page.title}
                                                 </h3>
@@ -309,7 +334,7 @@ export default function EditorSidebar() {
 
                             <h3 className="file-name text-sm overflow-hidden text-ellipsis"
                                 onClick={() => {
-                                    router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
+                                    HandleMoveToAPage(page);
                                 }}>
                                 {page.title}
                             </h3>
