@@ -22,7 +22,7 @@ import SimpleImage from '@editorjs/simple-image'
 import { uploadFile } from '@uploadcare/upload-client'
 import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 
-import Components from './components/components'
+import Components from './tools/components'
 import { AppStateContext } from '../../context/state';
 
 const EditorComponent = (props) => {

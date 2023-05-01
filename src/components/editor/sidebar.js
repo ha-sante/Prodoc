@@ -15,7 +15,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 
-
 const StrictModeDroppable = ({ children, ...props }) => {
     const [enabled, setEnabled] = useState(false);
 
@@ -31,7 +30,6 @@ const StrictModeDroppable = ({ children, ...props }) => {
     }
     return <Droppable {...props}>{children}</Droppable>;
 };
-
 
 export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
@@ -53,7 +51,8 @@ export default function EditorSidebar() {
             position: position,
             title: position == 'chapter' ? "Added Chapter Page" : "Added Child Page",
             content: { editor: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
-            children: []
+            children: [],
+            configuration: {}
         };
         console.log({ page, parent_id, position });
         let toastId = toast.loading('Adding the new Page...');
@@ -384,13 +383,14 @@ export default function EditorSidebar() {
 
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
         let productChapters = AppState.content.filter(child => child?.type === 'product' && child?.position === 'chapter')
-        let pages = {
+        let book = {
             id: "book",
             position: 'book',
             title: "Product Documentation",
             description: "The book itself (The page for it)",
             content: { editor: "", mdx: "" },
-            children: productChapters.map(main => main.id)
+            children: productChapters.map(main => main.id),
+            configuration: {}
         };
 
         // CHECK IF WE HAVE A NAVIGATION STYLING DATA ALREADY
@@ -409,7 +409,7 @@ export default function EditorSidebar() {
             console.log("error", error);
         }
 
-        console.log("sidebar.pages.menu.refreshed", pages);
+        console.log("sidebar.book.menu.refreshed", book);
 
         return (
             <div className="h-full px-3 py-4 overflow-x-hidden bg-gray-50 dark:bg-gray-800 justify-between">
@@ -424,7 +424,7 @@ export default function EditorSidebar() {
                 </ul>
 
                 <div className="mt-4 mb-4" id="navigation">
-                    <Directory page={pages} />
+                    <Directory page={book} />
                 </div>
             </div>
         )

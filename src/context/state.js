@@ -5,17 +5,10 @@ import axios from 'axios';
 const AppContext = React.createContext();
 
 export function AppStateProvider({ children }) {
-  const [content, setContent] = useState([
-    // { id: "4", title: "Sub Docu Page 4", content: "", children: ["5"] },
-    // { id: "main1", title: "Main Docu Page 1", content: "", children: [] },
-    // { id: "2", title: "Sub Docu Page 2", content: "", children: [] },
-    // { id: "3", title: "Sub Docu Page 3", content: "", children: [] },
-    // { id: "5", title: "Sub2 Docu Page 5", content: "", children: ['6', '7'] },
-    // { id: "6", title: "Sub2 Docu Page 6", content: "", children: [] },
-    // { id: "7", title: "Sub2 Docu Page 7", content: "", children: [] },
-  ]);
+  const [content, setContent] = useState([]);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState();
+  const [configure, setConfigure] = useState(false);
   const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
     "time": new Date().getTime(),
     "blocks": [
@@ -54,7 +47,10 @@ export function AppStateProvider({ children }) {
     }
   }
 
-  const data = { content, setContent, pagination, setPagination, page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA, };
+  const data = {
+    configure, setConfigure, content, setContent, pagination, setPagination,
+    page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
+  };
   return (
     <AppContext.Provider value={data}> {children} </AppContext.Provider>
   );

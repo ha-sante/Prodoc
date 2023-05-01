@@ -9,6 +9,7 @@ import { Label, TextInput, Checkbox, Button, Alert, Avatar } from "flowbite-reac
 import axios from 'axios';
 
 import EditorSidebar from '@/components/editor/sidebar';
+import ConfigurePrompt from '@/components/editor/prompts/configure';
 
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
@@ -222,7 +223,7 @@ export default function Editor() {
 
   function PageEditorPage() {
     return (
-      <div className="p-4 sm:ml-64 flex flex-row justify-between">
+      <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
         {AppState.page != undefined ?
           <div className="p-4 w-[80%] mx-auto">
@@ -230,17 +231,29 @@ export default function Editor() {
 
               <div className='flex flex-row items-center justify-between mb-3'>
                 <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
-                {edited ?
-                  <Button size="xs" isProcessing={processing} color="warning" onClick={() => saveEditedPage()}>
-                    Save Page Data Update
-                    <CloudChange size="16" className="ml-2" color="#fff" />
+
+                <div className='flex flex-row'>
+                  <Button size="xs" className="mr-4" color="light" onClick={() => saveEditedPage()}>
+                    Import
                   </Button>
-                  :
-                  <Button size="xs" isProcessing={processing} onClick={() => saveEditedPage()}>
-                    Save Page Data
-                    <CloudPlus size="16" className="ml-2" color="#fff" />
+
+                  <Button size="xs" className="mr-4" color="light" onClick={() => AppState.setConfigure(true)}>
+                    Configure
                   </Button>
-                }
+
+                  {edited ?
+                    <Button size="xs" isProcessing={processing} color="warning" onClick={() => saveEditedPage()}>
+                      Save Page Data Update
+                      <CloudChange size="16" className="ml-2" color="#fff" />
+                    </Button>
+                    :
+                    <Button size="xs" isProcessing={processing} onClick={() => saveEditedPage()}>
+                      Save Page Data
+                      <CloudPlus size="16" className="ml-2" color="#fff" />
+                    </Button>
+                  }
+
+                </div>
               </div>
 
               <div className='border shadow-sm rounded-lg pt-3 pb-3'>
@@ -330,6 +343,8 @@ export default function Editor() {
 
   return (
     <main className="min-h-screen flex-col items-center border justify-between">
+      <ConfigurePrompt />
+
       {!authenticated ?
         AuthenticationPage()
         :
