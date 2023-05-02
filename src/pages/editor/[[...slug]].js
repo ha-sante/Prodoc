@@ -158,27 +158,41 @@ export default function Editor() {
     let route_data = { slug, page: router.query.page };
     console.log("route.change.data", route_data);
 
-    // LOAD THE PRODUCT BOOK CONTENT
-    if (route_data.slug !== undefined) {
-      // GET ALL THE LATEST CONTENT
-      AppState.ContentAPIHandler('GET').then(response => {
-        console.log('get.all.content', { content: response.data, page_id: router.query.page });
-        AppState.setContent(response.data);
+    // LOAD CONTENT IF WE ARE AT EDITOR/(SOMETHING)
+    if (Array.isArray(route_data.slug)) {
 
-        // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
-        if (route_data.page != undefined) {
-          let page = response.data.find(page => page.id == route_data.page);
-          console.log("slug.page.matched", page);
-          AppState.setPage({ ...page });
-          AppState.setEdited(false);
-          // page is not there
-        } else {
-          // AppState.setPage();
-        }
+      if (AppState.content.length == 0) {
+        // GET ALL CONTENT
+        AppState.ContentAPIHandler('GET').then(response => {
+          console.log('get.all.content', { content: response.data, page_id: router.query.page });
+          AppState.setContent(response.data);
 
-      }).catch(error => {
-        console.log('error', error);
-      })
+          // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
+          if (route_data.page != undefined) {
+            let page = response.data.find(page => page.id == route_data.page);
+            console.log("slug.page.matched", { page });
+            AppState.setPage({ ...page });
+            AppState.setEdited(false);
+          } else {
+            // AppState.setPage();
+          }
+
+        }).catch(error => {
+          console.log('error', error);
+        })
+      }
+
+      // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
+      if (route_data.page != undefined) {
+        let page = AppState.content.find(page => page.id == route_data.page);
+        console.log("slug.page.matched", { page });
+        AppState.setPage({ ...page });
+        AppState.setEdited(false);
+        // page is not there
+      } else {
+        // AppState.setPage();
+      }
+
     }
 
   }, [slug]);
