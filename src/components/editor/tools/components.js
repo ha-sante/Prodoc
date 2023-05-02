@@ -21,7 +21,7 @@ export default class AdvancedComponents {
     }
 
     constructor({ data, api, config, readOnly, block }) {
-        console.log("editor.custom.components.executed", data);
+        // console.log("editor.custom.components.executed", data);
         this.data = {
             code: data.code || '',
         };
@@ -49,7 +49,7 @@ export default class AdvancedComponents {
             };
         };
 
-        console.log("components.parent.data", this.data);
+        // console.log("components.parent.data", this.data);
         ReactDOM.render(
             (<Wrapper onDataChange={onDataChange} readOnly={this.readOnly} data={this.data} />),
             rootNode

@@ -195,8 +195,8 @@ export default function Wrapper(props) {
                         </a>
                     </div>
                     <div>
-                        <Button size="xs" color={'#fff'} className='border'>
-                            Guide <Book1 size="16" color="#FF8A65" className='ml-2' />
+                        <Button size="xs" color={'#fff'} className='border' disabled={true}>
+                            Guide <Book1 size="16" color="#FF8A65" className='ml-2' /> (Soon)
                         </Button>
                     </div>
                 </div>

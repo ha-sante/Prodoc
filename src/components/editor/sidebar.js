@@ -8,11 +8,13 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 import { Label, TextInput, Checkbox, Button, Dropdown } from "flowbite-react";
-import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows } from 'iconsax-react';
+import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
 import { AppStateContext } from '../../context/state';
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
+import DefinitionsPrompt from './prompts/definitions';
 
 
 const StrictModeDroppable = ({ children, ...props }) => {
@@ -37,6 +39,7 @@ export default function EditorSidebar() {
     const { slug } = router.query;
     const [navigation, setNavigation] = useState('main');
     const [processing, setProcessing] = useState(false);
+    const [definitions, setDefinitions] = useState(false);
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
@@ -44,12 +47,10 @@ export default function EditorSidebar() {
         { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
 
-
-
     function HandleAddPage(position, parent_id) {
         // PAGE IS SOMETHING
         let page = {
-            type: 'product',
+            type: navigation,
             position: position,
             title: position == 'chapter' ? "Added Chapter Page" : "Added Child Page",
             content: { editor: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
@@ -396,11 +397,11 @@ export default function EditorSidebar() {
             switch (slug[0]) {
                 case 'product':
                     console.warn("sidebar.content.set.to.product.documentation");
-                    setNavigation(slug)
+                    setNavigation(slug[0])
                     break;
                 case 'api':
                     console.warn("sidebar.content.set.to.api.documentation");
-                    setNavigation(slug)
+                    setNavigation(slug[0])
                     break;
             }
         } else {
@@ -442,11 +443,11 @@ export default function EditorSidebar() {
     function SubPageNavigation() {
 
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
-        let productChapters = AppState.content.filter(child => child?.type === 'product' && child?.position === 'chapter')
+        let productChapters = AppState.content.filter(child => child?.type === navigation && child?.position === 'chapter')
         let book = {
             id: "book",
             position: 'book',
-            title: "Product Documentation",
+            title: navigation == "product" ? "Product Documentation" : "API Documentation",
             description: "The book itself (The page for it)",
             content: { editor: "", mdx: "" },
             children: productChapters.map(main => main.id),
@@ -470,7 +471,6 @@ export default function EditorSidebar() {
         }
 
         // console.log("sidebar.book.menu.refreshed", book);
-
         return (
             <div className="h-full px-3 py-4 overflow-x-hidden bg-gray-50 dark:bg-gray-800 justify-between">
 
@@ -481,6 +481,15 @@ export default function EditorSidebar() {
                             <span className="ml-3"> Back</span>
                         </Link>
                     </li>
+                    {
+                        navigation == 'api' &&
+                        <li>
+                            < p onClick={() => setDefinitions(true)} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <span className="ml-2 text-gray-700"> Specification File</span>
+                                <Code1 size="16" color="#111827" />
+                            </p>
+                        </li>
+                    }
                 </ul>
 
                 <div className="mt-4 mb-4" id="navigation">
@@ -492,7 +501,11 @@ export default function EditorSidebar() {
 
     return (
         <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
+
+            <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} setDefinitions={setDefinitions} />
+
             {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
+
         </aside>
     )
 }

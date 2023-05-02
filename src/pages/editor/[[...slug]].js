@@ -316,8 +316,7 @@ export default function Editor() {
 
               <p className='pt-2 text-sm'>
                 I built Prodoc as a solution to the lack of customizability offered in current documentation tools.
-                I built it over 2 weeks, given I already had experience with building content systems.
-                I am the founder of another productivity tool for content management.
+                I built it, given I already had experience with building content systems. I am the founder of another productivity tool for content management.
               </p>
 
               <p className='pt-2 text-sm'>
