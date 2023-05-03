@@ -146,6 +146,7 @@ export default function APIDefinitionsPrompt(props) {
                 setProcessing(false);
                 toast.dismiss(toastId);
                 toast.success("Creating/Recreating your api pages complete");
+                AppState.setDefinitions(false);
             }).catch(error => {
                 console.log('error', error);
                 setProcessing(false);

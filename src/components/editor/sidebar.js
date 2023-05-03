@@ -183,7 +183,7 @@ export default function EditorSidebar() {
                 }
 
             } else {
-                router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
+                router.push(`/editor/${navigation}/?page=${page.id}`, undefined, { shallow: true })
             }
         }
     }
