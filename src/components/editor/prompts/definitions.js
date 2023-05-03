@@ -131,12 +131,29 @@ export default function APIDefinitionsPrompt(props) {
         })
 
         toast.success("Converted spec JSON to pages content type.");
-        let toastId = toast.loading("Sending this for persistent storage.");
-        toast.dismiss(toastId);
+        let toastId = toast.loading("Persisting content & creating pages for it.");
 
         let configuration = { openapi: [json], }
         let bulk = { pages, mappings, chapters, configuration };
-        console.log("all.child.pages", bulk);
+        // console.log("all.child.pages", bulk);
+
+        // BULK CREATE THE CONTENT PAGES
+        AppState.ContentAPIHandler('PATCH', bulk).then(response => {
+            // GET THE NEW CONTENT LIST
+            AppState.ContentAPIHandler('GET').then(response => {
+                // SET NEW CONTENT
+                AppState.setContent(response.data);
+                setProcessing(false);
+                toast.dismiss(toastId);
+                toast.success("Creating/Recreating your api pages complete");
+            }).catch(error => {
+                console.log('error', error);
+                setProcessing(false);
+            });
+        }).catch(error => {
+            console.log('error', error);
+            setProcessing(false);
+        });
     }
 
 
@@ -180,7 +197,7 @@ export default function APIDefinitionsPrompt(props) {
                     </div>
                 </Modal.Body>
                 <Modal.Footer className='border-t border pt-4 pb-4'>
-                    <Button size={"sm"} onClick={() => { HandleGenerateAPIPages() }}>
+                    <Button size={"sm"} onClick={() => { HandleGenerateAPIPages() }} className='flex items-center'>
                         {processing && <Spinner size={'sm'} aria-label="Spinner button example" className='mr-2' />}
                         {processing ? 'Generating & Replacing' : 'Generate & Replace'}
                     </Button>

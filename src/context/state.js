@@ -66,6 +66,9 @@ export function AppStateProvider({ children }) {
       case 'DELETE':
         return axios.delete(`/api/content?id=${data.id}`);
         break;
+      case 'PATCH':
+        return axios.patch(`/api/content`, data);
+        break;
     }
   }
 
