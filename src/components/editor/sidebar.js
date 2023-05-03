@@ -14,9 +14,6 @@ import { AppStateContext } from '../../context/state';
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
-import DefinitionsPrompt from './prompts/definitions';
-
-
 const StrictModeDroppable = ({ children, ...props }) => {
     const [enabled, setEnabled] = useState(false);
 
@@ -53,6 +50,7 @@ export default function EditorSidebar() {
             type: navigation,
             position: position,
             title: position == 'chapter' ? "Added Chapter Page" : "Added Child Page",
+            description: "",
             content: { editor: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
             children: [],
             configuration: {
@@ -163,28 +161,30 @@ export default function EditorSidebar() {
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
-        // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF 
-        if (AppState.edited == true) {
-            let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
-            console.log("permission.after.clicking.div", permission);
+        // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
+        if (page.type !== 'book') {
+            if (AppState.edited == true) {
+                let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
+                console.log("permission.after.clicking.div", permission);
 
-            switch (permission) {
-                case true:
-                    // RESET THE PAGE'S OLD DATA BEFORE ROUTING
-                    // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
-                    let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
-                    let anew = AppState.content;
-                    anew[index] = AppState?.page;
-                    AppState.setContent(anew);
-                    AppState.setEdited(false);
-                    router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
-                    break;
-                case false:
-                    break;
+                switch (permission) {
+                    case true:
+                        // RESET THE PAGE'S OLD DATA BEFORE ROUTING
+                        // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
+                        let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
+                        let anew = AppState.content;
+                        anew[index] = AppState?.page;
+                        AppState.setContent(anew);
+                        AppState.setEdited(false);
+                        router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
+                        break;
+                    case false:
+                        break;
+                }
+
+            } else {
+                router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
             }
-
-        } else {
-            router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true })
         }
     }
 
@@ -484,7 +484,7 @@ export default function EditorSidebar() {
                     {
                         navigation == 'api' &&
                         <li>
-                            < p onClick={() => setDefinitions(true)} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            < p onClick={() => AppState.setDefinitions(true)} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span className="ml-2 text-gray-700"> Specification File</span>
                                 <Code1 size="16" color="#111827" />
                             </p>
@@ -502,7 +502,6 @@ export default function EditorSidebar() {
     return (
         <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
 
-            <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} setDefinitions={setDefinitions} />
 
             {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
 

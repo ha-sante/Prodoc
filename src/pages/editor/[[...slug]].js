@@ -10,6 +10,7 @@ import axios from 'axios';
 
 import EditorSidebar from '@/components/editor/sidebar';
 import ConfigurePrompt from '@/components/editor/prompts/configure';
+import DefinitionsPrompt from '@/components/editor/prompts/definitions';
 
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
@@ -344,6 +345,7 @@ export default function Editor() {
     <>
       <main className="min-h-screen flex-col items-center border justify-between">
         <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
+        <DefinitionsPrompt key={"definitions-prompt"} definitions={AppState.definitions} setDefinitions={AppState.setDefinitions} />
 
         {!AppState.authenticated ?
           AuthenticationPage()

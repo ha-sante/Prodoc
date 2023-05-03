@@ -13,6 +13,7 @@ export function AppStateProvider({ children }) {
   const [edited, setEdited] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [permission, setPermission] = useState();
+  const [definitions, setDefinitions] = useState(false);
 
   const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
     "time": new Date().getTime(),
@@ -34,6 +35,22 @@ export function AppStateProvider({ children }) {
     ]
   }
 
+  const DEFAULT_PAGE_DATA = {
+    type: "api",
+    position: "child",
+    title: "",
+    description: "",
+    content: { editor: "", mdx: "", api: {} },
+    children: [],
+    configuration: {
+      privacy: "public", // or hidden
+      purpose: "page", // or external_link
+      depricated: false,
+      external_link: { url: "" },
+      seo: { image: "", title: "", description: "", slug: "" },
+    }
+  }
+
   // API CALLS 
   function ContentAPIHandler(option, data) {
     switch (option) {
@@ -53,14 +70,15 @@ export function AppStateProvider({ children }) {
   }
 
   const data = {
+    definitions, setDefinitions,
     edited, setEdited,
     permission, setPermission,
     code, setCode,
     authenticated, setAuthenticated,
     configure, setConfigure, content, setContent, pagination, setPagination,
-    page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
+    page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
   };
-  
+
   return (
     <AppContext.Provider value={data}> {children} </AppContext.Provider>
   );
