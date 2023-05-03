@@ -53,6 +53,36 @@ export default function APIDefinitionsPrompt(props) {
         return local;
     }
 
+    const ReturnHandlingForAllMethods = (data, url, components, paths) => {
+        return {
+            ...AppState.DEFAULT_PAGE_DATA,
+            type: "api",
+            position: "child",
+            title: data?.summary ? data.summary.trim() : url,
+            description: data?.description ? data?.description.trim() : "",
+            content: {
+                ...AppState.DEFAULT_PAGE_DATA.content,
+                api: {
+                    type: "delete",
+                    tags: data?.tags ? data?.tags : [],
+                    deprecated: data?.deprecated ? data?.deprecated : false,
+                    operationId: data?.operationId ? data?.operationId : '',
+                    externalDocs: data?.externalDocs ? data?.externalDocs : {},
+                    callbacks: data?.callbacks ? data?.callbacks : {},
+                    security: data?.security ? data?.security : [],
+                    servers: data?.servers ? data?.servers : [],
+
+                    parameters: data?.parameters ? data?.parameters.map((block) => GetEveryPropertyInFull("", block, components)) : [],
+                    responses: _.keys(data?.responses).map((key) => GetEveryPropertyInFull("", data?.responses[key], components)),
+                    requestBody: _.keys(data?.requestBody).map((key) => GetEveryPropertyInFull("", data?.requestBody[key], components)),
+                    // parameters,
+                    // requestBody,
+                    // responses,
+                }
+            },
+        };
+    }
+
     const HandleGenerateAPIPages = () => {
         setProcessing(true);
         let json = JSON5.parse(code);
@@ -61,158 +91,52 @@ export default function APIDefinitionsPrompt(props) {
         // PREPARE PARENT AND CHILD PAGES FOR STORAGE
         let paths = json?.paths;
         let components = json?.components;
+
+        let methods = ["get", "post", "put", "delete", "patch", "connect", "head", "trace", "options"];
+        let pages = [];
+        let chapters = [];
+        let mappings = {};
+
+        // CREATE ALL CHILD PAGES
         Object.keys(paths).map((url, index) => {
             let endpoint = paths[url];
-            // console.log("going.through.endpoint", endpoint)
-            if (endpoint["get"]) {
-                // console.log("going.through.get.endpoint", endpoint["get"])
-                let data = endpoint["get"];
-                let page = {
-                    ...AppState.DEFAULT_PAGE_DATA,
-                    type: "api",
-                    position: "child",
-                    title: data?.summary ? data.summary : url,
-                    description: data?.description ? data?.description : "",
-                    content: {
-                        ...AppState.DEFAULT_PAGE_DATA.content,
-                        api: {
-                            tags: data?.tags ? data?.tags : [],
-                            deprecated: data?.deprecated ? data?.deprecated : false,
-                            operationId: data?.operationId ? data?.operationId : '',
-                            externalDocs: data?.externalDocs ? data?.externalDocs : {},
-                            callbacks: data?.callbacks ? data?.callbacks : {},
-                            security: data?.security ? data?.security : [],
-                            servers: data?.servers ? data?.servers : [],
-
-                            parameters: data?.parameters ? data?.parameters.map((block) => GetEveryPropertyInFull("", block, components)) : [],
-                            responses: _.keys(data?.responses).map((key) => GetEveryPropertyInFull("", data?.responses[key], components)),
-                            requestBody: _.keys(data?.requestBody).map((key) => GetEveryPropertyInFull("", data?.requestBody[key], components)),
-                            // parameters,
-                            // requestBody,
-                            // responses,
-                        }
-                    },
-                };
-
-                // HANDLE PARAMETERS (REFRENCE OR RAW DEFINED)
-                // if (data?.parameters) {
-                //     let refreshed = [];
-                //     // HANDLE EVERY PURE & REFERENCED OBJECT TOGETHER
-                //     data?.parameters.map((block, index) => {
-                //         let mapped = GetEveryPropertyInFull("", block, components);
-                //         refreshed.push(mapped);
-                //     });
-
-                //     // console.log("parameters.refreshed", { refreshed });
-                //     page.content.api.parameters = refreshed;
-                // }
-
-                // // HANDLE WHEN RESPONSES
-                // if (data?.responses) {
-                //     let refreshed = [];
-                //     // HANDLE EVERY PURE & REFERENCED OBJECT TOGETHER
-                //     Object.keys(data?.responses).map((key, index) => {
-                //         let block = data?.responses[key];
-                //         let mapped = GetEveryPropertyInFull("", block, components);
-                //         refreshed.push(mapped);
-                //     });
-
-                //     // console.log("responses.refreshed", { refreshed });
-                //     page.content.api.responses = refreshed;
-                // }
-
-            }
-
-            if (endpoint["post"]) {
-                console.log("going.through.post.endpoint", endpoint["post"])
-                let data = endpoint["post"];
-                let page = {
-                    ...AppState.DEFAULT_PAGE_DATA,
-                    type: "api",
-                    position: "child",
-                    title: data?.summary ? data.summary : url,
-                    description: data?.description ? data?.description : "",
-                    content: {
-                        ...AppState.DEFAULT_PAGE_DATA.content,
-                        api: {
-                            tags: data?.tags ? data?.tags : [],
-                            deprecated: data?.deprecated ? data?.deprecated : false,
-                            operationId: data?.operationId ? data?.operationId : '',
-                            externalDocs: data?.externalDocs ? data?.externalDocs : {},
-                            callbacks: data?.callbacks ? data?.callbacks : {},
-                            security: data?.security ? data?.security : [],
-                            servers: data?.servers ? data?.servers : [],
-                            // parameters,
-                            // requestBody,
-                            // responses,
-                        }
-                    },
-                };
-
-                // HANDLE PARAMETERS (REFRENCE OR RAW DEFINED)
-                if (data?.parameters) {
-                    let refreshed = [];
-                    // HANDLE EVERY PURE & REFERENCED OBJECT TOGETHER
-                    data?.parameters.map((block, index) => {
-                        let mapped = GetEveryPropertyInFull("", block, components);
-                        refreshed.push(mapped);
+            methods.map((name) => {
+                let data = endpoint[name];
+                if (data) {
+                    let page = ReturnHandlingForAllMethods(data, url, components, paths);
+                    pages.push(page);
+                    page.content.api.tags.map((tag) => {
+                        _.has(mappings, tag) ? [] : mappings[tag] = { 'children': [], page: {} };
+                        mappings[tag]['children'].push(page);
                     });
-
-                    console.log("parameters.refreshed", { refreshed });
-                    page.content.api.parameters = refreshed;
                 }
+            })
+        });
 
-                // HANDLE WHEN RESPONSES
-                if (data?.responses) {
-                    let refreshed = [];
-                    // HANDLE EVERY PURE & REFERENCED OBJECT TOGETHER
-                    Object.keys(data?.responses).map((key, index) => {
-                        let block = data?.responses[key];
-                        let mapped = GetEveryPropertyInFull("", block, components);
-                        refreshed.push(mapped);
-                    });
-
-                    console.log("responses.refreshed", { refreshed });
-                    page.content.api.responses = refreshed;
-                }
-
-                // HANDLE WHEN REQUEST BODY
-                if (data?.requestBody) {
-                    let refreshed = [];
-                    // HANDLE EVERY PURE & REFERENCED OBJECT TOGETHER
-                    Object.keys(data?.requestBody).map((key, index) => {
-                        let block = data?.requestBody[key];
-                        let mapped = GetEveryPropertyInFull("", block, components);
-                        refreshed.push(mapped);
-                    });
-
-                    console.log("requestBody.refreshed", { refreshed });
-                    page.content.api.requestBody = refreshed;
-                }
-
-            }
-
-            if (endpoint["put"]) {
-
-            }
-
-            if (endpoint["delete"]) {
-
-            }
-
-            if (endpoint["patch"]) {
-
-            }
-
-            if (endpoint["delete"]) {
-
-            }
-
-            if (endpoint["connect"] || endpoint["head"] || endpoint["trace"] || endpoint["options"]) {
-
-            }
+        // CREATE PARENT PAGES
+        Object.keys(mappings).map((label) => {
+            let data = {
+                ...AppState.DEFAULT_PAGE_DATA,
+                type: "api",
+                position: "chapter",
+                title: label,
+                description: `${label} - Overview Page`,
+                content: {
+                    ...AppState.DEFAULT_PAGE_DATA.content,
+                    api: {}
+                },
+            };
+            mappings[label].page = data;
+            chapters.push(data);
         })
 
+        toast.success("Converted spec JSON to pages content type.");
+        let toastId = toast.loading("Sending this for persistent storage.");
+        toast.dismiss(toastId);
+
+        let configuration = { openapi: [json], }
+        let bulk = { pages, mappings, chapters, configuration };
+        console.log("all.child.pages", bulk);
     }
 
 

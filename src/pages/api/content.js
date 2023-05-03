@@ -55,8 +55,67 @@ export default function handler(req, res) {
             }).catch(error => {
                 res.status(404).send(error)
             });
+        case "PATCH":
+            // Process a PATCH request
+            // BULK UPLOADING OF CHAPTER & PAGES 
+            fauna.client.query(
+                q.Let(
+                    {
+                        chapters: q.Map(body.chapters,
+                            q.Lambda(
+                                'page',
+                                q.Let({
+                                    chapter_id: q.NewId(),
+                                    data: q.Create(
+                                        q.Ref(q.Collection('Content'), q.Var('chapter_id')),
+                                        { data: q.Merge(q.Var('page'), { id: q.Var("chapter_id") }) },
+                                    )
+                                }, q.Select(['data'], q.Var("data")))
+                            )),
+                        pages: q.Map(body.pages,
+                            q.Lambda(
+                                'page',
+                                q.Let({
+                                    page_id: q.NewId(),
+                                    data: q.Create(
+                                        q.Ref(q.Collection('Content'), q.Var('page_id')),
+                                        { data: q.Merge(q.Var('page'), { id: q.Var("page_id") }) },
+                                    )
+                                }, q.Select(['data'], q.Var("data")))
+                            )),
 
-            break;
+                        // for each chapter
+                        // find every page that has the same child tag as it
+                        // add the page_id to the chapters children[]
+                        update_chapters: q.Map(q.Var("chapters"),
+                            q.Lambda(
+                                'chapter',
+                                q.Let({
+                                    title: q.Select(["title"], q.Var("chapter")),
+                                    matches: q.Filter(q.Var("pages"),
+                                        q.Lambda(
+                                            'page',
+                                            q.Let({
+                                                // CHECK IF CHAPTER IS FOUND IN PAGE'S TAGS
+                                                // IF TRUE, PAGE IS A CHILD OF CHAPTER
+                                                tags: q.Select(["content", "api", "tags"], q.Var("page")),
+                                                page_id: q.Select(["id"], q.Var("page")),
+                                                valid: q.ContainsValue(q.Var("title"), q.Var("tags")),
+                                            }, q.Var("valid"))
+                                        )),
+                                    children: q.Map(q.Var("matches"), q.Lambda(
+                                        'child',
+                                        q.Select(["id"], q.Var("child"))
+                                    )),
+                                }, q.Merge(q.Var("chapter"), { children: q.Var("children") }))
+                            )),
+                    },
+                    { update_chapters: q.Var("update_chapters") })
+            ).then(result => {
+                res.status(200).send(result);
+            }).catch(error => {
+                res.status(404).send(error)
+            });
+
     }
-
 }
