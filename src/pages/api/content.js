@@ -11,10 +11,9 @@ export default function handler(req, res) {
             // Process a POST request
             fauna.client.query(
                 q.Let({
-                    create: q.Create(q.Collection('Content'), { data: body }),
-                    create_id: q.Select(["ref", "id"], q.Var("create")),
-                    update: q.Update(q.Ref(q.Collection('Content'), q.Var('create_id')), { data: { id: q.Var('create_id') } })
-                }, q.Var("update"))
+                    create_id: q.NewId(),
+                    create: q.Create(q.Ref(q.Collection('Content'), q.Var("create_id")), { data: q.Merge(body, { id: q.Var("create_id") }) }),
+                }, q.Var("create"))
             ).then((result) => {
                 res.status(200).json(result.data)
             }).catch(error => {
@@ -58,9 +57,22 @@ export default function handler(req, res) {
         case "PATCH":
             // Process a PATCH request
             // BULK UPLOADING OF CHAPTER & PAGES 
+            // !FOR PROCESSING BULK API CONTENT ONLY
             fauna.client.query(
                 q.Let(
                     {
+                        // DELETE ALL API CONTENT STORED CURRENTLY
+                        deleted: q.Map(
+                            q.Paginate(
+                                q.Match(q.Index("find_content_by_type"), "api")
+                            ),
+                            q.Lambda("ref", q.Delete(q.Var("ref")))
+                        ),
+
+                        // UPDATE CONFIGURATIONS WITH THE NEWLY RECIEVED DATA
+                        configured: q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }),
+
+                        // CREATE THE API PAGES ANEW
                         chapters: q.Map(body.chapters,
                             q.Lambda(
                                 'page',
@@ -84,14 +96,15 @@ export default function handler(req, res) {
                                 }, q.Select(['data'], q.Var("data")))
                             )),
 
-                        // for each chapter
-                        // find every page that has the same child tag as it
-                        // add the page_id to the chapters children[]
+                        // - for each chapter
+                        // - find every page that has the same child tag as it
+                        // - add the page_id to the chapters children[]
                         update_chapters: q.Map(q.Var("chapters"),
                             q.Lambda(
                                 'chapter',
                                 q.Let({
                                     title: q.Select(["title"], q.Var("chapter")),
+                                    chapter_id: q.Select(["id"], q.Var("chapter")),
                                     matches: q.Filter(q.Var("pages"),
                                         q.Lambda(
                                             'page',
@@ -107,15 +120,17 @@ export default function handler(req, res) {
                                         'child',
                                         q.Select(["id"], q.Var("child"))
                                     )),
-                                }, q.Merge(q.Var("chapter"), { children: q.Var("children") }))
+                                    updated: q.Merge(q.Var("chapter"), { children: q.Var("children") }),
+                                    update: q.Update(q.Ref(q.Collection('Content'), q.Var("chapter_id")), { data: q.Var("updated") }),
+                                }, q.Select(["data"], q.Var("update")))
                             )),
                     },
-                    { update_chapters: q.Var("update_chapters") })
+                    q.Var("update_chapters")
+                )
             ).then(result => {
                 res.status(200).send(result);
             }).catch(error => {
                 res.status(404).send(error)
             });
-
     }
 }

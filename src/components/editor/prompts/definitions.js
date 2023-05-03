@@ -182,7 +182,7 @@ export default function APIDefinitionsPrompt(props) {
                 <Modal.Footer className='border-t border pt-4 pb-4'>
                     <Button size={"sm"} onClick={() => { HandleGenerateAPIPages() }}>
                         {processing && <Spinner size={'sm'} aria-label="Spinner button example" className='mr-2' />}
-                        {processing ? 'Generating' : 'Generate'}
+                        {processing ? 'Generating & Replacing' : 'Generate & Replace'}
                     </Button>
                     <Button size={"sm"} color="gray" onClick={() => { setProcessing(false); AppState.setDefinitions(false) }}>
                         Cancel
