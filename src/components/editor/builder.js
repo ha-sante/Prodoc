@@ -58,6 +58,7 @@ export default function BuilderEditor() {
                                                     width={"50%"}
                                                     placeholder={param.name}
                                                     required={param?.required ? true : false}
+                                                    onChange={() => { }}
                                                 />
                                             </div>
                                         )
@@ -116,7 +117,6 @@ export default function BuilderEditor() {
                             </div>
                         </div>
                     }
-
 
                 </div>);
             }

@@ -2,6 +2,43 @@ import React, { Component, useContext, useState } from 'react';
 import { render } from 'react-dom';
 import axios from 'axios';
 
+
+const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
+  "time": new Date().getTime(),
+  "blocks": [
+    {
+      "type": "header",
+      "data": {
+        "text": "This is the Title of your page!",
+        "level": 1
+      }
+    },
+    {
+      "type": "paragraph",
+      "data": {
+        "text": "<i>This is the description of your page</i>",
+        "level": 1
+      }
+    },
+  ]
+}
+
+const DEFAULT_PAGE_DATA = {
+  type: "api",
+  position: "child",
+  title: "",
+  description: "",
+  content: { editor: "", mdx: "", api: {} },
+  children: [],
+  configuration: {
+    privacy: "public", // or hidden
+    purpose: "page", // or external_link
+    depricated: false,
+    external_link: { url: "" },
+    seo: { image: "", title: "", description: "", slug: "" },
+  }
+}
+
 const AppContext = React.createContext();
 
 export function AppStateProvider({ children }) {
@@ -15,42 +52,7 @@ export function AppStateProvider({ children }) {
   const [permission, setPermission] = useState();
   const [definitions, setDefinitions] = useState(false);
   const [navigation, setNavigation] = useState('main');
-
-  const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
-    "time": new Date().getTime(),
-    "blocks": [
-      {
-        "type": "header",
-        "data": {
-          "text": "This is the Title of your page!",
-          "level": 1
-        }
-      },
-      {
-        "type": "paragraph",
-        "data": {
-          "text": "<i>This is the description of your page</i>",
-          "level": 1
-        }
-      },
-    ]
-  }
-
-  const DEFAULT_PAGE_DATA = {
-    type: "api",
-    position: "child",
-    title: "",
-    description: "",
-    content: { editor: "", mdx: "", api: {} },
-    children: [],
-    configuration: {
-      privacy: "public", // or hidden
-      purpose: "page", // or external_link
-      depricated: false,
-      external_link: { url: "" },
-      seo: { image: "", title: "", description: "", slug: "" },
-    }
-  }
+  const [builder, setBuilder] = useState({});
 
   // API CALLS 
   function ContentAPIHandler(option, data) {
@@ -74,6 +76,7 @@ export function AppStateProvider({ children }) {
   }
 
   const data = {
+    builder, setBuilder,
     navigation, setNavigation,
     definitions, setDefinitions,
     edited, setEdited,
