@@ -175,6 +175,7 @@ export default function EditorSidebar() {
                         anew[index] = AppState?.page;
                         AppState.setContent(anew);
                         AppState.setEdited(false);
+                        AppState.setBuilder({});
                         router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
                         break;
                     case false:
@@ -182,6 +183,8 @@ export default function EditorSidebar() {
                 }
 
             } else {
+                AppState.setBuilder({});
+                AppState.setPage();
                 router.push(`/editor/${AppState.navigation}/?page=${page.id}`, undefined, { shallow: true })
             }
         }

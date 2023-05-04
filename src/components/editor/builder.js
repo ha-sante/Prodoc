@@ -7,32 +7,157 @@ import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
-import { Label, TextInput, Checkbox, Button, Dropdown } from "flowbite-react";
+import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
 import { AppStateContext } from '../../context/state';
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
+const _ = require('lodash');
+
+
 export default function BuilderEditor() {
     const AppState = useContext(AppStateContext);
     const router = useRouter();
 
+    const Indicators = (page) => {
+        // IF THE VALUE IS API
+        // RETURN A INDICATOR OF 
+        if (page.type == "api" && page.content.api.type) {
+            let colors = { get: "success", post: "info", put: "indigo", delete: "failure", patch: "warning" }
+            return <Badge color={colors[page.content.api.type]} className='inline rounded-full'>{page.content.api.type}</Badge>
+        }
+    }
+
+    const Formations = ({ property, paths }) => {
+        let input_mappings = { string: "text", integer: "number", object: "text" };
+        console.log("Formations", { paths, property });
+
+        if (_.isPlainObject(property.properties)) {
+            // GO OVER EACH MEMBER WITH OBJECT.KEYS
+            // RENDER AN INPUT FOR THEM IF THEY ARE OF TYPE STRING
+            // IF OBJECT, RETURN THIS FUNCTION
+            return (
+                <div>
+                    {Object.keys(Object.fromEntries(Object.entries(property.properties).sort())).map((key, index) => {
+                        let block = property.properties[key];
+                        block.name = key; // set property name to its's key
+                        console.warn("block", block);
+
+                        if (_.isPlainObject(block.properties)) {
+                            let new_paths = paths + `/${block.name}`;
+                            console.log("block.is.of.type.object", { new_paths, block })
+                            return (
+                                <div className='mb-2'>
+                                    <p className='text-black flex flex-row items-center'>{block.name}
+                                        <span color={"gray"} className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
+                                    </p>
+                                    <div className='ml-4 mt-2'>
+                                        <Formations property={block} paths={new_paths} />
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        let builder_path_label = key;
+                        let current_path = paths.split("/")
+                        let value_exists = _.has(AppState.builder, [...current_path, builder_path_label, block.name]);
+                        let current_value = _.get(AppState.builder, [...current_path, builder_path_label, block.name]);
+                        let input_type = block?.type ? input_mappings[block.type] : "text";
+                        console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
+                        return (
+                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                                <p className='text-black flex flex-row items-center'>{block.name}
+                                    <span color={"gray"} className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
+                                </p>
+                                <TextInput
+                                    id={key}
+                                    type={input_type}
+                                    width={"50%"}
+                                    placeholder={`${key}`}
+                                    required={block?.nullable ? block?.nullable : false}
+                                    value={current_value}
+                                    onChange={(e) => {
+                                        let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
+                                        let local = AppState.builder;
+                                        _.set(local, [...current_path, builder_path_label, block.name], value);
+                                        AppState.setBuilder(local);
+                                        console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
+                                    }}
+                                />
+                            </div>
+                        )
+                    })
+                    }
+                </div>
+            )
+        }
+
+        return (<div><p>Hello Rolling</p></div>)
+
+        // console.log("reached.last.return", { property, paths })
+        // let block = property;
+        // let builder_path_label = property.name;
+        // let current_path = paths.split("/")
+        // let value_exists = _.has(AppState.builder, [...current_path, builder_path_label, block.name]);
+        // let current_value = _.get(AppState.builder, [...current_path, builder_path_label, block.name]);
+        // let input_type = block?.type ? input_mappings[block.type] : "text";
+        // return (
+        //     <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+        //         <p className='text-black'>{block.name}</p>
+        //         <TextInput
+        //             id={block.name}
+        //             type={input_type}
+        //             width={"50%"}
+        //             placeholder={input_type}
+        //             required={block?.nullable ? block?.nullable : false}
+        //             value={current_value}
+        //             onChange={(e) => {
+        //                 let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
+        //                 let local = AppState.builder;
+        //                 _.set(local, [...current_path, builder_path_label, block.name], value);
+        //                 AppState.setBuilder(local);
+        //                 console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
+        //             }}
+        //         />
+        //     </div>
+        // )
+    }
+
+    const bodySection = () => {
+        // GET THE FIRST ELEMENT OF THE BODY
+        // GET ITS SCHEMA
+        // - GET THE SCHEMAS PROPERTIES
+
+        // GO OVER EACH AND CREATE THE FORM
+        // - PER EACH CHILD, CHECK IF THERE'S AN OBJECT
+        // - IF THERE'S AN OBJECT, CALL RECURSIVE FUNCTION
+
+        // RECURSIVELY RENDER THE CHILD'S LIST
+        let page = AppState.page;
+        let body = page?.content?.api?.requestBody[0]; // is an object of element name and content
+        let first_el_key = Object.keys(body)[0];
+        let property = _.get(body, first_el_key)?.schema;
+        console.log("body", { body, property });
+        return (<div>
+            <h2 className='text-lg font-medium mt-5'>
+                Request Body
+            </h2>
+            <Formations property={property} paths={"body"} />
+        </div>)
+    }
 
     const parametersSection = () => {
         // GO OVER EACH PARAMETER
         // GROUP THEM BY THEIR PARAMETER TYPE
-
-
         // FOR EACH CATEGORY
         // CREATE ITS SECTION OF THE VIEW BLOCK
-
         // RENDER IT IN THE VIEW
         let page = AppState.page;
-        let input_mappings = { string: "text", integer: "number" };
-
         if (AppState.page) {
             let parameters = AppState?.page?.content?.api?.parameters;
+            let input_mappings = { string: "text", integer: "number" };
             console.log("parameters", { parameters })
             if (parameters) {
                 let header_params = parameters.filter(param => param["in"] == "header");
@@ -40,99 +165,74 @@ export default function BuilderEditor() {
                 let path_params = parameters.filter(param => param["in"] == "path");
                 let cookie_params = parameters.filter(param => param["in"] == "cookie");
 
-                return (<div>
+                let grouped = [
+                    { label: "Header", child: header_params },
+                    { label: "Query", child: query_params },
+                    { label: "Path", child: path_params },
+                    { label: "Cookie", child: cookie_params },
+                ];
 
+                return (<div className='mb-4'>
                     {
-                        header_params.length > 0 &&
-                        <div>
-                            <h2 className='text-lg font-bold mt-5'>Header Params</h2>
-                            <div>
-                                {
-                                    header_params.map(param => {
-                                        return (
-                                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
-                                                <p>{param.name}</p>
-                                                <TextInput
-                                                    id={param.name}
-                                                    type={param?.schema ? input_mappings[param.schema.type] : "text"}
-                                                    width={"50%"}
-                                                    placeholder={param.name}
-                                                    required={param?.required ? true : false}
-                                                    onChange={() => { }}
-                                                />
-                                            </div>
-                                        )
-                                    })
-                                }
-                            </div>
-                        </div>
-                    }
+                        grouped.map((block, block_index) => {
+                            if (block.child.length > 0) {
+                                let builder_path_label = block.label.toLowerCase();
+                                return (
+                                    <div key={block_index}>
+                                        <h2 className='text-lg font-medium mt-5'>
+                                            {block.label} Params
+                                        </h2>
 
-                    {
-                        query_params.length > 0 &&
-                        <div>
-                            <h2 className='text-lg font-bold mt-5'>Query Params</h2>
-                            <div>
-                                {
-                                    query_params.map(param => {
-                                        return (
-                                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
-                                                <p>{param.name}</p>
-                                                <TextInput
-                                                    id={param.name}
-                                                    type={param?.schema ? input_mappings[param.schema.type] : "text"}
-                                                    width={"50%"}
-                                                    placeholder={param.name}
-                                                    required={param?.required ? true : false}
-                                                />
-                                            </div>
-                                        )
-                                    })
-                                }
-                            </div>
-                        </div>
-                    }
+                                        {
+                                            block.child.map(param => {
+                                                let value_exists = _.has(AppState.builder, ["parameters", builder_path_label, param.name]);
+                                                let current_value = _.get(AppState.builder, ["parameters", builder_path_label, param.name]);
+                                                let input_type = param?.schema ? input_mappings[param.schema.type] : "text";
+                                                return (
+                                                    <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                                                        <p>{param.name}</p>
+                                                        <TextInput
+                                                            id={param.name}
+                                                            type={input_type}
+                                                            width={"50%"}
+                                                            placeholder={param.name}
+                                                            required={param?.required ? param?.required : false}
+                                                            value={current_value}
+                                                            onChange={(e) => {
+                                                                let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
+                                                                let local = AppState.builder;
+                                                                _.set(local, ["parameters", builder_path_label, param.name], value);
+                                                                AppState.setBuilder(local);
+                                                                console.log("param.input.changed", { value, local, current_value, builder: AppState.builder })
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )
+                                            })
+                                        }
 
-                    {
-                        path_params.length > 0 &&
-                        <div>
-                            <h2 className='text-lg font-bold mt-5'>Path Params</h2>
-                            <div>
-                                {
-                                    path_params.map(param => {
-                                        return (
-                                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
-                                                <p>{param.name}</p>
-                                                <TextInput
-                                                    id={param.name}
-                                                    type={param?.schema ? input_mappings[param.schema.type] : "text"}
-                                                    width={"50%"}
-                                                    placeholder={param.name}
-                                                    required={param?.required ? true : false}
-                                                />
-                                            </div>
-                                        )
-                                    })
-                                }
-                            </div>
-                        </div>
+                                    </div >
+                                )
+                            }
+                        })
                     }
-
-                </div>);
+                </div >);
             }
         }
     }
-
 
     return (
         <div className="flex flex-row justify-between">
             {/* // builder */}
             {/* api preview */}
             <div className="p-4 rounded-lg dark:border-gray-700 w-[60%]">
-                <div className='border shadow-sm rounded-lg p-3'>
-                    <p>Builder View</p>
-
+                <div className='border shadow-sm rounded-lg p-5'>
+                    <h2 className='text-2xl font-bold text-gray-900'>
+                        {AppState.page.title}
+                    </h2>
+                    <p className='flex items-center gap-4'>{Indicators(AppState.page)} Endpoint:  {AppState.page.content?.api?.endpoint}</p>
                     {parametersSection()}
+                    {bodySection()}
                 </div>
             </div>
 

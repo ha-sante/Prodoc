@@ -227,7 +227,7 @@ export default function Editor() {
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {AppState.page?.id !== undefined ?
+        {AppState.page?.id !== undefined && AppState.page?.type == "product" ?
           <div className="p-4 w-[80%] mx-auto">
             <div className="p-4 rounded-lg dark:border-gray-700">
 
@@ -264,7 +264,7 @@ export default function Editor() {
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {AppState.page?.id !== undefined ?
+        {AppState.page?.id !== undefined && AppState.page?.type == "api" ?
           <div className="p-4 w-[100%] mx-auto">
             <APIBuilder />
           </div>

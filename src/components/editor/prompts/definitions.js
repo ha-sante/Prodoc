@@ -14,7 +14,7 @@ import JSON5 from 'json5'
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 export default function APIDefinitionsPrompt(props) {
     const AppState = useContext(AppStateContext);
@@ -63,6 +63,7 @@ export default function APIDefinitionsPrompt(props) {
             content: {
                 ...AppState.DEFAULT_PAGE_DATA.content,
                 api: {
+                    endpoint: url,
                     type: method,
                     method: method,
                     tags: data?.tags ? data?.tags : [],
