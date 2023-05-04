@@ -7,7 +7,7 @@ import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
-import { Label, TextInput, Checkbox, Button, Dropdown } from "flowbite-react";
+import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
 import { AppStateContext } from '../../context/state';
@@ -34,7 +34,6 @@ export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
     const router = useRouter();
     const { slug } = router.query;
-    const [navigation, setNavigation] = useState('main');
     const [processing, setProcessing] = useState(false);
     const [definitions, setDefinitions] = useState(false);
 
@@ -47,7 +46,7 @@ export default function EditorSidebar() {
     function HandleAddPage(position, parent_id) {
         // PAGE IS SOMETHING
         let page = {
-            type: navigation,
+            type: AppState.navigation,
             position: position,
             title: position == 'chapter' ? "Added Chapter Page" : "Added Child Page",
             description: "",
@@ -183,7 +182,7 @@ export default function EditorSidebar() {
                 }
 
             } else {
-                router.push(`/editor/${navigation}/?page=${page.id}`, undefined, { shallow: true })
+                router.push(`/editor/${AppState.navigation}/?page=${page.id}`, undefined, { shallow: true })
             }
         }
     }
@@ -191,6 +190,15 @@ export default function EditorSidebar() {
     const HandleLogOut = () => {
         localStorage.removeItem("authenticated");
         AppState.setAuthenticated(false);
+    }
+
+    const Indicators = (page) => {
+        // IF THE VALUE IS API
+        // RETURN A INDICATOR OF 
+        if (page.type == "api" && page.content.api.type) {
+            let colors = { get: "success", post: "info", put: "indigo", delete: "failure", patch: "warning" }
+            return <Badge color={colors[page.content.api.type]} className='inline ml-2'>{page.content.api.type}</Badge>
+        }
     }
 
     const Directory = ({ page }) => {
@@ -244,11 +252,11 @@ export default function EditorSidebar() {
                                                         }
                                                     </h2>
                                                 }
-                                                <h3 className={`${page.id == 'book' ? '' : 'file-name font-normal'} text-sm overflow-hidden text-ellipsis flex`}
+                                                <h3 className={`${page.id == 'book' ? '' : 'file-name font-normal'} flex flex-row text-sm overflow-hidden`}
                                                     onClick={() => {
                                                         HandleMoveToAPage(page);
                                                     }}>
-                                                    {page.title}
+                                                    {page.title} {Indicators(page)}
                                                 </h3>
                                             </div>
 
@@ -347,11 +355,11 @@ export default function EditorSidebar() {
                                 </h2>
                             }
 
-                            <h3 className="file-name text-sm overflow-hidden text-ellipsis"
+                            <h3 className="file-name text-sm overflow-hidden text-ellipsis flex flex-row"
                                 onClick={() => {
                                     HandleMoveToAPage(page);
                                 }}>
-                                {page.title}
+                                {page.title} {Indicators(page)}
                             </h3>
                         </div>
 
@@ -392,20 +400,20 @@ export default function EditorSidebar() {
     }
 
     useEffect(() => {
-        if (slug && slug !== navigation) {
-            console.log("sidebar.slug.changed", { slug, navigation, page_id: router.query.page });
+        if (slug && slug !== AppState.navigation) {
+            console.log("sidebar.slug.changed", { slug, navigation: AppState.navigation, page_id: router.query.page });
             switch (slug[0]) {
                 case 'product':
                     console.warn("sidebar.content.set.to.product.documentation");
-                    setNavigation(slug[0])
+                    AppState.setNavigation(slug[0])
                     break;
                 case 'api':
                     console.warn("sidebar.content.set.to.api.documentation");
-                    setNavigation(slug[0])
+                    AppState.setNavigation(slug[0])
                     break;
             }
         } else {
-            setNavigation('main')
+            AppState.setNavigation('main')
         }
     }, [slug]);
 
@@ -443,11 +451,11 @@ export default function EditorSidebar() {
     function SubPageNavigation() {
 
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
-        let productChapters = AppState.content.filter(child => child?.type === navigation && child?.position === 'chapter')
+        let productChapters = AppState.content.filter(child => child?.type === AppState.navigation && child?.position === 'chapter')
         let book = {
             id: "book",
             position: 'book',
-            title: navigation == "product" ? "Product Documentation" : "API Documentation",
+            title: AppState.navigation == "product" ? "Product Documentation" : "API Documentation",
             description: "The book itself (The page for it)",
             content: { editor: "", mdx: "" },
             children: productChapters.map(main => main.id),
@@ -482,7 +490,7 @@ export default function EditorSidebar() {
                         </Link>
                     </li>
                     {
-                        navigation == 'api' &&
+                        AppState.navigation == 'api' &&
                         <li>
                             < p onClick={() => AppState.setDefinitions(true)} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span className="ml-2 text-gray-700"> Specification File</span>
@@ -501,7 +509,7 @@ export default function EditorSidebar() {
 
     return (
         <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-            {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
+            {AppState.navigation == 'main' ? MainNavigation() : SubPageNavigation()}
         </aside>
     )
 }

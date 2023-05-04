@@ -53,7 +53,7 @@ export default function APIDefinitionsPrompt(props) {
         return local;
     }
 
-    const ReturnHandlingForAllMethods = (data, url, components, paths) => {
+    const ReturnHandlingForAllMethods = (data, url, components, paths, method) => {
         return {
             ...AppState.DEFAULT_PAGE_DATA,
             type: "api",
@@ -63,7 +63,8 @@ export default function APIDefinitionsPrompt(props) {
             content: {
                 ...AppState.DEFAULT_PAGE_DATA.content,
                 api: {
-                    type: "delete",
+                    type: method,
+                    method: method,
                     tags: data?.tags ? data?.tags : [],
                     deprecated: data?.deprecated ? data?.deprecated : false,
                     operationId: data?.operationId ? data?.operationId : '',
@@ -103,7 +104,7 @@ export default function APIDefinitionsPrompt(props) {
             methods.map((name) => {
                 let data = endpoint[name];
                 if (data) {
-                    let page = ReturnHandlingForAllMethods(data, url, components, paths);
+                    let page = ReturnHandlingForAllMethods(data, url, components, paths, name);
                     pages.push(page);
                     page.content.api.tags.map((tag) => {
                         _.has(mappings, tag) ? [] : mappings[tag] = { 'children': [], page: {} };

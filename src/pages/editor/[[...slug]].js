@@ -9,6 +9,7 @@ import { Label, TextInput, Checkbox, Button, Alert, Avatar, Modal } from "flowbi
 import axios from 'axios';
 
 import EditorSidebar from '@/components/editor/sidebar';
+import APIBuilder from '@/components/editor/builder';
 import ConfigurePrompt from '@/components/editor/prompts/configure';
 import DefinitionsPrompt from '@/components/editor/prompts/definitions';
 
@@ -222,40 +223,13 @@ export default function Editor() {
     )
   }
 
-  function PageEditorPage() {
+  function EditorPage() {
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
         {AppState.page?.id !== undefined ?
           <div className="p-4 w-[80%] mx-auto">
-            <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-
-              <div className='flex flex-row items-center justify-between mb-3'>
-                <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
-
-                <div className='flex flex-row'>
-                  <Button size="xs" className="mr-4" disabled={true} color="light" onClick={() => handleSavePageData()}>
-                    Import (Coming Soon)
-                  </Button>
-
-                  <Button size="xs" className="mr-4" color="light" onClick={() => AppState.setConfigure(true)}>
-                    Configure
-                  </Button>
-
-                  {AppState.edited ?
-                    <Button size="xs" isProcessing={processing} color="warning" onClick={() => handleSavePageData()}>
-                      Save Page Data Update
-                      <CloudChange size="16" className="ml-2" color="#fff" />
-                    </Button>
-                    :
-                    <Button size="xs" isProcessing={processing} onClick={() => handleSavePageData()}>
-                      Save Page Data
-                      <CloudPlus size="16" className="ml-2" color="#fff" />
-                    </Button>
-                  }
-
-                </div>
-              </div>
+            <div className="p-4 rounded-lg dark:border-gray-700">
 
               <div className='border shadow-sm rounded-lg pt-3 pb-3'>
                 <BlocksEditor
@@ -286,7 +260,34 @@ export default function Editor() {
     )
   }
 
-  function EditorHomePage() {
+  function APIPage() {
+    return (
+      <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
+
+        {AppState.page?.id !== undefined ?
+          <div className="p-4 w-[100%] mx-auto">
+            <APIBuilder />
+          </div>
+          :
+          <div className="p-4 w-[80%] mx-auto">
+            <div className="p-4 rounded-lg dark:border-gray-700">
+
+              <div className='flex flex-row items-center justify-between mb-3 mt-6 text-center'>
+                <p class="block text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
+                  <ArrowLeft2 size="16" className="mr-2" />
+                  Click/Create a new page to start editing
+                </p>
+              </div>
+
+            </div>
+          </div>
+        }
+
+      </div>
+    )
+  }
+
+  function HomePage() {
     return (
       <div className="p-5 pt-0 sm:ml-64 flex flex-row justify-between">
 
@@ -341,6 +342,42 @@ export default function Editor() {
     )
   }
 
+  function Navigation() {
+    return (
+      <div className="p-2 sm:ml-64 sticky top-0 z-10">
+        <div className="p-5 border-b-2 border-gray-200 w-[100%] mx-auto !bg-white border-dashed dark:border-gray-700">
+
+          <div className='flex flex-row items-center justify-between'>
+            <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
+
+            <div className='flex flex-row'>
+              <Button size="xs" className="mr-4" disabled={true} color="light" onClick={() => handleSavePageData()}>
+                Import (Coming Soon)
+              </Button>
+
+              <Button size="xs" className="mr-4" color="light" onClick={() => AppState.setConfigure(true)}>
+                Configure
+              </Button>
+
+              {AppState.edited ?
+                <Button size="xs" isProcessing={processing} color="warning" onClick={() => handleSavePageData()}>
+                  Save Page Data Update
+                  <CloudChange size="16" className="ml-2" color="#fff" />
+                </Button>
+                :
+                <Button size="xs" isProcessing={processing} onClick={() => handleSavePageData()}>
+                  Save Page Data
+                  <CloudPlus size="16" className="ml-2" color="#fff" />
+                </Button>
+              }
+
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <main className="min-h-screen flex-col items-center border justify-between">
@@ -351,16 +388,16 @@ export default function Editor() {
           AuthenticationPage()
           :
           <div className="w-100">
-
             {slug == undefined ?
               <div className="w-100">
                 <EditorSidebar />
-                {EditorHomePage()}
+                {HomePage()}
               </div>
               :
               <div className="w-100">
+                {AppState.page?.id !== undefined && Navigation()}
                 <EditorSidebar />
-                {PageEditorPage()}
+                {AppState.navigation === 'api' ? APIPage() : EditorPage()}
               </div>
             }
           </div>

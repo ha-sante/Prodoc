@@ -14,6 +14,7 @@ export function AppStateProvider({ children }) {
   const [authenticated, setAuthenticated] = useState(false);
   const [permission, setPermission] = useState();
   const [definitions, setDefinitions] = useState(false);
+  const [navigation, setNavigation] = useState('main');
 
   const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
     "time": new Date().getTime(),
@@ -73,6 +74,7 @@ export function AppStateProvider({ children }) {
   }
 
   const data = {
+    navigation, setNavigation,
     definitions, setDefinitions,
     edited, setEdited,
     permission, setPermission,
