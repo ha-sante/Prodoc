@@ -51,7 +51,7 @@ export default function BuilderEditor() {
                             return (
                                 <div className='mb-2'>
                                     <p className='text-black flex flex-row items-center'>{block.name}
-                                        <span color={"gray"} className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
+                                        <span className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
                                     </p>
                                     <div className='ml-4 mt-2'>
                                         <Formations property={block} paths={new_paths} />
@@ -65,23 +65,25 @@ export default function BuilderEditor() {
                         let value_exists = _.has(AppState.builder, [...current_path, builder_path_label, block.name]);
                         let current_value = _.get(AppState.builder, [...current_path, builder_path_label, block.name]);
                         let input_type = block?.type ? input_mappings[block.type] : "text";
+                        let required = block?.nullable ? block?.nullable : false;
                         console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
                         return (
                             <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
                                 <p className='text-black flex flex-row items-center'>{block.name}
-                                    <span color={"gray"} className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
+                                    <span className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
+                                    <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
                                 </p>
                                 <TextInput
                                     id={key}
                                     type={input_type}
-                                    width={"50%"}
+                                    className='w-[30%]'
                                     placeholder={`${key}`}
-                                    required={block?.nullable ? block?.nullable : false}
+                                    required={required}
                                     value={current_value}
                                     onChange={(e) => {
                                         let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
                                         let local = AppState.builder;
-                                        _.set(local, [...current_path, builder_path_label, block.name], value);
+                                        _.set(local, [...current_path, builder_path_label], value);
                                         AppState.setBuilder(local);
                                         console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
                                     }}
@@ -95,34 +97,6 @@ export default function BuilderEditor() {
         }
 
         return (<div><p>Hello Rolling</p></div>)
-
-        // console.log("reached.last.return", { property, paths })
-        // let block = property;
-        // let builder_path_label = property.name;
-        // let current_path = paths.split("/")
-        // let value_exists = _.has(AppState.builder, [...current_path, builder_path_label, block.name]);
-        // let current_value = _.get(AppState.builder, [...current_path, builder_path_label, block.name]);
-        // let input_type = block?.type ? input_mappings[block.type] : "text";
-        // return (
-        //     <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
-        //         <p className='text-black'>{block.name}</p>
-        //         <TextInput
-        //             id={block.name}
-        //             type={input_type}
-        //             width={"50%"}
-        //             placeholder={input_type}
-        //             required={block?.nullable ? block?.nullable : false}
-        //             value={current_value}
-        //             onChange={(e) => {
-        //                 let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
-        //                 let local = AppState.builder;
-        //                 _.set(local, [...current_path, builder_path_label, block.name], value);
-        //                 AppState.setBuilder(local);
-        //                 console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
-        //             }}
-        //         />
-        //     </div>
-        // )
     }
 
     const bodySection = () => {
@@ -136,16 +110,22 @@ export default function BuilderEditor() {
 
         // RECURSIVELY RENDER THE CHILD'S LIST
         let page = AppState.page;
-        let body = page?.content?.api?.requestBody[0]; // is an object of element name and content
-        let first_el_key = Object.keys(body)[0];
-        let property = _.get(body, first_el_key)?.schema;
-        console.log("body", { body, property });
-        return (<div>
-            <h2 className='text-lg font-medium mt-5'>
-                Request Body
-            </h2>
-            <Formations property={property} paths={"body"} />
-        </div>)
+        if (page) {
+            let has_body = AppState?.page?.content?.api?.requestBody?.length > 0;
+            if (has_body) {
+                let body = page?.content?.api?.requestBody[0]; // is an object of element name and content\
+                let first_el_key = Object.keys(body)[0];
+                let property = _.get(body, first_el_key)?.schema;
+                console.log("body", { has_body, body, property })
+
+                return (<div>
+                    <h2 className='text-lg font-medium mt-5'>
+                        Request Body
+                    </h2>
+                    <Formations property={property} paths={"body"} />
+                </div>)
+            }
+        }
     }
 
     const parametersSection = () => {
@@ -188,15 +168,19 @@ export default function BuilderEditor() {
                                                 let value_exists = _.has(AppState.builder, ["parameters", builder_path_label, param.name]);
                                                 let current_value = _.get(AppState.builder, ["parameters", builder_path_label, param.name]);
                                                 let input_type = param?.schema ? input_mappings[param.schema.type] : "text";
+                                                let required = param?.required ? param?.required : false;
                                                 return (
                                                     <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
-                                                        <p>{param.name}</p>
+                                                        <p>{param.name}
+                                                            <span className='ml-2 text-xs font-normal text-gray-400'>{param.schema.type}</span>
+                                                            <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
+                                                        </p>
                                                         <TextInput
                                                             id={param.name}
                                                             type={input_type}
-                                                            width={"50%"}
+                                                            className='w-[30%]'
                                                             placeholder={param.name}
-                                                            required={param?.required ? param?.required : false}
+                                                            required={required}
                                                             value={current_value}
                                                             onChange={(e) => {
                                                                 let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
