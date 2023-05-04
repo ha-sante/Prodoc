@@ -29,6 +29,8 @@ export default function BuilderEditor() {
 
         // RENDER IT IN THE VIEW
         let page = AppState.page;
+        let input_mappings = { string: "text", integer: "number" };
+
         if (AppState.page) {
             let parameters = AppState?.page?.content?.api?.parameters;
             console.log("parameters", { parameters })
@@ -43,11 +45,78 @@ export default function BuilderEditor() {
                     {
                         header_params.length > 0 &&
                         <div>
-                            <h2>Header Params</h2>
+                            <h2 className='text-lg font-bold mt-5'>Header Params</h2>
                             <div>
+                                {
+                                    header_params.map(param => {
+                                        return (
+                                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                                                <p>{param.name}</p>
+                                                <TextInput
+                                                    id={param.name}
+                                                    type={param?.schema ? input_mappings[param.schema.type] : "text"}
+                                                    width={"50%"}
+                                                    placeholder={param.name}
+                                                    required={param?.required ? true : false}
+                                                />
+                                            </div>
+                                        )
+                                    })
+                                }
                             </div>
                         </div>
                     }
+
+                    {
+                        query_params.length > 0 &&
+                        <div>
+                            <h2 className='text-lg font-bold mt-5'>Query Params</h2>
+                            <div>
+                                {
+                                    query_params.map(param => {
+                                        return (
+                                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                                                <p>{param.name}</p>
+                                                <TextInput
+                                                    id={param.name}
+                                                    type={param?.schema ? input_mappings[param.schema.type] : "text"}
+                                                    width={"50%"}
+                                                    placeholder={param.name}
+                                                    required={param?.required ? true : false}
+                                                />
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    {
+                        path_params.length > 0 &&
+                        <div>
+                            <h2 className='text-lg font-bold mt-5'>Path Params</h2>
+                            <div>
+                                {
+                                    path_params.map(param => {
+                                        return (
+                                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                                                <p>{param.name}</p>
+                                                <TextInput
+                                                    id={param.name}
+                                                    type={param?.schema ? input_mappings[param.schema.type] : "text"}
+                                                    width={"50%"}
+                                                    placeholder={param.name}
+                                                    required={param?.required ? true : false}
+                                                />
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </div>
+                        </div>
+                    }
+
 
                 </div>);
             }
