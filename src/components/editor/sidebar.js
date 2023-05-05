@@ -190,6 +190,31 @@ export default function EditorSidebar() {
         }
     }
 
+    const HandleBacktoMain = () => {
+        // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
+        // TAKE PERMISSION FROM HIM BEFORE MOVING 
+        // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
+        // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
+        if (AppState.edited == true) {
+            let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
+            console.log("permission.after.clicking.div", permission);
+            if (permission) {
+                let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
+                let anew = AppState.content;
+                anew[index] = AppState?.page;
+                AppState.setPage();
+                AppState.setEdited(false);
+                AppState.setBuilder({});
+                AppState.setContent(anew);
+                router.push(`/editor`);
+            }
+        } else {
+            AppState.setBuilder({});
+            AppState.setPage();
+            router.push(`/editor`);
+        }
+    }
+
     const HandleLogOut = () => {
         localStorage.removeItem("authenticated");
         AppState.setAuthenticated(false);
@@ -487,10 +512,10 @@ export default function EditorSidebar() {
 
                 <ul className="font-medium mb-4">
                     <li>
-                        <Link href="/editor" className="border flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <p onClick={HandleBacktoMain} className="border cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <ArrowLeft size="16" color="#111827" />
                             <span className="ml-3"> Back</span>
-                        </Link>
+                        </p>
                     </li>
                     {
                         AppState.navigation == 'api' &&

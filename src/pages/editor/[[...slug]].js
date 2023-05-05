@@ -26,6 +26,8 @@ import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2, CloudChange } from 'ic
 import ReactPlayer from 'react-player'
 import toast, { Toaster } from 'react-hot-toast';
 
+import { diff } from 'deep-object-diff';
+
 export default function Editor() {
 
   const AppState = useContext(AppStateContext);
@@ -54,12 +56,19 @@ export default function Editor() {
   const editorOnSaveHandler = (editor, title, description) => {
     console.log("Editor Data to Save::", { editor, title, description });
 
-    // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
     let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
     let anew = AppState.content;
-    anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
-    AppState.setContent(anew);
-    AppState.setEdited(true);
+
+    let details = Object.keys(diff(editor, anew[index]?.content?.editor));
+    let undifferent = details.length == 1 && details[0] == 'time';
+    console.log("editor.new.content.difference", {undifferent, details});
+
+    if (undifferent == false) {
+      // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
+      anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
+      AppState.setContent(anew);
+      AppState.setEdited(true);
+    }
   }
 
   const handlePageConfigChange = (configuration) => {
