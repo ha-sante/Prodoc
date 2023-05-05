@@ -16,17 +16,27 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const _ = require('lodash');
 
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/themes/prism.css'; //Example style, you can use another
 
 export default function BuilderEditor() {
     const AppState = useContext(AppStateContext);
     const router = useRouter();
-    const [languages, setLanguages] = useState([
+    const [environments, setEnvironments] = useState([
         { logo: "/editor/curl.svg", name: "cURL" },
         { logo: "/editor/javascript.svg", name: "JavaScript" },
         { logo: "/editor/python.svg", name: "Python" },
         { logo: "/editor/node.svg", name: "Node.js" },
         { logo: "/editor/go.svg", name: "Golang" },
+        { logo: "/editor/go.svg", name: "Java" },
     ]);
+    const [selected, setSelected] = useState();
+    const [code, setCode] = useState(
+        `function add(a, b) { return a + b; }`
+    );
 
     const Indicators = (page) => {
         // IF THE VALUE IS API
@@ -223,7 +233,7 @@ export default function BuilderEditor() {
             {/* api preview */}
             <div className="p-4 rounded-lg dark:border-gray-700 w-[60%]">
                 <div className='border shadow-sm rounded-lg p-5'>
-                    <p className='mb-2'>Builder View</p>
+                    <p className='mb-2'>Build Requests</p>
 
                     <h2 className='text-2xl font-bold text-gray-900'>
                         {AppState.page.title}
@@ -236,21 +246,39 @@ export default function BuilderEditor() {
 
             <div className="p-4 rounded-lg dark:border-gray-700 w-[40%]">
                 <div className='border shadow-sm rounded-lg p-3'>
-                    <p className='mb-2'>Operations View</p>
+                    <p className='mb-2'>Test/Send Requests</p>
 
                     <div>
                         <h2 className='text-2xl font-bold text-gray-900'>
                             Languages/Environments
                         </h2>
                         <div className='flex gap-2 content-between'>
-                            {languages.map((language, index) => {
+                            {environments.map((language, index) => {
                                 return (
-                                    <div key={language?.name} className="border mt-2 mb-2 p-2 text-center w-1/3">
+                                    <div key={language?.name}
+                                        className={`border mt-2 mb-2 p-2 text-center cursor-pointer w-1/3 ${selected == index ? "border-gray-400" : ""}`}
+                                        onClick={() => { setSelected(index) }}>
                                         <Image src={language.logo} alt="me" width="30" height="30" className='mx-auto h-[20px] w-[20px]' />
                                         <p className='mt-2 text-xs'>{language.name}</p>
                                     </div>
                                 )
                             })}
+                        </div>
+
+                        <p className='text-sm font-normal mt-3 mb-2 text-gray-900'>
+                            Request
+                        </p>
+                        <div className='border p-2'>
+                            <Editor
+                                value={code}
+                                onValueChange={code => setCode(code)}
+                                highlight={code => highlight(code != undefined ? code : "", languages.js)}
+                                padding={10}
+                                style={{
+                                    fontFamily: '"Fira code", "Fira Mono", monospace',
+                                    fontSize: 12,
+                                }}
+                            />
                         </div>
                     </div>
 
