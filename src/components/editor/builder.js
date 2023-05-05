@@ -20,6 +20,13 @@ const _ = require('lodash');
 export default function BuilderEditor() {
     const AppState = useContext(AppStateContext);
     const router = useRouter();
+    const [languages, setLanguages] = useState([
+        { logo: "/editor/curl.svg", name: "cURL" },
+        { logo: "/editor/javascript.svg", name: "JavaScript" },
+        { logo: "/editor/python.svg", name: "Python" },
+        { logo: "/editor/node.svg", name: "Node.js" },
+        { logo: "/editor/go.svg", name: "Golang" },
+    ]);
 
     const Indicators = (page) => {
         // IF THE VALUE IS API
@@ -99,7 +106,7 @@ export default function BuilderEditor() {
         return (<div><p>Hello Rolling</p></div>)
     }
 
-    const bodySection = () => {
+    const BodySection = () => {
         // GET THE FIRST ELEMENT OF THE BODY
         // GET ITS SCHEMA
         // - GET THE SCHEMAS PROPERTIES
@@ -128,7 +135,7 @@ export default function BuilderEditor() {
         }
     }
 
-    const parametersSection = () => {
+    const ParametersSection = () => {
         // GO OVER EACH PARAMETER
         // GROUP THEM BY THEIR PARAMETER TYPE
         // FOR EACH CATEGORY
@@ -205,24 +212,48 @@ export default function BuilderEditor() {
         }
     }
 
+
+    const OperationsView = () => {
+
+    }
+
     return (
         <div className="flex flex-row justify-between">
             {/* // builder */}
             {/* api preview */}
             <div className="p-4 rounded-lg dark:border-gray-700 w-[60%]">
                 <div className='border shadow-sm rounded-lg p-5'>
+                    <p className='mb-2'>Builder View</p>
+
                     <h2 className='text-2xl font-bold text-gray-900'>
                         {AppState.page.title}
                     </h2>
                     <p className='flex items-center gap-4'>{Indicators(AppState.page)} Endpoint:  {AppState.page.content?.api?.endpoint}</p>
-                    {parametersSection()}
-                    {bodySection()}
+                    {ParametersSection()}
+                    {BodySection()}
                 </div>
             </div>
 
             <div className="p-4 rounded-lg dark:border-gray-700 w-[40%]">
                 <div className='border shadow-sm rounded-lg p-3'>
-                    <p>Operations View</p>
+                    <p className='mb-2'>Operations View</p>
+
+                    <div>
+                        <h2 className='text-2xl font-bold text-gray-900'>
+                            Languages/Environments
+                        </h2>
+                        <div className='flex gap-2 content-between'>
+                            {languages.map((language, index) => {
+                                return (
+                                    <div key={language?.name} className="border mt-2 mb-2 p-2 text-center w-1/3">
+                                        <Image src={language.logo} alt="me" width="30" height="30" className='mx-auto h-[20px] w-[20px]' />
+                                        <p className='mt-2 text-xs'>{language.name}</p>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
