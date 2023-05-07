@@ -25,8 +25,9 @@ import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 import Components from './tools/components'
 import { AppStateContext } from '../../context/state';
 
-const EditorComponent = (props) => {
-  const ejInstance = useRef();
+// export default function EditorSidebar() {
+export default function EditorComponent(props){
+  let ejInstance = useRef();
   const AppState = useContext(AppStateContext);
 
   const initEditor = () => {
@@ -104,7 +105,10 @@ const EditorComponent = (props) => {
 
   // This will run only once
   useEffect(() => {
-    if (ejInstance.current === null) {
+    // console.log("editorjs.page.refreshed", { ejInstance });
+
+    if (ejInstance.current == null) {
+      // console.log("editorjs.current.instance == null");
       initEditor();
     }
 
@@ -116,5 +120,3 @@ const EditorComponent = (props) => {
 
   return <><div id='editorjs'></div></>;
 }
-
-export default EditorComponent;

@@ -2,7 +2,6 @@ import React, { Component, useContext, useState } from 'react';
 import { render } from 'react-dom';
 import axios from 'axios';
 
-
 const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
   "time": new Date().getTime(),
   "blocks": [
@@ -38,6 +37,8 @@ const DEFAULT_PAGE_DATA = {
     seo: { image: "", title: "", description: "", slug: "" },
   }
 }
+
+
 
 const AppContext = React.createContext();
 

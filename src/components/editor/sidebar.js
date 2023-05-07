@@ -428,18 +428,9 @@ export default function EditorSidebar() {
     }
 
     useEffect(() => {
-        if (slug && slug !== AppState.navigation) {
+        if (slug !== undefined && slug?.length > 0) {
             console.log("sidebar.slug.changed", { slug, navigation: AppState.navigation, page_id: router.query.page });
-            switch (slug[0]) {
-                case 'product':
-                    console.warn("sidebar.content.set.to.product.documentation");
-                    AppState.setNavigation(slug[0])
-                    break;
-                case 'api':
-                    console.warn("sidebar.content.set.to.api.documentation");
-                    AppState.setNavigation(slug[0])
-                    break;
-            }
+            AppState.setNavigation(slug[0])
         } else {
             AppState.setNavigation('main')
         }

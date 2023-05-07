@@ -13,7 +13,6 @@
     "@blocknote/react": "^0.6.2",
     "@dnd-kit/sortable": "^7.0.2",
     "@editorjs/editorjs": "^2.26.5",
-    "@hawk.so/javascript": "^3.0.1",
     "@uiw/react-md-editor": "^3.20.8",
     "@uiw/react-textarea-code-editor": "^2.1.1",
     "@uploadcare/rest-client": "^6.5.1",

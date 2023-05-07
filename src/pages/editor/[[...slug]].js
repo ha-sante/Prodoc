@@ -61,7 +61,7 @@ export default function Editor() {
 
     let details = Object.keys(diff(editor, anew[index]?.content?.editor));
     let undifferent = details.length == 1 && details[0] == 'time';
-    console.log("editor.new.content.difference", {undifferent, details});
+    console.log("editor.new.content.difference", { undifferent, details });
 
     if (undifferent == false) {
       // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
@@ -168,7 +168,6 @@ export default function Editor() {
   useEffect(() => {
     let route_data = { slug, page: router.query.page };
     console.log("route.change.data", route_data);
-
     // LOAD CONTENT IF WE ARE AT EDITOR/(SOMETHING)
     if (Array.isArray(route_data.slug)) {
 
@@ -181,11 +180,11 @@ export default function Editor() {
           // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
           if (route_data.page != undefined) {
             let page = response.data.find(page => page.id == route_data.page);
-            console.log("slug.page.matched", { page });
+            console.log("slug.page.matched.content.new.load", { page });
             AppState.setPage({ ...page });
             AppState.setEdited(false);
           } else {
-            // AppState.setPage();
+            toast("Page not found");
           }
 
         }).catch(error => {
@@ -196,16 +195,13 @@ export default function Editor() {
       // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
       if (route_data.page != undefined) {
         let page = AppState.content.find(page => page.id == route_data.page);
-        console.log("slug.page.matched", { page });
+        console.log("slug.page.matched.content.preloaded", { page });
         AppState.setPage({ ...page });
         AppState.setEdited(false);
-        // page is not there
       } else {
-        // AppState.setPage();
+        toast("Page not found");
       }
-
     }
-
   }, [slug]);
 
   function AuthenticationPage() {
@@ -239,7 +235,6 @@ export default function Editor() {
         {AppState.page?.id !== undefined && AppState.page?.type == "product" ?
           <div className="p-4 w-[80%] mx-auto">
             <div className="p-4 rounded-lg dark:border-gray-700">
-
               <div className='border shadow-sm rounded-lg pt-3 pb-3'>
                 <BlocksEditor
                   onSave={(editorData, title, description) =>
@@ -247,7 +242,6 @@ export default function Editor() {
                   }
                 />
               </div>
-
             </div>
           </div>
           :
