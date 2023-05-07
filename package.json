@@ -26,6 +26,7 @@
     "faunadb": "^4.8.0",
     "flowbite": "^1.6.5",
     "flowbite-react": "^0.4.3",
+    "httpsnippet": "^2.0.0",
     "iconsax-react": "^0.0.8",
     "json5": "^2.2.3",
     "lodash": "^4.17.21",

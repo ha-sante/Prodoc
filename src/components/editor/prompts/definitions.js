@@ -93,6 +93,7 @@ export default function APIDefinitionsPrompt(props) {
         // PREPARE PARENT AND CHILD PAGES FOR STORAGE
         let paths = json?.paths;
         let components = json?.components;
+        let { openapi, info, servers, security } = Object(json);
 
         let methods = ["get", "post", "put", "delete", "patch", "connect", "head", "trace", "options"];
         let pages = [];
@@ -106,6 +107,12 @@ export default function APIDefinitionsPrompt(props) {
                 let data = endpoint[name];
                 if (data) {
                     let page = ReturnHandlingForAllMethods(data, url, components, paths, name);
+                    
+                    page.content.api["configuration"] = { };
+                    page.content.api.configuration.servers = servers ? servers : [];
+                    page.content.api.configuration.openapi = openapi ? openapi : "";
+                    page.content.api.configuration.info = info ? info : {};
+
                     pages.push(page);
                     page.content.api.tags.map((tag) => {
                         _.has(mappings, tag) ? [] : mappings[tag] = { 'children': [], page: {} };
@@ -117,7 +124,7 @@ export default function APIDefinitionsPrompt(props) {
 
         // CREATE PARENT PAGES
         Object.keys(mappings).map((label) => {
-            let data = {
+            let page = {
                 ...AppState.DEFAULT_PAGE_DATA,
                 type: "api",
                 position: "chapter",
@@ -128,8 +135,14 @@ export default function APIDefinitionsPrompt(props) {
                     api: {}
                 },
             };
-            mappings[label].page = data;
-            chapters.push(data);
+
+            page.content.api["configuration"] = { };
+            page.content.api.configuration.servers = servers ? servers : [];
+            page.content.api.configuration.openapi = openapi ? openapi : "";
+            page.content.api.configuration.info = info ? info : {};
+
+            mappings[label].page = page;
+            chapters.push(page);
         })
 
         toast.success("Converted spec JSON to pages content type.");

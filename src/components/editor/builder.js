@@ -22,42 +22,77 @@ import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism.css'; //Example style, you can use another
 
+import HTTPSnippet from 'httpsnippet';
+
 export default function BuilderEditor() {
     const AppState = useContext(AppStateContext);
     const router = useRouter();
     const [environments, setEnvironments] = useState([
-        { logo: "/editor/curl.svg", name: "cURL" },
-        { logo: "/editor/javascript.svg", name: "JavaScript" },
-        { logo: "/editor/python.svg", name: "Python" },
-        { logo: "/editor/node.svg", name: "Node.js" },
-        { logo: "/editor/go.svg", name: "Golang" },
-        { logo: "/editor/go.svg", name: "Java" },
+        { logo: "/editor/curl.svg", name: "cURL", target: "shell" },
+        { logo: "/editor/javascript.svg", name: "JavaScript", target: "javascript" },
+        { logo: "/editor/python.svg", name: "Python", target: "python" },
+        { logo: "/editor/node.svg", name: "Node.js", target: "node" },
+        { logo: "/editor/go.svg", name: "Golang", target: "go" },
+        { logo: "/editor/ruby.svg", name: "Ruby", target: "ruby" },
     ]);
     const [selected, setSelected] = useState(0);
     const [code, setCode] = useState(
         `function add(a, b) { return a + b; }`
     );
 
+    useEffect(() => {
+        AppState.setBuilder({});
+    }, [AppState.page]);
+
 
     useEffect(() => {
         let environment = environments[selected];
         let template = ``;
 
-        switch (environment.name.toLowerCase()) {
-            case "curl":
-                template = ``;
-                setCode(code);
-                break;
-            case "javascript":
-                template = ``;
-                setCode(code);
-                break;
-            case "curl":
-                template = ``;
-                setCode(code);
-                break;
+        console.log("builder.data", { builder: AppState.builder })
+
+        // GET FORM DATA
+        let { body, parameters } = Object(AppState.builder);
+        let { headers, paths, queries } = Object(parameters);
+        let har_format = {
+            method: "POST",
+            url: "http://www.example.com/path/?param=value",
+            cookies: [],
+            queryString: [],
+            postData: {},
+            headers: [],
+        };
+
+        // HANDLE HEADERS
+        if (headers) {
+            _.mapKeys(headers, function (value, key) {
+                if (value) {
+                    har_format.headers.push({
+                        name: key,
+                        value: value,
+                        comment: ""
+                    })
+                }
+            });
         }
-    }, [selected]);
+
+        // HANDLE BODY
+        if (body) {
+            har_format.postData = {
+                "mimeType": "application/json;charset=UTF-8",
+                "params": [],
+                "text": JSON.stringify(body)
+            }
+        }
+
+        const snippet = new HTTPSnippet(har_format);
+        const options = { indent: '\t' };
+        const output = snippet.convert(environment.target.toLowerCase(), '', options);
+        console.log(output);
+        if (output) {
+            setCode(output);
+        }
+    }, [selected, AppState.builder]);
 
     const Indicators = (page) => {
         // IF THE VALUE IS API
@@ -87,7 +122,7 @@ export default function BuilderEditor() {
                             let new_paths = paths + `/${block.name}`;
                             //console.log("block.is.of.type.object", { new_paths, block })
                             return (
-                                <div className='mb-2'>
+                                <div className='mb-2' key={key}>
                                     <p className='text-black flex flex-row items-center'>{block.name}
                                         <span className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
                                     </p>
@@ -106,7 +141,7 @@ export default function BuilderEditor() {
                         let required = block?.nullable ? block?.nullable : false;
                         //console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
                         return (
-                            <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                            <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
                                 <p className='text-black flex flex-row items-center'>{block.name}
                                     <span className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
                                     <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
@@ -123,7 +158,7 @@ export default function BuilderEditor() {
                                         let local = AppState.builder;
                                         _.set(local, [...current_path, builder_path_label], value);
                                         AppState.setBuilder(local);
-                                        //console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
+                                        // console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
                                     }}
                                 />
                             </div>
@@ -202,13 +237,13 @@ export default function BuilderEditor() {
                                         </h2>
 
                                         {
-                                            block.child.map(param => {
+                                            block.child.map((param, param_index) => {
                                                 let value_exists = _.has(AppState.builder, ["parameters", builder_path_label, param.name]);
                                                 let current_value = _.get(AppState.builder, ["parameters", builder_path_label, param.name]);
                                                 let input_type = param?.schema ? input_mappings[param.schema.type] : "text";
                                                 let required = param?.required ? param?.required : false;
                                                 return (
-                                                    <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                                                    <div key={param_index} className='flex flex-row gap-2 mb-2 justify-between items-center'>
                                                         <p>{param.name}
                                                             <span className='ml-2 text-xs font-normal text-gray-400'>{param.schema.type}</span>
                                                             <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
@@ -242,7 +277,6 @@ export default function BuilderEditor() {
             }
         }
     }
-
 
     const OperationsView = () => {
 
