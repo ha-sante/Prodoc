@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, memo } from "react";
 import { useRouter } from 'next/router'
 
 import { Inter } from 'next/font/google'
@@ -33,15 +33,22 @@ const StrictModeDroppable = ({ children, ...props }) => {
 export default function EditorSidebar() {
     const AppState = useContext(AppStateContext);
     const router = useRouter();
-    const { slug } = router.query;
     const [processing, setProcessing] = useState(false);
-    const [definitions, setDefinitions] = useState(false);
+    const [navigation, setNavigation] = useState('main');
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
         { icon: <Code1 size="16" color="#111827" />, title: "API Reference", id: 'api' },
         { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
+
+    // useEffect(() => {
+    //     console.log("rerendering.the.sidebar", { remote_navigation: AppState.navigation, navigation})
+
+    //     if (AppState.navigation !== navigation) {
+    //         setNavigation(AppState.navigation)
+    //     }
+    // }, [AppState.navigation]);
 
     function HandleAddPage(position, parent_id) {
         // PAGE IS SOMETHING
@@ -165,7 +172,6 @@ export default function EditorSidebar() {
             if (AppState.edited == true) {
                 let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
                 console.log("permission.after.clicking.div", permission);
-
                 switch (permission) {
                     case true:
                         // RESET THE PAGE'S OLD DATA BEFORE ROUTING
@@ -181,10 +187,8 @@ export default function EditorSidebar() {
                     case false:
                         break;
                 }
-
             } else {
-                AppState.setBuilder({});
-                AppState.setPage();
+                // AppState.setBuilder({});
                 router.push(`/editor/${AppState.navigation}/?page=${page.id}`, undefined, { shallow: true })
             }
         }
@@ -426,15 +430,6 @@ export default function EditorSidebar() {
             )
         }
     }
-
-    useEffect(() => {
-        if (slug !== undefined && slug?.length > 0) {
-            console.log("sidebar.slug.changed", { slug, navigation: AppState.navigation, page_id: router.query.page });
-            AppState.setNavigation(slug[0])
-        } else {
-            AppState.setNavigation('main')
-        }
-    }, [slug]);
 
     function MainNavigation() {
         return (

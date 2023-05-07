@@ -25,13 +25,12 @@ import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 import Components from './tools/components'
 import { AppStateContext } from '../../context/state';
 
-// export default function EditorSidebar() {
-export default function EditorComponent(props){
-  let ejInstance = useRef();
+export default function EditorComponent(props) {
+  const ejInstance = useRef();
   const AppState = useContext(AppStateContext);
 
   const initEditor = () => {
-    console.log("page.editor.refreshed");
+    console.log("initEditor.called");
     const editor = new EditorJS({
       holder: 'editorjs',
       onReady: () => {
@@ -74,7 +73,6 @@ export default function EditorComponent(props){
                 })
                 console.log(`URL: ${result.cdnUrl}`)
 
-
                 // Return the url to the uploaded file
                 return {
                   success: 1,
@@ -105,17 +103,19 @@ export default function EditorComponent(props){
 
   // This will run only once
   useEffect(() => {
-    // console.log("editorjs.page.refreshed", { ejInstance });
+    if (AppState.page != null) {
+      console.log("editorjs.page.refreshed", { ejInstance });
 
-    if (ejInstance.current == null) {
-      // console.log("editorjs.current.instance == null");
-      initEditor();
+      if (ejInstance.current == null) {
+        // console.log("editorjs.current.instance == null");
+        initEditor();
+      }
+
+      return () => {
+        ejInstance?.current?.destroy();
+        ejInstance.current = null;
+      };
     }
-
-    return () => {
-      ejInstance?.current?.destroy();
-      ejInstance.current = null;
-    };
   }, [AppState.page]);
 
   return <><div id='editorjs'></div></>;

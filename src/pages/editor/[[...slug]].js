@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic';
 
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useLayoutEffect } from "react";
 import { useRouter } from 'next/router'
 
 import { Label, TextInput, Checkbox, Button, Alert, Avatar, Modal } from "flowbite-react";
@@ -166,25 +166,34 @@ export default function Editor() {
   }, []);
 
   useEffect(() => {
-    let route_data = { slug, page: router.query.page };
-    console.log("route.change.data", route_data);
-    // LOAD CONTENT IF WE ARE AT EDITOR/(SOMETHING)
-    if (Array.isArray(route_data.slug)) {
+    let nav = { slug, page: router.query.page };
+    console.log("nav.data.changed", { nav });
 
-      if (AppState.content.length == 0) {
-        // GET ALL CONTENT
+    // - /PRODUCT OR /API LOADS : (GET ALL CONTENT AT THIS POINT)
+    // - /PRODUCT/PAGE (NO CONTENT) : (GET ALL CONTENT) (FROM THE RESPONSE CHECK FOR THE PAGE)
+    // - /product/page (content) : (FIND THE PAGE)
+
+    // CHECK FOR PAGE NAVIGATION
+    if (Array.isArray(nav.slug)) {
+
+      // SET OUR NAVIGATION VIEW
+      AppState.setNavigation(slug[0])
+
+      // IF AT THE MAIN ENTRY ONLY (/product or /api)
+      if (nav.page == null) {
+        // GET ALL CONTENT ANEW
         AppState.ContentAPIHandler('GET').then(response => {
+
+          // SET THE NEW CONTENT
           console.log('get.all.content', { content: response.data, page_id: router.query.page });
           AppState.setContent(response.data);
 
-          // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
-          if (route_data.page != undefined) {
-            let page = response.data.find(page => page.id == route_data.page);
+          // SET THE CURRENT PAGE WE ARE ON
+          if (nav.page != undefined) {
+            let page = response.data.find(page => page.id == nav.page);
             console.log("slug.page.matched.content.new.load", { page });
             AppState.setPage({ ...page });
             AppState.setEdited(false);
-          } else {
-            toast("Page not found");
           }
 
         }).catch(error => {
@@ -192,15 +201,41 @@ export default function Editor() {
         })
       }
 
-      // IF WE ARE AT A SUB PAGE E.G /PRODUCT...
-      if (route_data.page != undefined) {
-        let page = AppState.content.find(page => page.id == route_data.page);
-        console.log("slug.page.matched.content.preloaded", { page });
-        AppState.setPage({ ...page });
-        AppState.setEdited(false);
-      } else {
-        toast("Page not found");
+      // IF AT A CHILD PAGE
+      if (nav.page != null) {
+        // IF NO CONTENT
+        if (AppState.content.length == 0) {
+          // GET ALL CONTENT ANEW
+          AppState.ContentAPIHandler('GET').then(response => {
+
+            // SET THE NEW CONTENT
+            console.log('get.all.content', { content: response.data, page_id: router.query.page });
+            AppState.setContent(response.data);
+
+            // SET THE CURRENT PAGE WE ARE ON
+            if (nav.page != undefined) {
+              let page = response.data.find(page => page.id == nav.page);
+              console.log("slug.page.matched.new.loaded.content.page", { page });
+              AppState.setPage({ ...page });
+              AppState.setEdited(false);
+            }
+
+          }).catch(error => {
+            console.log('error', error);
+          })
+        }
+
+        // IF CONTENT EXISTS
+        if (AppState.content.length > 0) {
+          let page = AppState.content.find(page => page.id == nav.page);
+          console.log("slug.page.matched.preloaded.content.page", { page });
+          AppState.setPage({ ...page });
+          AppState.setEdited(false);
+        }
       }
+
+    } else {
+      AppState.setNavigation('main');
     }
   }, [slug]);
 
@@ -229,6 +264,7 @@ export default function Editor() {
   }
 
   function EditorPage() {
+    console.log("editor.page.reload.called")
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
@@ -249,7 +285,7 @@ export default function Editor() {
             <div className="p-4 rounded-lg dark:border-gray-700">
 
               <div className='flex flex-row items-center justify-between mb-3 mt-6 text-center'>
-                <p class="block text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
+                <p class="text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
                   <ArrowLeft2 size="16" className="mr-2" />
                   Click/Create a new page to start editing
                 </p>
@@ -300,12 +336,7 @@ export default function Editor() {
             <div className='flex flex-row items-center justify-between mb-3'>
               <h2 for="helper-text" class="block text-lg font-medium text-gray-900 dark:text-white">Welcome Home 👋</h2>
             </div>
-
-            <div className='border shadow-sm rounded-lg p-3 w-auto'>
-              <ReactPlayer width={'100%'} url='https://www.youtube.com/watch?v=zAS9Dpf7YuM' />
-            </div>
-
-
+            
             <div className='mt-3 p-3 text-left'>
 
               <div className='flex'>
@@ -316,8 +347,8 @@ export default function Editor() {
                 />
               </div>
               <p className='pt-2 text-sm'>
-                Welcome to Prodoc, an open source product and api documentation tool.
-                My name is Henry and I am the first author of the prodoc open source tool.</p>
+                Prodoc, is an open source product and api documentation tool.
+                My name is Henry and I am the first author/contributor to the prodoc open source tool.</p>
 
               <p className='pt-2 text-sm'>
                 I built Prodoc as a solution to the lack of customizability offered in current documentation tools.
@@ -326,17 +357,15 @@ export default function Editor() {
 
               <p className='pt-2 text-sm'>
                 My goal with Prodoc is for everyone to have a solid tool to setup their documentation websites and to get the best
-                of both worlds whiles doing it.
-                I hope you enjoy and if anything, do reach out to the Open Source team
-                <a href="https://github.com/ha-sante/Prodoc" target='_blank' className='underline'> here</a> (Opens in new tab).
+                of both worlds whiles doing it (easy management and front facing website customizability).
+                I hope you enjoy it and if anything, do reach out to the Open Source team <a href="https://github.com/ha-sante/Prodoc" target='_blank' className='underline'>here</a>
               </p>
 
 
-              <p className='pt-2 text-sm'>
+              <p className='pt-3 text-sm'>
                 This place will be replaced with analytics data soon. 📊
               </p>
             </div>
-
 
           </div>
         </div>
@@ -383,7 +412,7 @@ export default function Editor() {
 
   return (
     <>
-      <main className="min-h-screen flex-col items-center border justify-between">
+      <main className="min-h-screen flex-col items-center justify-between">
         <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
         <DefinitionsPrompt key={"definitions-prompt"} definitions={AppState.definitions} setDefinitions={AppState.setDefinitions} />
 
@@ -391,7 +420,7 @@ export default function Editor() {
           AuthenticationPage()
           :
           <div className="w-100">
-            {slug == undefined ?
+            {slug == null ?
               <div className="w-100">
                 <EditorSidebar />
                 {HomePage()}
@@ -400,7 +429,8 @@ export default function Editor() {
               <div className="w-100">
                 {AppState.page?.id !== undefined && Navigation()}
                 <EditorSidebar />
-                {AppState.navigation === 'api' ? APIPage() : EditorPage()}
+                {AppState.navigation === 'api' && APIPage()}
+                {AppState.navigation === 'product' && EditorPage()}
               </div>
             }
           </div>

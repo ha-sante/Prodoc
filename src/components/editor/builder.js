@@ -70,7 +70,7 @@ export default function BuilderEditor() {
 
     const Formations = ({ property, paths }) => {
         let input_mappings = { string: "text", integer: "number", object: "text" };
-        console.log("Formations", { paths, property });
+        //console.log("Formations", { paths, property });
 
         if (_.isPlainObject(property.properties)) {
             // GO OVER EACH MEMBER WITH OBJECT.KEYS
@@ -81,11 +81,11 @@ export default function BuilderEditor() {
                     {Object.keys(Object.fromEntries(Object.entries(property.properties).sort())).map((key, index) => {
                         let block = property.properties[key];
                         block.name = key; // set property name to its's key
-                        console.warn("block", block);
+                        //console.warn("block", block);
 
                         if (_.isPlainObject(block.properties)) {
                             let new_paths = paths + `/${block.name}`;
-                            console.log("block.is.of.type.object", { new_paths, block })
+                            //console.log("block.is.of.type.object", { new_paths, block })
                             return (
                                 <div className='mb-2'>
                                     <p className='text-black flex flex-row items-center'>{block.name}
@@ -104,7 +104,7 @@ export default function BuilderEditor() {
                         let current_value = _.get(AppState.builder, [...current_path, builder_path_label, block.name]);
                         let input_type = block?.type ? input_mappings[block.type] : "text";
                         let required = block?.nullable ? block?.nullable : false;
-                        console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
+                        //console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
                         return (
                             <div className='flex flex-row gap-2 mb-2 justify-between items-center'>
                                 <p className='text-black flex flex-row items-center'>{block.name}
@@ -123,7 +123,7 @@ export default function BuilderEditor() {
                                         let local = AppState.builder;
                                         _.set(local, [...current_path, builder_path_label], value);
                                         AppState.setBuilder(local);
-                                        console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
+                                        //console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
                                     }}
                                 />
                             </div>
@@ -154,7 +154,7 @@ export default function BuilderEditor() {
                 let body = page?.content?.api?.requestBody[0]; // is an object of element name and content\
                 let first_el_key = Object.keys(body)[0];
                 let property = _.get(body, first_el_key)?.schema;
-                console.log("body", { has_body, body, property })
+                //console.log("body", { has_body, body, property })
 
                 return (<div>
                     <h2 className='text-lg font-medium mt-5'>
@@ -176,7 +176,7 @@ export default function BuilderEditor() {
         if (AppState.page) {
             let parameters = AppState?.page?.content?.api?.parameters;
             let input_mappings = { string: "text", integer: "number" };
-            console.log("parameters", { parameters })
+            //console.log("parameters", { parameters })
             if (parameters) {
                 let header_params = parameters.filter(param => param["in"] == "header");
                 let query_params = parameters.filter(param => param["in"] == "query");
@@ -225,7 +225,7 @@ export default function BuilderEditor() {
                                                                 let local = AppState.builder;
                                                                 _.set(local, ["parameters", builder_path_label, param.name], value);
                                                                 AppState.setBuilder(local);
-                                                                console.log("param.input.changed", { value, local, current_value, builder: AppState.builder })
+                                                                //console.log("param.input.changed", { value, local, current_value, builder: AppState.builder })
                                                             }}
                                                         />
                                                     </div>
