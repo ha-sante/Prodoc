@@ -65,6 +65,7 @@ export default function Wrapper(props) {
             <StringToReactComponent data={{
                 Alert,
                 Avatar,
+                Accordion,
                 Badge,
                 Breadcrumb,
                 Button,
@@ -101,6 +102,7 @@ export default function Wrapper(props) {
                const {
                 Alert,
                 Avatar,
+                Accordion,
                 Badge,
                 Breadcrumb,
                 Button,

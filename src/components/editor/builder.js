@@ -33,10 +33,31 @@ export default function BuilderEditor() {
         { logo: "/editor/go.svg", name: "Golang" },
         { logo: "/editor/go.svg", name: "Java" },
     ]);
-    const [selected, setSelected] = useState();
+    const [selected, setSelected] = useState(0);
     const [code, setCode] = useState(
         `function add(a, b) { return a + b; }`
     );
+
+
+    useEffect(() => {
+        let environment = environments[selected];
+        let template = ``;
+
+        switch (environment.name.toLowerCase()) {
+            case "curl":
+                template = ``;
+                setCode(code);
+                break;
+            case "javascript":
+                template = ``;
+                setCode(code);
+                break;
+            case "curl":
+                template = ``;
+                setCode(code);
+                break;
+        }
+    }, [selected]);
 
     const Indicators = (page) => {
         // IF THE VALUE IS API
