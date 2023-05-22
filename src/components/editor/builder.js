@@ -36,63 +36,116 @@ export default function BuilderEditor() {
         { logo: "/editor/ruby.svg", name: "Ruby", target: "ruby" },
     ]);
     const [selected, setSelected] = useState(0);
+    const [base, setBase] = useState("");
     const [code, setCode] = useState(
         `function add(a, b) { return a + b; }`
     );
+    const [builder, setBuilder] = useState({});
+
 
     useEffect(() => {
-        AppState.setBuilder({});
+
+        // SET THE PAGE SERVER ENDPOINT
+        if (AppState.page) {
+            let url = AppState.page.content.api?.configuration?.servers[0].url;
+            console.log({ url });
+            setBase(url);
+            setBuilder({});
+        }
+
     }, [AppState.page]);
 
-
-    useEffect(() => {
+    const RenderCodeArea = () => {
         let environment = environments[selected];
         let template = ``;
 
         console.log("builder.data", { builder: AppState.builder })
 
-        // GET FORM DATA
-        let { body, parameters } = Object(AppState.builder);
-        let { headers, paths, queries } = Object(parameters);
-        let har_format = {
-            method: "POST",
-            url: "http://www.example.com/path/?param=value",
-            cookies: [],
-            queryString: [],
-            postData: {},
-            headers: [],
-        };
+        if (AppState.page) {
 
-        // HANDLE HEADERS
-        if (headers) {
-            _.mapKeys(headers, function (value, key) {
-                if (value) {
-                    har_format.headers.push({
-                        name: key,
-                        value: value,
-                        comment: ""
-                    })
-                }
-            });
-        }
+            // GET FORM DATA
+            let { body, parameters } = Object(AppState.builder);
+            let { header, path, query } = Object(parameters);
+            let base = AppState.page.content.api?.configuration?.servers[0].url;
+            let endpoint = AppState.page?.content.api.endpoint;
 
-        // HANDLE BODY
-        if (body) {
-            har_format.postData = {
-                "mimeType": "application/json;charset=UTF-8",
-                "params": [],
-                "text": JSON.stringify(body)
+            let har_format = {
+                method: "POST",
+                url: `${base}${endpoint}`,
+                cookies: [],
+                queryString: [],
+                postData: {},
+                headers: [],
+            };
+
+
+            // HANDLE PATH
+            if (path) {
+                // FOR THE ENDPOINT
+                // CHECK FOR EVERY WORD SARROUNDED BY {}
+                // REPLACE IT BY IT'S EQUIVALENT IN PATH
+                _.mapKeys(path, function (value, key) {
+                    let new_endpoint = _.replace(endpoint, `{${key}}`, value);
+                    if (new_endpoint) {
+                        har_format.url = base + new_endpoint;
+                    }
+                });
             }
-        }
+            console.log({ har_format, endpoint })
 
-        const snippet = new HTTPSnippet(har_format);
-        const options = { indent: '\t' };
-        const output = snippet.convert(environment.target.toLowerCase(), '', options);
-        console.log(output);
-        if (output) {
-            setCode(output);
+            // HANDLE HEADER
+            if (header) {
+                _.mapKeys(header, function (value, key) {
+                    if (value) {
+                        har_format.headers.push({
+                            name: key,
+                            value: value,
+                            comment: ""
+                        })
+                    }
+                });
+            }
+
+            // HANDLE QUERY
+            if (query) {
+                _.mapKeys(query, function (value, key) {
+                    if (value) {
+                        har_format.queryString.push({
+                            name: key,
+                            value: `${value}`,
+                        })
+                    }
+                });
+            }
+
+            // HANDLE BODY
+            if (body) {
+                har_format.postData = {
+                    "mimeType": "application/json",
+                    "params": [],
+                    "text": JSON.stringify(body)
+                }
+            }
+
+            const snippet = new HTTPSnippet(har_format);
+            const options = { indent: '\t' };
+
+            try {
+                const output = snippet.convert(environment.target.toLowerCase(), '', options);
+                // console.log(output);
+                if (output) {
+                    setCode(output);
+                }
+            } catch (error) {
+                console.log("error.generating.code.example", { error });
+            }
+
         }
-    }, [selected, AppState.builder]);
+    }
+
+    useEffect(() => {
+        RenderCodeArea();
+    }, [selected, builder]);
 
     const Indicators = (page) => {
         // IF THE VALUE IS API
@@ -103,9 +156,30 @@ export default function BuilderEditor() {
         }
     }
 
+    const TrazeForm = ({ property, paths }) => {
+        // FIRST PART OF LOOP = BODY
+        if (_.isPlainObject(property.properties)) {
+            Object.keys(Object.fromEntries(Object.entries(property.properties).sort())).map((key, index) => {
+                let block = { ...property.properties[key], name: key };
+
+                // IF TREE, HAS AN OBJECT AGAIN, LOOP THROUGH THAT
+                if (_.isPlainObject(block.properties)) {
+                    let new_paths = paths + `/${block.name}`;
+                    TrazeForm(block, new_paths);
+                }
+
+                // SET NORMAL VALUE PATH
+                // VALUE
+            })
+        }
+    }
+
     const Formations = ({ property, paths }) => {
         let input_mappings = { string: "text", integer: "number", object: "text" };
         //console.log("Formations", { paths, property });
+
+        // SET THE STATE FOR ALL THE OBJECT PROPERTIES NAMES AT THE PATH
+
 
         if (_.isPlainObject(property.properties)) {
             // GO OVER EACH MEMBER WITH OBJECT.KEYS
@@ -118,6 +192,7 @@ export default function BuilderEditor() {
                         block.name = key; // set property name to its's key
                         //console.warn("block", block);
 
+                        // IF TREE, HAS AN OBJECT AGAIN, LOOP THROUGH THAT
                         if (_.isPlainObject(block.properties)) {
                             let new_paths = paths + `/${block.name}`;
                             //console.log("block.is.of.type.object", { new_paths, block })
@@ -133,13 +208,18 @@ export default function BuilderEditor() {
                             )
                         }
 
+                        // ELSE, RENDER THE FORM BLOCK AS RECIEVED
                         let builder_path_label = key;
                         let current_path = paths.split("/")
-                        let value_exists = _.has(AppState.builder, [...current_path, builder_path_label, block.name]);
-                        let current_value = _.get(AppState.builder, [...current_path, builder_path_label, block.name]);
+                        let value_exists = _.has(builder, [...current_path, builder_path_label, block.name]);
+                        let current_value = _.get(builder, [...current_path, builder_path_label, block.name]);
                         let input_type = block?.type ? input_mappings[block.type] : "text";
                         let required = block?.nullable ? block?.nullable : false;
-                        //console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
+                        // console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
+
+                        let val = current_value ? current_value : "";
+                        console.warn("current_value", { current_value });
+                        // const [inputValue, setInputValue] = useState({ [key]: `${val}` });
                         return (
                             <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
                                 <p className='text-black flex flex-row items-center'>{block.name}
@@ -152,12 +232,14 @@ export default function BuilderEditor() {
                                     className='w-[30%]'
                                     placeholder={`${key}`}
                                     required={required}
-                                    value={current_value}
+                                    value={inputValue[key]} // variable["something"]{something}
                                     onChange={(e) => {
                                         let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
-                                        let local = AppState.builder;
+                                        let local = builder;
+                                        // ORIGINAL
                                         _.set(local, [...current_path, builder_path_label], value);
-                                        AppState.setBuilder(local);
+                                        setInputValue({ [key]: value });
+                                        setBuilder({ ...local });
                                         // console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
                                     }}
                                 />
@@ -169,10 +251,11 @@ export default function BuilderEditor() {
             )
         }
 
-        return (<div><p>Hello Rolling</p></div>)
+        return (<div><p></p></div>)
     }
 
     const BodySection = () => {
+        console.log("rendered.body.section")
         // GET THE FIRST ELEMENT OF THE BODY
         // GET ITS SCHEMA
         // - GET THE SCHEMAS PROPERTIES
@@ -182,6 +265,12 @@ export default function BuilderEditor() {
         // - IF THERE'S AN OBJECT, CALL RECURSIVE FUNCTION
 
         // RECURSIVELY RENDER THE CHILD'S LIST
+
+
+        // Making inputs controlled
+        // - Keep this in local state variable
+
+
         let page = AppState.page;
         if (page) {
             let has_body = AppState?.page?.content?.api?.requestBody?.length > 0;
@@ -238,8 +327,8 @@ export default function BuilderEditor() {
 
                                         {
                                             block.child.map((param, param_index) => {
-                                                let value_exists = _.has(AppState.builder, ["parameters", builder_path_label, param.name]);
-                                                let current_value = _.get(AppState.builder, ["parameters", builder_path_label, param.name]);
+                                                let value_exists = _.has(builder, ["parameters", builder_path_label, param.name]);
+                                                let current_value = _.get(builder, ["parameters", builder_path_label, param.name]);
                                                 let input_type = param?.schema ? input_mappings[param.schema.type] : "text";
                                                 let required = param?.required ? param?.required : false;
                                                 return (
@@ -257,9 +346,9 @@ export default function BuilderEditor() {
                                                             value={current_value}
                                                             onChange={(e) => {
                                                                 let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
-                                                                let local = AppState.builder;
+                                                                let local = builder;
                                                                 _.set(local, ["parameters", builder_path_label, param.name], value);
-                                                                AppState.setBuilder(local);
+                                                                setBuilder(local);
                                                                 //console.log("param.input.changed", { value, local, current_value, builder: AppState.builder })
                                                             }}
                                                         />

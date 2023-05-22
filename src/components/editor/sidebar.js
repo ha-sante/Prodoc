@@ -44,7 +44,6 @@ export default function EditorSidebar() {
 
     // useEffect(() => {
     //     console.log("rerendering.the.sidebar", { remote_navigation: AppState.navigation, navigation})
-
     //     if (AppState.navigation !== navigation) {
     //         setNavigation(AppState.navigation)
     //     }
