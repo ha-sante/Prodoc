@@ -285,7 +285,7 @@ export default function Editor() {
             <div className="p-4 rounded-lg dark:border-gray-700">
 
               <div className='flex flex-row items-center justify-between mb-3 mt-6 text-center'>
-                <p class="text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
+                <p className="text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
                   <ArrowLeft2 size="16" className="mr-2" />
                   Click/Create a new page to start editing
                 </p>
@@ -312,7 +312,7 @@ export default function Editor() {
             <div className="p-4 rounded-lg dark:border-gray-700">
 
               <div className='flex flex-row items-center justify-between mb-3 mt-6 text-center'>
-                <p class="block text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
+                <p className="text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
                   <ArrowLeft2 size="16" className="mr-2" />
                   Click/Create a new page to start editing
                 </p>
@@ -334,9 +334,9 @@ export default function Editor() {
           <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
 
             <div className='flex flex-row items-center justify-between mb-3'>
-              <h2 for="helper-text" class="block text-lg font-medium text-gray-900 dark:text-white">Welcome Home 👋</h2>
+              <h2 className="block text-lg font-medium text-gray-900 dark:text-white">Welcome Home 👋</h2>
             </div>
-            
+
             <div className='mt-3 p-3 text-left'>
 
               <div className='flex'>
@@ -380,7 +380,7 @@ export default function Editor() {
         <div className="p-5 border-b-2 border-gray-200 w-[100%] mx-auto !bg-white border-dashed dark:border-gray-700">
 
           <div className='flex flex-row items-center justify-between'>
-            <h2 for="helper-text" class="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
+            <h2 className="block text-sm font-medium text-gray-900 dark:text-white">Editing Page</h2>
 
             <div className='flex flex-row'>
               <Button size="xs" className="mr-4" disabled={true} color="light" onClick={() => handleSavePageData()}>
@@ -392,12 +392,12 @@ export default function Editor() {
               </Button>
 
               {AppState.edited ?
-                <Button size="xs" isProcessing={processing} color="warning" onClick={() => handleSavePageData()}>
+                <Button size="xs" color="warning" onClick={() => handleSavePageData()}>
                   Save Page Data Update
                   <CloudChange size="16" className="ml-2" color="#fff" />
                 </Button>
                 :
-                <Button size="xs" isProcessing={processing} onClick={() => handleSavePageData()}>
+                <Button size="xs" onClick={() => handleSavePageData()}>
                   Save Page Data
                   <CloudPlus size="16" className="ml-2" color="#fff" />
                 </Button>

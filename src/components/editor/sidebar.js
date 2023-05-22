@@ -292,7 +292,7 @@ export default function EditorSidebar() {
                                             </div>
 
                                             {page.id === 'book' ?
-                                                <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
+                                                <Button size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
                                                 :
                                                 <div className='flex flex-row w-100 items-center'>
                                                     <Dropdown
@@ -396,7 +396,7 @@ export default function EditorSidebar() {
 
 
                         {page.id === 'book' ?
-                            <Button isProcessing={processing} size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
+                            <Button size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
                             :
                             <div className='flex flex-row w-100 items-center'>
                                 <Dropdown

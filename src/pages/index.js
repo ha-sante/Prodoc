@@ -6,7 +6,8 @@ const inter = Inter({ subsets: ['latin'] })
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-white">
-      <h2>INDEX PAGE</h2>
+      <h2>This is the index page.</h2>
+      <p>Its the placeholder for the front facing website of the documentation site.</p>
     </main>
   )
 }
