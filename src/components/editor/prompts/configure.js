@@ -2,7 +2,8 @@ import { default as React } from 'react';
 import { Tabs, Accordion, Card, Button, Modal, TextInput, Textarea } from "flowbite-react";
 import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsax-react';
 
-import { AppStateContext } from '../../../context/state';
+import { store } from '../../../context/state';
+import { useStore } from "jotai";
 
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -15,7 +16,9 @@ import JSON5 from 'json5'
 import { toast } from 'react-hot-toast';
 
 export default function ConfigurePagePrompt(props) {
-    const AppState = React.useContext(AppStateContext);
+    // const AppState = React.useContext(AppStateContext);
+    const [AppState, setAppState] = useStore(store);
+
     const [code, setCode] = React.useState('');
 
     const inputRef = React.useRef();
@@ -83,7 +86,7 @@ export default function ConfigurePagePrompt(props) {
     }
 
     return (
-        <Modal size="md" show={AppState.configure} onClose={() => { AppState.setConfigure(false); }} popup={true}>
+        <Modal size="md" show={AppState.configure} onClose={() => { setAppState({ configure: false }); }} popup={true}>
 
             <Modal.Header className='text-sm !p-5 !pb-0'>
                 <p>Page Configuration</p>
@@ -119,7 +122,7 @@ export default function ConfigurePagePrompt(props) {
                 <Button size={"sm"} onClick={HandleSetConfiguration}>
                     Set
                 </Button>
-                <Button size={"sm"} color="gray" onClick={() => { AppState.setConfigure(false) }}>
+                <Button size={"sm"} color="gray" onClick={() => { setAppState({ configure: false }); }}>
                     Cancel
                 </Button>
             </Modal.Footer>

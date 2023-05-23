@@ -23,11 +23,13 @@ import { uploadFile } from '@uploadcare/upload-client'
 import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 
 import Components from './tools/components'
-import { AppStateContext } from '../../context/state';
+
+import { store } from '../../context/state';
+import { useStore } from "jotai";
 
 export default function EditorComponent(props) {
   const ejInstance = useRef();
-  const AppState = useContext(AppStateContext);
+  const [AppState, setAppState] = useStore(store);
 
   const initEditor = () => {
     console.log("initEditor.called");

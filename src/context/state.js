@@ -2,7 +2,8 @@ import React, { Component, useContext, useState } from 'react';
 import { render } from 'react-dom';
 import axios from 'axios';
 
-const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
+// DEFAULT DATAS
+export const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
   "time": new Date().getTime(),
   "blocks": [
     {
@@ -21,8 +22,7 @@ const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
     },
   ]
 }
-
-const DEFAULT_PAGE_DATA = {
+export const DEFAULT_PAGE_DATA = {
   type: "api",
   position: "child",
   title: "",
@@ -38,10 +38,8 @@ const DEFAULT_PAGE_DATA = {
   }
 }
 
-
-
+// REACT CONTEXT STATEMENT MANAGEMENT
 const AppContext = React.createContext();
-
 export function AppStateProvider({ children }) {
   const [content, setContent] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -92,5 +90,55 @@ export function AppStateProvider({ children }) {
     <AppContext.Provider value={data}> {children} </AppContext.Provider>
   );
 };
+// export const AppStateContext = AppContext;
 
-export const AppStateContext = AppContext;
+
+// API CALLS 
+function ContentAPIHandler(option, data) {
+  switch (option) {
+    case 'POST':
+      return axios.post('/api/content', data);
+      break;
+    case 'GET':
+      return axios.get('/api/content');
+      break;
+    case 'PUT':
+      return axios.put('/api/content', data);
+      break;
+    case 'DELETE':
+      return axios.delete(`/api/content?id=${data.id}`);
+      break;
+    case 'PATCH':
+      return axios.patch(`/api/content`, data);
+      break;
+  }
+}
+
+
+// JOTAI STATE MANAGEMENT
+import { createStore, Provider, useStore } from "jotai";
+export const store = createStore(() => ({
+  counter: 0,
+  content: [],
+  pagination: {},
+  page: null,
+  configure: false,
+  code: '{ privacy: "public" }',
+  edited: false,
+  authenticated: false,
+  permission: false,
+  definitions: false,
+  navigation: 'main',
+  builder: {},
+
+  // STATIC DATA & METHODS
+  DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
+  DEFAULT_PAGE_DATA,
+  ContentAPIHandler
+}));
+export function JotaiAppStateProvider({ children }) {
+  return (<Provider store={store}> {children} </Provider>);
+};
+export const AppStateStoreProvider = JotaiAppStateProvider;
+
+

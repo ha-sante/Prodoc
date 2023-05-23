@@ -2,7 +2,9 @@ import { useState, useContext, useRef, useCallback, useEffect } from 'react';
 import { Tabs, Accordion, Card, Button, Modal, TextInput, Textarea, Spinner } from "flowbite-react";
 import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsax-react';
 
-import { AppStateContext } from '../../../context/state';
+// import { AppStateContext } from '../../../context/state';
+import { store } from '../../../context/state';
+import { useStore } from "jotai";
 
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -17,7 +19,9 @@ import axios from 'axios';
 const _ = require('lodash');
 
 export default function APIDefinitionsPrompt(props) {
-    const AppState = useContext(AppStateContext);
+    // const AppState = useContext(AppStateContext);
+    const [AppState, setAppState] = useStore(store);
+
     const [code, setCode] = useState('');
     const [processing, setProcessing] = useState(false);
     const rootRef = useRef(null);
@@ -107,8 +111,8 @@ export default function APIDefinitionsPrompt(props) {
                 let data = endpoint[name];
                 if (data) {
                     let page = ReturnHandlingForAllMethods(data, url, components, paths, name);
-                    
-                    page.content.api["configuration"] = { };
+
+                    page.content.api["configuration"] = {};
                     page.content.api.configuration.servers = servers ? servers : [];
                     page.content.api.configuration.openapi = openapi ? openapi : "";
                     page.content.api.configuration.info = info ? info : {};
@@ -136,7 +140,7 @@ export default function APIDefinitionsPrompt(props) {
                 },
             };
 
-            page.content.api["configuration"] = { };
+            page.content.api["configuration"] = {};
             page.content.api.configuration.servers = servers ? servers : [];
             page.content.api.configuration.openapi = openapi ? openapi : "";
             page.content.api.configuration.info = info ? info : {};
@@ -157,11 +161,13 @@ export default function APIDefinitionsPrompt(props) {
             // GET THE NEW CONTENT LIST
             AppState.ContentAPIHandler('GET').then(response => {
                 // SET NEW CONTENT
-                AppState.setContent(response.data);
+                // AppState.setContent(response.data);
+                setAppState({ content: response.data });
                 setProcessing(false);
                 toast.dismiss(toastId);
                 toast.success("Creating/Recreating your api pages complete");
-                AppState.setDefinitions(false);
+                // AppState.setDefinitions(false);
+                setAppState({ definitions: false });
             }).catch(error => {
                 console.log('error', error);
                 setProcessing(false);
@@ -172,14 +178,13 @@ export default function APIDefinitionsPrompt(props) {
         });
     }
 
-
     useEffect(() => {
         setProcessing(false);
     }, []);
 
     return (
         <div ref={rootRef} className='w-[100%]'>
-            <Modal size="2xl" show={AppState.definitions} onClose={() => { AppState.setDefinitions(false); }} popup={true} root={rootRef.current ?? undefined}>
+            <Modal size="2xl" show={AppState.definitions} onClose={() => { setAppState({ definitions: false }); }} popup={true} root={rootRef.current ?? undefined}>
 
                 <Modal.Header className='text-sm !p-5 !pb-0'>
                     <p>Create API Pages </p>
@@ -202,7 +207,7 @@ export default function APIDefinitionsPrompt(props) {
                             id="code-area"
                             placeholder="Paste content of Spec File here"
                             onChange={e => {
-                                let value = e.target.value;
+                                let value = e.target.value; 2
                                 console.log("textinput.value.changed", { value })
                                 setCode(value);
                             }}
@@ -217,7 +222,7 @@ export default function APIDefinitionsPrompt(props) {
                         {processing && <Spinner size={'sm'} aria-label="Spinner button example" className='mr-2' />}
                         {processing ? 'Generating & Replacing' : 'Generate & Replace'}
                     </Button>
-                    <Button size={"sm"} color="gray" onClick={() => { setProcessing(false); AppState.setDefinitions(false) }}>
+                    <Button size={"sm"} color="gray" onClick={() => { setProcessing(false); setAppState({ definitions: false }); }}>
                         Cancel
                     </Button>
                 </Modal.Footer>

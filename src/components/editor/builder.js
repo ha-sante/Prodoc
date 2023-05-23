@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { useRouter } from 'next/router'
 
 import { Inter } from 'next/font/google'
@@ -10,7 +10,9 @@ const inter = Inter({ subsets: ['latin'] })
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
-import { AppStateContext } from '../../context/state';
+import { store } from '../../context/state';
+import { useStore } from "jotai";
+
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -25,7 +27,9 @@ import 'prismjs/themes/prism.css'; //Example style, you can use another
 import HTTPSnippet from 'httpsnippet';
 
 export default function BuilderEditor() {
-    const AppState = useContext(AppStateContext);
+    // const AppState = useContext(AppStateContext);
+    const [AppState, setAppState] = useStore(store);
+
     const router = useRouter();
     const [environments, setEnvironments] = useState([
         { logo: "/editor/curl.svg", name: "cURL", target: "shell" },
@@ -44,7 +48,6 @@ export default function BuilderEditor() {
 
 
     useEffect(() => {
-
         // SET THE PAGE SERVER ENDPOINT
         if (AppState.page) {
             let url = AppState.page.content.api?.configuration?.servers[0].url;
@@ -52,14 +55,11 @@ export default function BuilderEditor() {
             setBase(url);
             setBuilder({});
         }
-
     }, [AppState.page]);
 
     const RenderCodeArea = () => {
         let environment = environments[selected];
         let template = ``;
-
-        console.log("builder.data", { builder: AppState.builder })
 
         if (AppState.page) {
 
@@ -179,8 +179,6 @@ export default function BuilderEditor() {
         //console.log("Formations", { paths, property });
 
         // SET THE STATE FOR ALL THE OBJECT PROPERTIES NAMES AT THE PATH
-
-
         if (_.isPlainObject(property.properties)) {
             // GO OVER EACH MEMBER WITH OBJECT.KEYS
             // RENDER AN INPUT FOR THEM IF THEY ARE OF TYPE STRING
@@ -209,17 +207,22 @@ export default function BuilderEditor() {
                         }
 
                         // ELSE, RENDER THE FORM BLOCK AS RECIEVED
-                        let builder_path_label = key;
-                        let current_path = paths.split("/")
-                        let value_exists = _.has(builder, [...current_path, builder_path_label, block.name]);
-                        let current_value = _.get(builder, [...current_path, builder_path_label, block.name]);
-                        let input_type = block?.type ? input_mappings[block.type] : "text";
-                        let required = block?.nullable ? block?.nullable : false;
-                        // console.log("block.typed", { builder_path_label, current_path, value_exists, current_value, input_type })
+                        let builder_path_label = key; // GET THE CURRENT END OF THE STICK WE ARE ON
+                        let current_path = paths.split("/"); // SPLIT CURRENT PATH INTO ARRAY OF KEYS
+                        let value_exists = _.has(builder, [...current_path, builder_path_label, block.name]); // CHECK IF VALUE IS SET FOR CURRENT INPUT
+                        let current_value = _.get(builder, [...current_path, builder_path_label, block.name]); // GET THAT VALUE
+                        let input_type = block?.type ? input_mappings[block.type] : "text"; // GET THE VALUE ACCEPTED FOR THE INPUT
+                        let required = block?.nullable ? block?.nullable : false; // GET IF ITS REQUIRED OR NOT
+                        let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE
+                        let inputRef = useRef(); // CREATE A HOLD FOR THE INPUT
 
-                        let val = current_value ? current_value : "";
-                        console.warn("current_value", { current_value });
-                        // const [inputValue, setInputValue] = useState({ [key]: `${val}` });
+                        console.log("rendering.input.content", { current_path, value_exists, current_value, input_type, required, inputValue, inputRef });
+
+                        useEffect(() => {
+                            // Instruction we give here will render once component gets rendered
+                            console.log("current.value.changed", current_value)
+                        }, [current_value]);
+
                         return (
                             <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
                                 <p className='text-black flex flex-row items-center'>{block.name}
@@ -232,14 +235,19 @@ export default function BuilderEditor() {
                                     className='w-[30%]'
                                     placeholder={`${key}`}
                                     required={required}
-                                    value={inputValue[key]} // variable["something"]{something}
+                                    ref={inputRef}
+                                    defaultValue={current_value}
                                     onChange={(e) => {
                                         let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
+                                        console.log("input.member.edited", { ref: inputRef, value, builder });
                                         let local = builder;
-                                        // ORIGINAL
                                         _.set(local, [...current_path, builder_path_label], value);
-                                        setInputValue({ [key]: value });
+                                        console.log("builder.data.update", { local })
+                                        e.target.focus();
                                         setBuilder({ ...local });
+
+                                        // // ORIGINAL
+                                        // setInputValue({ [key]: value });
                                         // console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
                                     }}
                                 />
@@ -251,26 +259,15 @@ export default function BuilderEditor() {
             )
         }
 
-        return (<div><p></p></div>)
+        return (<div><p>I visited here</p></div>)
     }
 
+    /**
+     * This function recursively creates the form UI & maps in the best way possible, the form input to it's state value
+     * 
+     * @returns {number} The api request body form UI component with conditionally recusive children
+     */
     const BodySection = () => {
-        console.log("rendered.body.section")
-        // GET THE FIRST ELEMENT OF THE BODY
-        // GET ITS SCHEMA
-        // - GET THE SCHEMAS PROPERTIES
-
-        // GO OVER EACH AND CREATE THE FORM
-        // - PER EACH CHILD, CHECK IF THERE'S AN OBJECT
-        // - IF THERE'S AN OBJECT, CALL RECURSIVE FUNCTION
-
-        // RECURSIVELY RENDER THE CHILD'S LIST
-
-
-        // Making inputs controlled
-        // - Keep this in local state variable
-
-
         let page = AppState.page;
         if (page) {
             let has_body = AppState?.page?.content?.api?.requestBody?.length > 0;
@@ -279,6 +276,7 @@ export default function BuilderEditor() {
                 let first_el_key = Object.keys(body)[0];
                 let property = _.get(body, first_el_key)?.schema;
                 //console.log("body", { has_body, body, property })
+                console.log("rendering.body.section")
 
                 return (<div>
                     <h2 className='text-lg font-medium mt-5'>
