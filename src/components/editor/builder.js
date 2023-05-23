@@ -13,7 +13,7 @@ import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, Arro
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -285,7 +285,6 @@ export default function BuilderEditor() {
      * @returns {number} The api request body form UI component with conditionally recusive children
      */
     const BodySection = () => {
-        let page = page;
         if (page) {
             let has_body = page?.content?.api?.requestBody?.length > 0;
             if (has_body) {
@@ -311,7 +310,6 @@ export default function BuilderEditor() {
         // FOR EACH CATEGORY
         // CREATE ITS SECTION OF THE VIEW BLOCK
         // RENDER IT IN THE VIEW
-        let page = page;
         if (page) {
             let parameters = page?.content?.api?.parameters;
             let input_mappings = { string: "text", integer: "number" };

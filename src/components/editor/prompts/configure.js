@@ -2,8 +2,12 @@ import { default as React } from 'react';
 import { Tabs, Accordion, Card, Button, Modal, TextInput, Textarea } from "flowbite-react";
 import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsax-react';
 
-import { store } from '../../../context/state';
-import { useStore } from "jotai";
+import {
+    store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+} from '../../../context/state';
+import { useStore, useAtom } from "jotai";
 
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -16,10 +20,21 @@ import JSON5 from 'json5'
 import { toast } from 'react-hot-toast';
 
 export default function ConfigurePagePrompt(props) {
-    // const AppState = React.useContext(AppStateContext);
-    const [AppState, setAppState] = useStore(store);
+    const [content, setContent] = useAtom(contentAtom);
 
-    const [code, setCode] = React.useState('');
+    const [pagination, setPagination] = useAtom(paginationAtom);
+    const [page, setPage] = useAtom(pageAtom);
+    const [builder, setBuilder] = useAtom(builderAtom);
+
+    const [configure, setConfigure] = useAtom(configureAtom);
+    const [edited, setEdited] = useAtom(editedAtom);
+    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    const [permission, setPermission] = useAtom(permissionAtom);
+    const [definitions, setDefinitions] = useAtom(definitionsAtom);
+
+    const [code, setCode] = useAtom(codeAtom);
+    const [navigation, setNavigation] = useAtom(navigationAtom);
+
 
     const inputRef = React.useRef();
     const editorRef = React.useRef();
@@ -35,17 +50,17 @@ export default function ConfigurePagePrompt(props) {
     React.useEffect(() => {
         // console.log("config.started", inputRef);
         if (inputRef.current && code == "") {
-            let page = AppState.content.find(page => AppState.page?.id == page.id);
+            let page = content.find(page => page?.id == page.id);
             inputRef.current.value = JSON.stringify(page?.configuration, undefined, 4);
         }
-    }, [AppState.configure]);
+    }, [configure]);
 
     const ReturnEditMode = () => {
         return (
             <div className='w-100 border'>
                 <Editor
                     ref={editorRef}
-                    // value={AppState.code}
+                    // value={code}
                     onValueChange={code => console.log(code)}
                     highlight={code => {
                         let update = inputRef.current?.value;
@@ -86,7 +101,7 @@ export default function ConfigurePagePrompt(props) {
     }
 
     return (
-        <Modal size="md" show={AppState.configure} onClose={() => { setAppState({ configure: false }); }} popup={true}>
+        <Modal size="md" show={configure} onClose={() => { setConfigure(false); }} popup={true}>
 
             <Modal.Header className='text-sm !p-5 !pb-0'>
                 <p>Page Configuration</p>
@@ -122,7 +137,7 @@ export default function ConfigurePagePrompt(props) {
                 <Button size={"sm"} onClick={HandleSetConfiguration}>
                     Set
                 </Button>
-                <Button size={"sm"} color="gray" onClick={() => { setAppState({ configure: false }); }}>
+                <Button size={"sm"} color="gray" onClick={() => { setConfigure(false); }}>
                     Cancel
                 </Button>
             </Modal.Footer>

@@ -94,7 +94,7 @@ export const DEFAULT_PAGE_DATA = {
 
 
 // API CALLS 
-function ContentAPIHandler(option, data) {
+export function ContentAPIHandler(option, data) {
   switch (option) {
     case 'POST':
       return axios.post('/api/content', data);

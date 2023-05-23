@@ -2,9 +2,12 @@ import { useState, useContext, useRef, useCallback, useEffect } from 'react';
 import { Tabs, Accordion, Card, Button, Modal, TextInput, Textarea, Spinner } from "flowbite-react";
 import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsax-react';
 
-// import { AppStateContext } from '../../../context/state';
-import { store } from '../../../context/state';
-import { useStore } from "jotai";
+import {
+    store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+} from '../../../context/state';
+import { useStore, useAtom } from "jotai";
 
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -19,10 +22,23 @@ import axios from 'axios';
 const _ = require('lodash');
 
 export default function APIDefinitionsPrompt(props) {
-    // const AppState = useContext(AppStateContext);
-    const [AppState, setAppState] = useStore(store);
+    const [content, setContent] = useAtom(contentAtom);
 
-    const [code, setCode] = useState('');
+    const [pagination, setPagination] = useAtom(paginationAtom);
+    const [page, setPage] = useAtom(pageAtom);
+    const [builder, setBuilder] = useAtom(builderAtom);
+
+    const [configure, setConfigure] = useAtom(configureAtom);
+    const [edited, setEdited] = useAtom(editedAtom);
+    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    const [permission, setPermission] = useAtom(permissionAtom);
+    const [definitions, setDefinitions] = useAtom(definitionsAtom);
+
+    const [code, setCode] = useAtom(codeAtom);
+    const [navigation, setNavigation] = useAtom(navigationAtom);
+
+
+
     const [processing, setProcessing] = useState(false);
     const rootRef = useRef(null);
     const [temp, setTemp] = useState({});
@@ -59,13 +75,13 @@ export default function APIDefinitionsPrompt(props) {
 
     const ReturnHandlingForAllMethods = (data, url, components, paths, method) => {
         return {
-            ...AppState.DEFAULT_PAGE_DATA,
+            ...DEFAULT_PAGE_DATA,
             type: "api",
             position: "child",
             title: data?.summary ? data.summary.trim() : url,
             description: data?.description ? data?.description.trim() : "",
             content: {
-                ...AppState.DEFAULT_PAGE_DATA?.content,
+                ...DEFAULT_PAGE_DATA?.content,
                 api: {
                     endpoint: url,
                     type: method,
@@ -129,13 +145,13 @@ export default function APIDefinitionsPrompt(props) {
         // CREATE PARENT PAGES
         Object.keys(mappings).map((label) => {
             let page = {
-                ...AppState.DEFAULT_PAGE_DATA,
+                ...DEFAULT_PAGE_DATA,
                 type: "api",
                 position: "chapter",
                 title: label,
                 description: `${label} - Overview Page`,
                 content: {
-                    ...AppState.DEFAULT_PAGE_DATA?.content,
+                    ...DEFAULT_PAGE_DATA?.content,
                     api: {}
                 },
             };
@@ -157,17 +173,15 @@ export default function APIDefinitionsPrompt(props) {
         // console.log("all.child.pages", bulk);
 
         // BULK CREATE THE CONTENT PAGES
-        AppState.ContentAPIHandler('PATCH', bulk).then(response => {
+        ContentAPIHandler('PATCH', bulk).then(response => {
             // GET THE NEW CONTENT LIST
-            AppState.ContentAPIHandler('GET').then(response => {
+            ContentAPIHandler('GET').then(response => {
                 // SET NEW CONTENT
-                // AppState.setContent(response.data);
-                setAppState({ content: response.data });
+                setContent(response.data);
                 setProcessing(false);
                 toast.dismiss(toastId);
                 toast.success("Creating/Recreating your api pages complete");
-                // AppState.setDefinitions(false);
-                setAppState({ definitions: false });
+                setDefinitions(false);
             }).catch(error => {
                 console.log('error', error);
                 setProcessing(false);
@@ -184,7 +198,7 @@ export default function APIDefinitionsPrompt(props) {
 
     return (
         <div ref={rootRef} className='w-[100%]'>
-            <Modal size="2xl" show={AppState.definitions} onClose={() => { setAppState({ definitions: false }); }} popup={true} root={rootRef.current ?? undefined}>
+            <Modal size="2xl" show={definitions} onClose={() => { setDefinitions(false) }} popup={true} root={rootRef.current ?? undefined}>
 
                 <Modal.Header className='text-sm !p-5 !pb-0'>
                     <p>Create API Pages </p>
@@ -222,7 +236,7 @@ export default function APIDefinitionsPrompt(props) {
                         {processing && <Spinner size={'sm'} aria-label="Spinner button example" className='mr-2' />}
                         {processing ? 'Generating & Replacing' : 'Generate & Replace'}
                     </Button>
-                    <Button size={"sm"} color="gray" onClick={() => { setProcessing(false); setAppState({ definitions: false }); }}>
+                    <Button size={"sm"} color="gray" onClick={() => { setProcessing(false); setDefinitions(false); }}>
                         Cancel
                     </Button>
                 </Modal.Footer>
