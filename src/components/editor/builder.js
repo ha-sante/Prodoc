@@ -12,7 +12,8 @@ import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, Arro
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 

@@ -24,12 +24,32 @@ import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 
 import Components from './tools/components'
 
-import { store } from '../../context/state';
-import { useStore } from "jotai";
+import {
+  store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
+  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
+  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
+} from '../../context/state';
+import { useStore, useAtom } from "jotai";
+
 
 export default function EditorComponent(props) {
   const ejInstance = useRef();
-  const [AppState, setAppState] = useStore(store);
+
+  const [content, setContent] = useAtom(contentAtom);
+
+  const [pagination, setPagination] = useAtom(paginationAtom);
+  const [page, setPage] = useAtom(pageAtom);
+  const [builder, setBuilder] = useAtom(builderAtom);
+
+  const [configure, setConfigure] = useAtom(configureAtom);
+  const [edited, setEdited] = useAtom(editedAtom);
+  const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+  const [permission, setPermission] = useAtom(permissionAtom);
+  const [definitions, setDefinitions] = useAtom(definitionsAtom);
+
+  const [code, setCode] = useAtom(codeAtom);
+  const [navigation, setNavigation] = useAtom(navigationAtom);
+
 
   const initEditor = () => {
     console.log("initEditor.called");
@@ -39,7 +59,7 @@ export default function EditorComponent(props) {
         ejInstance.current = editor;
       },
       autofocus: false,
-      data: AppState.page !== undefined ? AppState.page?.content?.editor : AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
+      data: page !== undefined ? page?.content?.editor : DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
       onChange: async () => {
         let output = await editor.saver.save();
         props.onSave(output, output.blocks[0]?.data?.text, output.blocks[1]?.data?.text);
@@ -105,7 +125,7 @@ export default function EditorComponent(props) {
 
   // This will run only once
   useEffect(() => {
-    if (AppState.page != null) {
+    if (page != null) {
       console.log("editorjs.page.refreshed", { ejInstance });
 
       if (ejInstance.current == null) {
@@ -118,7 +138,7 @@ export default function EditorComponent(props) {
         ejInstance.current = null;
       };
     }
-  }, [AppState.page]);
+  }, [page]);
 
   return <><div id='editorjs'></div></>;
 }

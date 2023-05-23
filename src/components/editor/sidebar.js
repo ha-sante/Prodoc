@@ -10,8 +10,12 @@ const inter = Inter({ subsets: ['latin'] })
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
-import { store } from '../../context/state';
-import { useStore } from "jotai";
+import {
+    store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
+} from '../../context/state';
+import { useStore, useAtom } from "jotai";
 
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -33,12 +37,27 @@ const StrictModeDroppable = ({ children, ...props }) => {
 };
 
 export default function EditorSidebar() {
-    // const AppState = useContext(AppStateContext);
-    const [AppState, setAppState] = useStore(store);
+
+    const [content, setContent] = useAtom(contentAtom);
+
+    const [pagination, setPagination] = useAtom(paginationAtom);
+    const [page, setPage] = useAtom(pageAtom);
+    const [builder, setBuilder] = useAtom(builderAtom);
+
+    const [configure, setConfigure] = useAtom(configureAtom);
+    const [edited, setEdited] = useAtom(editedAtom);
+    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    const [permission, setPermission] = useAtom(permissionAtom);
+    const [definitions, setDefinitions] = useAtom(definitionsAtom);
+
+    const [code, setCode] = useAtom(codeAtom);
+    const [navigation, setNavigation] = useAtom(navigationAtom);
+
+
 
     const router = useRouter();
     const [processing, setProcessing] = useState(false);
-    const [navigation, setNavigation] = useState('main');
+    // const [navigation, setNavigation] = useState('main');
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
@@ -47,20 +66,20 @@ export default function EditorSidebar() {
     ];
 
     // useEffect(() => {
-    //     console.log("rerendering.the.sidebar", { remote_navigation: AppState.navigation, navigation})
-    //     if (AppState.navigation !== navigation) {
-    //         setNavigation(AppState.navigation)
+    //     console.log("rerendering.the.sidebar", { remote_navigation: navigation, navigation})
+    //     if (navigation !== navigation) {
+    //         setNavigation(navigation)
     //     }
-    // }, [AppState.navigation]);
+    // }, [navigation]);
 
     function HandleAddPage(position, parent_id) {
         // PAGE IS SOMETHING
         let page = {
-            type: AppState.navigation,
+            type: navigation,
             position: position,
             title: position == 'chapter' ? "Added Chapter Page" : "Added Child Page",
             description: "",
-            content: { editor: AppState.DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
+            content: { editor: DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
             children: [],
             configuration: {
                 privacy: "public", // or hidden
@@ -74,7 +93,7 @@ export default function EditorSidebar() {
         let toastId = toast.loading('Adding the new Page...');
 
         // GET ALL THE LATEST CONTENT
-        AppState.ContentAPIHandler('POST', page).then(response => {
+        ContentAPIHandler('POST', page).then(response => {
             console.log('response', response.data);
             toast.success('Child Page created & saved');
 
@@ -83,17 +102,16 @@ export default function EditorSidebar() {
                 // ADD IT TO THE PARENTS CHILDREN LIST
                 // & UPDATE THE PARENTS DATA
                 // OPEN THE PARENTS DROPDOWN
-                let parent_page = AppState.content.find((page) => page.id == parent_id);
+                let parent_page = content.find((page) => page.id == parent_id);
                 parent_page.children.push(response.data.id);
 
-                AppState.ContentAPIHandler('PUT', parent_page).then(response2 => {
+                ContentAPIHandler('PUT', parent_page).then(response2 => {
                     console.log('response', response2.data);
-                    let newContent = [...AppState.content];
-                    let parent_page_index = AppState.content.findIndex((page) => page.id == parent_id);
+                    let newContent = [...content];
+                    let parent_page_index = content.findIndex((page) => page.id == parent_id);
                     newContent[parent_page_index] = response2.data;
                     let anew = [...newContent, response.data];
-                    // AppState.setContent(anew)
-                    setAppState({ content: anew })
+                    setContent(anew)
                     toast.dismiss(toastId);
                     toast.success('Parent Page updated & saved');
                 }).catch(error => {
@@ -102,8 +120,8 @@ export default function EditorSidebar() {
                 });
 
             } else {
-                let anew = [...AppState.content, response.data];
-                setAppState({ content: anew })
+                let anew = [...content, response.data];
+                setContent(anew);
                 toast.dismiss(toastId);
             }
 
@@ -118,10 +136,10 @@ export default function EditorSidebar() {
     function HandleDeletePage(page) {
         let toastId = toast.loading('Deleting this Page...');
 
-        AppState.ContentAPIHandler('DELETE', page).then(response2 => {
-            let newContent = AppState.content.filter((block) => block.id !== page.id);
+        ContentAPIHandler('DELETE', page).then(response2 => {
+            let newContent = content.filter((block) => block.id !== page.id);
             let anew = [...newContent];
-            setAppState({ content: anew })
+            setContent(anew);
             toast.dismiss(toastId);
             toast.success('Page deleted');
         }).catch(error => {
@@ -131,7 +149,7 @@ export default function EditorSidebar() {
     }
 
     function HandleOnDragEnd(result) {
-        console.log("sorting.result.data", { result, content: AppState.content });
+        console.log("sorting.result.data", { result, content: content });
         // dropped outside the list
         if (!result.destination) {
             return;
@@ -140,19 +158,19 @@ export default function EditorSidebar() {
         let endIndex = result.destination.index;
         console.log("sorting.operational.data", { startIndex, endIndex });
 
-        // let result = Array.from(AppState.content);
+        // let result = Array.from(content);
         // let removed = result.splice(startIndex, 1);
         // result.splice(endIndex, 0, removed);
         // console.log("Sorted.list", result);
 
         // FIND THE PARENT
         // MOVE THE ID AT THE END TO THE DROPED INDEX
-        let parent_page = AppState.content.find((page, index) => page.id == result.destination.droppableId);
-        let parent_page_index = AppState.content.findIndex((page, index) => page.id == result.destination.droppableId);
+        let parent_page = content.find((page, index) => page.id == result.destination.droppableId);
+        let parent_page_index = content.findIndex((page, index) => page.id == result.destination.droppableId);
 
-        let active_pages = parent_page?.children.filter(id => AppState.content.some(page => page.id == id));
-        let dragged_page = AppState.content.find(page => page.id == result.draggableId);
-        let dropped_on_page = AppState.content.find((page) => page.id == active_pages[endIndex]);
+        let active_pages = parent_page?.children.filter(id => content.some(page => page.id == id));
+        let dragged_page = content.find(page => page.id == result.draggableId);
+        let dropped_on_page = content.find((page) => page.id == active_pages[endIndex]);
 
         console.warn("side.bar.navigation.pages.before.refresh", { parent_page, parent_page_index, dragged_page, dropped_on_page });
         if (dropped_on_page) {
@@ -160,9 +178,9 @@ export default function EditorSidebar() {
             parent_page.children[endIndex] = dragged_page.id;
             parent_page.children[startIndex] = dropped_on_page.id;
 
-            let newContent = [...AppState.content];
+            let newContent = [...content];
             newContent[parent_page_index] = parent_page;
-            setAppState({ content: newContent })
+            setContent(newContent);
             console.warn("side.bar.navigation.pages.refreshed", { parent_page, parent_page_index, newContent });
         }
     }
@@ -173,28 +191,27 @@ export default function EditorSidebar() {
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
         if (page.type !== 'book') {
-            if (AppState.edited == true) {
+            if (edited == true) {
                 let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
                 console.log("permission.after.clicking.div", permission);
                 switch (permission) {
                     case true:
                         // RESET THE PAGE'S OLD DATA BEFORE ROUTING
                         // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
-                        let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
-                        let anew = AppState.content;
-                        anew[index] = AppState?.page;
-                        // AppState.setContent(anew);
-                        // AppState.setEdited(false);
-                        // AppState.setBuilder({});
-                        setAppState({ content: anew, edited: false, builder: {} })
+                        let index = content.findIndex(page => page.id == page?.id);
+                        let anew = content;
+                        anew[index] = page;
+                        setContent(anew);
+                        setEdited(false);
+                        setBuilder({});
                         router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
                         break;
                     case false:
                         break;
                 }
             } else {
-                // AppState.setBuilder({});
-                router.push(`/editor/${AppState.navigation}/?page=${page.id}`, undefined, { shallow: true })
+                // setBuilder({});
+                router.push(`/editor/${navigation}/?page=${page.id}`, undefined, { shallow: true })
             }
         }
     }
@@ -204,32 +221,30 @@ export default function EditorSidebar() {
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
-        if (AppState.edited == true) {
+        if (edited == true) {
             let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
             console.log("permission.after.clicking.div", permission);
             if (permission) {
-                let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
-                let anew = AppState.content;
-                anew[index] = AppState?.page;
-                // AppState.setPage();
-                // AppState.setEdited(false);
-                // AppState.setBuilder({});
-                // AppState.setContent(anew);
-                setAppState({ content: anew, edited: false, builder: {}, page: {} })
+                let index = content.findIndex(page => page.id == page?.id);
+                let anew = content;
+                anew[index] = page;
+                setPage();
+                setEdited(false);
+                setBuilder({});
+                setContent(anew);
+
                 router.push(`/editor`);
             }
         } else {
-            // AppState.setBuilder({});
-            // AppState.setPage();
-            setAppState({ builder: {}, page: {} })
+            setBuilder({});
+            setPage();
             router.push(`/editor`);
         }
     }
 
     const HandleLogOut = () => {
         localStorage.removeItem("authenticated");
-        // AppState.setAuthenticated(false);
-        setAppState({ authenticated: false })
+        setAuthenticated(false);
     }
 
     const Indicators = (page) => {
@@ -252,7 +267,7 @@ export default function EditorSidebar() {
 
         const [isExpanded, toggleExpanded] = useState(pageOpened);
         const [isShown, setIsShown] = useState(false);
-        const pages = [...AppState.content];
+        const pages = [...content];
 
         if (page?.id) {
             let activeChildrenPages = page.children.filter(id => pages.some(paged => paged.id === id));
@@ -473,11 +488,11 @@ export default function EditorSidebar() {
     function SubPageNavigation() {
 
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
-        let productChapters = AppState.content.filter(child => child?.type === AppState.navigation && child?.position === 'chapter')
+        let productChapters = content.filter(child => child?.type === navigation && child?.position === 'chapter')
         let book = {
             id: "book",
             position: 'book',
-            title: AppState.navigation == "product" ? "Product Documentation" : "API Documentation",
+            title: navigation == "product" ? "Product Documentation" : "API Documentation",
             description: "The book itself (The page for it)",
             content: { editor: "", mdx: "" },
             children: productChapters.map(main => main.id),
@@ -512,9 +527,9 @@ export default function EditorSidebar() {
                         </p>
                     </li>
                     {
-                        AppState.navigation == 'api' &&
+                        navigation == 'api' &&
                         <li>
-                            < p onClick={() => setAppState({ definitions: true })} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            < p onClick={() => setDefinitions(true)} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span className="ml-2 text-gray-700"> Specification File</span>
                                 <Code1 size="16" color="#111827" />
                             </p>
@@ -531,7 +546,7 @@ export default function EditorSidebar() {
 
     return (
         <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-            {AppState.navigation == 'main' ? MainNavigation() : SubPageNavigation()}
+            {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
         </aside>
     )
 }
