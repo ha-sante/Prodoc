@@ -13,6 +13,10 @@ const nextConfig = {
       { source: '/docs/api/:slug*', destination: '/product-api-ref/:slug*' },
     ]
   },
+
+  experimental: {
+    swcPlugins: [['@swc-jotai/react-refresh', {}]],
+  },
 }
 
 // The above is made to support all domain use-cases

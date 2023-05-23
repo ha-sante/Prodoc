@@ -10,8 +10,11 @@ const inter = Inter({ subsets: ['latin'] })
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
-import { store } from '../../context/state';
-import { useStore } from "jotai";
+import {
+    store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom
+} from '../../context/state';
+import { useStore, useAtom } from "jotai";
 
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -27,8 +30,21 @@ import 'prismjs/themes/prism.css'; //Example style, you can use another
 import HTTPSnippet from 'httpsnippet';
 
 export default function BuilderEditor() {
-    // const AppState = useContext(AppStateContext);
-    const [AppState, setAppState] = useStore(store);
+    const [content, setContent] = useAtom(contentAtom);
+
+    const [pagination, setPagination] = useAtom(paginationAtom);
+    const [page, setPage] = useAtom(pageAtom);
+    const [builder, setBuilder] = useAtom(builderAtom);
+
+    const [configure, setConfigure] = useAtom(configureAtom);
+    const [edited, setEdited] = useAtom(editedAtom);
+    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    const [permission, setPermission] = useAtom(permissionAtom);
+    const [definitions, setDefinitions] = useAtom(definitionsAtom);
+
+    const [code, setCode] = useAtom(codeAtom);
+    const [navigation, setNavigation] = useAtom(navigationAtom);
+
 
     const router = useRouter();
     const [environments, setEnvironments] = useState([
@@ -41,33 +57,33 @@ export default function BuilderEditor() {
     ]);
     const [selected, setSelected] = useState(0);
     const [base, setBase] = useState("");
-    const [code, setCode] = useState(
-        `function add(a, b) { return a + b; }`
-    );
-    const [builder, setBuilder] = useState({});
+    // const [code, setCode] = useState(
+    //     `function add(a, b) { return a + b; }`
+    // );
+    // const [builder, setBuilder] = useState({});
 
 
     useEffect(() => {
         // SET THE PAGE SERVER ENDPOINT
-        if (AppState.page) {
-            let url = AppState.page.content.api?.configuration?.servers[0].url;
+        if (page) {
+            let url = page?.content.api?.configuration?.servers[0].url;
             console.log({ url });
             setBase(url);
             setBuilder({});
         }
-    }, [AppState.page]);
+    }, [page]);
 
     const RenderCodeArea = () => {
         let environment = environments[selected];
         let template = ``;
 
-        if (AppState.page) {
+        if (page) {
 
             // GET FORM DATA
-            let { body, parameters } = Object(AppState.builder);
+            let { body, parameters } = Object(builder);
             let { header, path, query } = Object(parameters);
-            let base = AppState.page.content.api?.configuration?.servers[0].url;
-            let endpoint = AppState.page?.content.api.endpoint;
+            let base = page?.content.api?.configuration?.servers[0].url;
+            let endpoint = page?.content.api.endpoint;
 
             let har_format = {
                 method: "POST",
@@ -248,7 +264,7 @@ export default function BuilderEditor() {
 
                                         // // ORIGINAL
                                         // setInputValue({ [key]: value });
-                                        // console.log("block.input.changed", { value, local, current_value, builder: AppState.builder })
+                                        // console.log("block.input.changed", { value, local, current_value, builder: builder })
                                     }}
                                 />
                             </div>
@@ -268,9 +284,9 @@ export default function BuilderEditor() {
      * @returns {number} The api request body form UI component with conditionally recusive children
      */
     const BodySection = () => {
-        let page = AppState.page;
+        let page = page;
         if (page) {
-            let has_body = AppState?.page?.content?.api?.requestBody?.length > 0;
+            let has_body = page?.content?.api?.requestBody?.length > 0;
             if (has_body) {
                 let body = page?.content?.api?.requestBody[0]; // is an object of element name and content\
                 let first_el_key = Object.keys(body)[0];
@@ -294,9 +310,9 @@ export default function BuilderEditor() {
         // FOR EACH CATEGORY
         // CREATE ITS SECTION OF THE VIEW BLOCK
         // RENDER IT IN THE VIEW
-        let page = AppState.page;
-        if (AppState.page) {
-            let parameters = AppState?.page?.content?.api?.parameters;
+        let page = page;
+        if (page) {
+            let parameters = page?.content?.api?.parameters;
             let input_mappings = { string: "text", integer: "number" };
             //console.log("parameters", { parameters })
             if (parameters) {
@@ -347,7 +363,7 @@ export default function BuilderEditor() {
                                                                 let local = builder;
                                                                 _.set(local, ["parameters", builder_path_label, param.name], value);
                                                                 setBuilder(local);
-                                                                //console.log("param.input.changed", { value, local, current_value, builder: AppState.builder })
+                                                                //console.log("param.input.changed", { value, local, current_value, builder: builder })
                                                             }}
                                                         />
                                                     </div>
@@ -378,9 +394,9 @@ export default function BuilderEditor() {
                     <p className='mb-2'>Build Requests</p>
 
                     <h2 className='text-2xl font-bold text-gray-900'>
-                        {AppState.page.title}
+                        {page?.title}
                     </h2>
-                    <p className='flex items-center gap-4'>{Indicators(AppState.page)} Endpoint:  {AppState.page.content?.api?.endpoint}</p>
+                    <p className='flex items-center gap-4'>{Indicators(page)} Endpoint:  {page?.content?.api?.endpoint}</p>
                     {ParametersSection()}
                     {BodySection()}
                 </div>

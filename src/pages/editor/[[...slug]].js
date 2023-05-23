@@ -15,7 +15,12 @@ import DefinitionsPrompt from '@/components/editor/prompts/definitions';
 
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
-import { AppStateContext } from '../../context/state';
+
+import {
+  store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
+  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom
+} from '../../context/state';
+import { useStore, useAtom } from "jotai";
 
 import { serialize } from 'next-mdx-remote/serialize'
 import { MDXRemote } from 'next-mdx-remote'
@@ -28,9 +33,27 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import { diff } from 'deep-object-diff';
 
+console.log("store.is", store)
+
+
 export default function Editor() {
 
-  const AppState = useContext(AppStateContext);
+  const [content, setContent] = useAtom(contentAtom);
+
+  const [pagination, setPagination] = useAtom(paginationAtom);
+  const [page, setPage] = useAtom(pageAtom);
+  const [builder, setBuilder] = useAtom(builderAtom);
+
+  const [configure, setConfigure] = useAtom(configureAtom);
+  const [edited, setEdited] = useAtom(editedAtom);
+  const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+  const [permission, setPermission] = useAtom(permissionAtom);
+  const [definitions, setDefinitions] = useAtom(definitionsAtom);
+
+  const [code, setCode] = useAtom(codeAtom);
+  const [navigation, setNavigation] = useAtom(navigationAtom);
+
+
   const router = useRouter();
   const { slug } = router.query;
   const [password, setPassword] = useState('');
@@ -44,20 +67,20 @@ export default function Editor() {
       toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
       localStorage.setItem("authenticated", true);
-      AppState.setAuthenticated(true);
+      setAuthenticated(true);
     }).catch(error => {
       console.log(error);
       toast.error('Invalid auth details.');
       toast.dismiss(toastId);
-      AppState.setAuthenticated(false);
+      setAuthenticated(true);
     });
   };
 
   const editorOnSaveHandler = (editor, title, description) => {
     console.log("Editor Data to Save::", { editor, title, description });
 
-    let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
-    let anew = AppState.content;
+    let index = content.findIndex(page => page.id == page?.id);
+    let anew = content;
 
     let details = Object.keys(diff(editor, anew[index]?.content?.editor));
     let undifferent = details.length == 1 && details[0] == 'time';
@@ -66,35 +89,34 @@ export default function Editor() {
     if (undifferent == false) {
       // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
       anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
-      AppState.setContent(anew);
-      AppState.setEdited(true);
+      setContent(anew);
+      setEdited(true);
     }
   }
 
   const handlePageConfigChange = (configuration) => {
     console.log("handling.change.via.props", { configuration });
 
-    let newContent = [...AppState.content];
-    let current_in_edit_page_index = AppState.content.findIndex((page) => AppState?.page?.id == page.id);
-    let page = AppState.content.find((page) => AppState?.page?.id == page.id);
+    let newContent = [...content];
+    let current_in_edit_page_index = content.findIndex((page) => page?.id == page.id);
+    let page = content.find((page) => page?.id == page.id);
 
     newContent[current_in_edit_page_index] = { ...page, configuration };
 
-    AppState.setContent(newContent);
-    AppState.setConfigure(false);
-    AppState.setEdited(true);
+    setContent(newContent);
+    setEdited(true);
+    setConfigure(false);
   }
 
   const handleSavePageData = () => {
     // GET THE DATA FOR THE UPDATED PAGE 
-    let page = AppState.content.find(page => page.id == AppState?.page?.id);
+    let page = content.find(page => page.id == page?.id);
     if (page) {
       setProcessing(true);
       let toastId = toast.loading('Saving this Page...');
-      AppState.ContentAPIHandler('PUT', page).then(response => {
-        // AppState.setContent(response.data);
+      ContentAPIHandler('PUT', page).then(response => {
         console.log('response', response.data);
-        AppState.setEdited(false);
+        setEdited(false);
         setProcessing(false);
         toast.dismiss(toastId);
         toast.success("Page Updated");
@@ -161,7 +183,7 @@ export default function Editor() {
     let valid = localStorage.getItem("authenticated");
     console.log("authenticated", valid);
     if (valid) {
-      AppState.setAuthenticated(true);
+      setAuthenticated(true);
     }
   }, []);
 
@@ -177,23 +199,26 @@ export default function Editor() {
     if (Array.isArray(nav.slug)) {
 
       // SET OUR NAVIGATION VIEW
-      AppState.setNavigation(slug[0])
-
+      // setNavigation(slug[0])
+      setNavigation(slug[0]);
       // IF AT THE MAIN ENTRY ONLY (/product or /api)
       if (nav.page == null) {
         // GET ALL CONTENT ANEW
-        AppState.ContentAPIHandler('GET').then(response => {
+        ContentAPIHandler('GET').then(response => {
 
           // SET THE NEW CONTENT
           console.log('get.all.content', { content: response.data, page_id: router.query.page });
-          AppState.setContent(response.data);
+          // setContent(response.data);
+          setContent(response.data);
 
           // SET THE CURRENT PAGE WE ARE ON
           if (nav.page != undefined) {
             let page = response.data.find(page => page.id == nav.page);
             console.log("slug.page.matched.content.new.load", { page });
-            AppState.setPage({ ...page });
-            AppState.setEdited(false);
+            // setPage({ ...page });
+            // setEdited(false);
+            setPage(page);
+            setEdited(false);
           }
 
         }).catch(error => {
@@ -204,20 +229,23 @@ export default function Editor() {
       // IF AT A CHILD PAGE
       if (nav.page != null) {
         // IF NO CONTENT
-        if (AppState.content.length == 0) {
+        if (content.length == 0) {
           // GET ALL CONTENT ANEW
-          AppState.ContentAPIHandler('GET').then(response => {
+          ContentAPIHandler('GET').then(response => {
 
             // SET THE NEW CONTENT
             console.log('get.all.content', { content: response.data, page_id: router.query.page });
-            AppState.setContent(response.data);
+            // setContent(response.data);
+            setContent(content);
 
             // SET THE CURRENT PAGE WE ARE ON
             if (nav.page != undefined) {
               let page = response.data.find(page => page.id == nav.page);
               console.log("slug.page.matched.new.loaded.content.page", { page });
-              AppState.setPage({ ...page });
-              AppState.setEdited(false);
+              // setPage({ ...page });
+              // setEdited(false);
+              setPage(page);
+              setEdited(false);
             }
 
           }).catch(error => {
@@ -226,16 +254,18 @@ export default function Editor() {
         }
 
         // IF CONTENT EXISTS
-        if (AppState.content.length > 0) {
-          let page = AppState.content.find(page => page.id == nav.page);
+        if (content.length > 0) {
+          let page = content.find(page => page.id == nav.page);
           console.log("slug.page.matched.preloaded.content.page", { page });
-          AppState.setPage({ ...page });
-          AppState.setEdited(false);
+          // setPage({ ...page });
+          // setEdited(false);
+          setPage(page);
+          setEdited(false);
         }
       }
 
     } else {
-      AppState.setNavigation('main');
+      setNavigation('main');
     }
   }, [slug]);
 
@@ -268,7 +298,7 @@ export default function Editor() {
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {AppState.page?.id !== undefined && AppState.page?.type == "product" ?
+        {page?.id !== undefined && page?.type == "product" ?
           <div className="p-4 w-[80%] mx-auto">
             <div className="p-4 rounded-lg dark:border-gray-700">
               <div className='border shadow-sm rounded-lg pt-3 pb-3'>
@@ -303,7 +333,7 @@ export default function Editor() {
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {AppState.page?.id !== undefined && AppState.page?.type == "api" ?
+        {page?.id !== undefined && page?.type == "api" ?
           <div className="p-4 w-[100%] mx-auto">
             <APIBuilder />
           </div>
@@ -387,11 +417,11 @@ export default function Editor() {
                 Import (Coming Soon)
               </Button>
 
-              <Button size="xs" className="mr-4" color="light" onClick={() => AppState.setConfigure(true)}>
+              <Button size="xs" className="mr-4" color="light" onClick={() => setConfigure(true)}>
                 Configure
               </Button>
 
-              {AppState.edited ?
+              {edited ?
                 <Button size="xs" color="warning" onClick={() => handleSavePageData()}>
                   Save Page Data Update
                   <CloudChange size="16" className="ml-2" color="#fff" />
@@ -414,9 +444,9 @@ export default function Editor() {
     <>
       <main className="min-h-screen flex-col items-center justify-between">
         <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
-        <DefinitionsPrompt key={"definitions-prompt"} definitions={AppState.definitions} setDefinitions={AppState.setDefinitions} />
+        <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} />
 
-        {!AppState.authenticated ?
+        {!authenticated ?
           AuthenticationPage()
           :
           <div className="w-100">
@@ -427,10 +457,10 @@ export default function Editor() {
               </div>
               :
               <div className="w-100">
-                {AppState.page?.id !== undefined && Navigation()}
+                {page?.id !== undefined && Navigation()}
                 <EditorSidebar />
-                {AppState.navigation === 'api' && APIPage()}
-                {AppState.navigation === 'product' && EditorPage()}
+                {navigation === 'api' && APIPage()}
+                {navigation === 'product' && EditorPage()}
               </div>
             }
           </div>

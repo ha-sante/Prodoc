@@ -65,7 +65,7 @@ export default function APIDefinitionsPrompt(props) {
             title: data?.summary ? data.summary.trim() : url,
             description: data?.description ? data?.description.trim() : "",
             content: {
-                ...AppState.DEFAULT_PAGE_DATA.content,
+                ...AppState.DEFAULT_PAGE_DATA?.content,
                 api: {
                     endpoint: url,
                     type: method,
@@ -135,7 +135,7 @@ export default function APIDefinitionsPrompt(props) {
                 title: label,
                 description: `${label} - Overview Page`,
                 content: {
-                    ...AppState.DEFAULT_PAGE_DATA.content,
+                    ...AppState.DEFAULT_PAGE_DATA?.content,
                     api: {}
                 },
             };

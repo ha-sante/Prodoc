@@ -39,57 +39,57 @@ export const DEFAULT_PAGE_DATA = {
 }
 
 // REACT CONTEXT STATEMENT MANAGEMENT
-const AppContext = React.createContext();
-export function AppStateProvider({ children }) {
-  const [content, setContent] = useState([]);
-  const [pagination, setPagination] = useState({});
-  const [page, setPage] = useState();
-  const [configure, setConfigure] = useState(false);
-  const [code, setCode] = useState('{ privacy: "public" }');
-  const [edited, setEdited] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [permission, setPermission] = useState();
-  const [definitions, setDefinitions] = useState(false);
-  const [navigation, setNavigation] = useState('main');
-  const [builder, setBuilder] = useState({});
+// const AppContext = React.createContext();
+// export function AppStateProvider({ children }) {
+//   const [content, setContent] = useState([]);
+//   const [pagination, setPagination] = useState({});
+//   const [page, setPage] = useState();
+//   const [configure, setConfigure] = useState(false);
+//   const [code, setCode] = useState('{ privacy: "public" }');
+//   const [edited, setEdited] = useState(false);
+//   const [authenticated, setAuthenticated] = useState(false);
+//   const [permission, setPermission] = useState();
+//   const [definitions, setDefinitions] = useState(false);
+//   const [navigation, setNavigation] = useState('main');
+//   const [builder, setBuilder] = useState({});
 
-  // API CALLS 
-  function ContentAPIHandler(option, data) {
-    switch (option) {
-      case 'POST':
-        return axios.post('/api/content', data);
-        break;
-      case 'GET':
-        return axios.get('/api/content');
-        break;
-      case 'PUT':
-        return axios.put('/api/content', data);
-        break;
-      case 'DELETE':
-        return axios.delete(`/api/content?id=${data.id}`);
-        break;
-      case 'PATCH':
-        return axios.patch(`/api/content`, data);
-        break;
-    }
-  }
+//   // API CALLS 
+//   function ContentAPIHandler(option, data) {
+//     switch (option) {
+//       case 'POST':
+//         return axios.post('/api/content', data);
+//         break;
+//       case 'GET':
+//         return axios.get('/api/content');
+//         break;
+//       case 'PUT':
+//         return axios.put('/api/content', data);
+//         break;
+//       case 'DELETE':
+//         return axios.delete(`/api/content?id=${data.id}`);
+//         break;
+//       case 'PATCH':
+//         return axios.patch(`/api/content`, data);
+//         break;
+//     }
+//   }
 
-  const data = {
-    builder, setBuilder,
-    navigation, setNavigation,
-    definitions, setDefinitions,
-    edited, setEdited,
-    permission, setPermission,
-    code, setCode,
-    authenticated, setAuthenticated,
-    configure, setConfigure, content, setContent, pagination, setPagination,
-    page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
-  };
+//   const data = {
+//     builder, setBuilder,
+//     navigation, setNavigation,
+//     definitions, setDefinitions,
+//     edited, setEdited,
+//     permission, setPermission,
+//     code, setCode,
+//     authenticated, setAuthenticated,
+//     configure, setConfigure, content, setContent, pagination, setPagination,
+//     page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
+//   };
 
-  return (
-    <AppContext.Provider value={data}> {children} </AppContext.Provider>
-  );
-};
+//   return (
+//     <AppContext.Provider value={data}> {children} </AppContext.Provider>
+//   );
+// };
 // export const AppStateContext = AppContext;
 
 
@@ -116,12 +116,11 @@ function ContentAPIHandler(option, data) {
 
 
 // JOTAI STATE MANAGEMENT
-import { createStore, Provider, useStore } from "jotai";
-export const store = createStore(() => ({
-  counter: 0,
+import { createStore, Provider, useStore, atom } from "jotai";
+let objguy = {
   content: [],
   pagination: {},
-  page: null,
+  page: {},
   configure: false,
   code: '{ privacy: "public" }',
   edited: false,
@@ -131,11 +130,45 @@ export const store = createStore(() => ({
   navigation: 'main',
   builder: {},
 
-  // STATIC DATA & METHODS
   DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
   DEFAULT_PAGE_DATA,
   ContentAPIHandler
-}));
+}
+export const store = createStore();
+
+export const contentAtom = atom([]);
+
+export const paginationAtom = atom({});
+export const pageAtom = atom({});
+export const builderAtom = atom({});
+
+export const configureAtom = atom(false);
+export const editedAtom = atom(false);
+export const authenticatedAtom = atom(false);
+export const permissionAtom = atom(false);
+export const definitionsAtom = atom(false);
+
+export const codeAtom = atom('{ privacy: "public" }');
+export const navigationAtom = atom('main');
+
+store.set(contentAtom, [])
+
+store.set(paginationAtom, {})
+store.set(pageAtom, {})
+store.set(builderAtom, {})
+
+store.set(configureAtom, false)
+store.set(editedAtom, false)
+store.set(authenticatedAtom, false)
+store.set(permissionAtom, false)
+store.set(definitionsAtom, false)
+
+store.set(codeAtom, '{ privacy: "public" }')
+store.set(navigationAtom, 'main')
+
+// STATIC DATA & METHODS
+console.log("store", store)
+
 export function JotaiAppStateProvider({ children }) {
   return (<Provider store={store}> {children} </Provider>);
 };

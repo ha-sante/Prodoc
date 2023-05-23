@@ -10,7 +10,9 @@ const inter = Inter({ subsets: ['latin'] })
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
-import { AppStateContext } from '../../context/state';
+import { store } from '../../context/state';
+import { useStore } from "jotai";
+
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -31,7 +33,9 @@ const StrictModeDroppable = ({ children, ...props }) => {
 };
 
 export default function EditorSidebar() {
-    const AppState = useContext(AppStateContext);
+    // const AppState = useContext(AppStateContext);
+    const [AppState, setAppState] = useStore(store);
+
     const router = useRouter();
     const [processing, setProcessing] = useState(false);
     const [navigation, setNavigation] = useState('main');
@@ -88,7 +92,8 @@ export default function EditorSidebar() {
                     let parent_page_index = AppState.content.findIndex((page) => page.id == parent_id);
                     newContent[parent_page_index] = response2.data;
                     let anew = [...newContent, response.data];
-                    AppState.setContent(anew)
+                    // AppState.setContent(anew)
+                    setAppState({ content: anew })
                     toast.dismiss(toastId);
                     toast.success('Parent Page updated & saved');
                 }).catch(error => {
@@ -98,7 +103,7 @@ export default function EditorSidebar() {
 
             } else {
                 let anew = [...AppState.content, response.data];
-                AppState.setContent(anew);
+                setAppState({ content: anew })
                 toast.dismiss(toastId);
             }
 
@@ -116,7 +121,7 @@ export default function EditorSidebar() {
         AppState.ContentAPIHandler('DELETE', page).then(response2 => {
             let newContent = AppState.content.filter((block) => block.id !== page.id);
             let anew = [...newContent];
-            AppState.setContent(anew);
+            setAppState({ content: anew })
             toast.dismiss(toastId);
             toast.success('Page deleted');
         }).catch(error => {
@@ -157,7 +162,7 @@ export default function EditorSidebar() {
 
             let newContent = [...AppState.content];
             newContent[parent_page_index] = parent_page;
-            AppState.setContent(newContent);
+            setAppState({ content: newContent })
             console.warn("side.bar.navigation.pages.refreshed", { parent_page, parent_page_index, newContent });
         }
     }
@@ -178,9 +183,10 @@ export default function EditorSidebar() {
                         let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
                         let anew = AppState.content;
                         anew[index] = AppState?.page;
-                        AppState.setContent(anew);
-                        AppState.setEdited(false);
-                        AppState.setBuilder({});
+                        // AppState.setContent(anew);
+                        // AppState.setEdited(false);
+                        // AppState.setBuilder({});
+                        setAppState({ content: anew, edited: false, builder: {} })
                         router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
                         break;
                     case false:
@@ -205,22 +211,25 @@ export default function EditorSidebar() {
                 let index = AppState.content.findIndex(page => page.id == AppState?.page?.id);
                 let anew = AppState.content;
                 anew[index] = AppState?.page;
-                AppState.setPage();
-                AppState.setEdited(false);
-                AppState.setBuilder({});
-                AppState.setContent(anew);
+                // AppState.setPage();
+                // AppState.setEdited(false);
+                // AppState.setBuilder({});
+                // AppState.setContent(anew);
+                setAppState({ content: anew, edited: false, builder: {}, page: {} })
                 router.push(`/editor`);
             }
         } else {
-            AppState.setBuilder({});
-            AppState.setPage();
+            // AppState.setBuilder({});
+            // AppState.setPage();
+            setAppState({ builder: {}, page: {} })
             router.push(`/editor`);
         }
     }
 
     const HandleLogOut = () => {
         localStorage.removeItem("authenticated");
-        AppState.setAuthenticated(false);
+        // AppState.setAuthenticated(false);
+        setAppState({ authenticated: false })
     }
 
     const Indicators = (page) => {
@@ -505,7 +514,7 @@ export default function EditorSidebar() {
                     {
                         AppState.navigation == 'api' &&
                         <li>
-                            < p onClick={() => AppState.setDefinitions(true)} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            < p onClick={() => setAppState({ definitions: true })} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span className="ml-2 text-gray-700"> Specification File</span>
                                 <Code1 size="16" color="#111827" />
                             </p>

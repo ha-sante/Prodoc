@@ -6,3 +6,5 @@ Prodoc is an open source product and API documentation tool. It enables you to o
 - [x] Editor Panel (Product Documentation)
 - [x] Editor Panel (API Documentation)
 - [ ] User-facing website/template
+
+- [ ] Content Versioning
