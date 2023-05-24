@@ -41,7 +41,7 @@ export default function EditorSidebar() {
     const [content, setContent] = useAtom(contentAtom);
 
     const [pagination, setPagination] = useAtom(paginationAtom);
-    const [page, setPage] = useAtom(pageAtom);
+    const [_, setPage] = useAtom(pageAtom);
     const [builder, setBuilder] = useAtom(builderAtom);
 
     const [configure, setConfigure] = useAtom(configureAtom);
@@ -211,7 +211,22 @@ export default function EditorSidebar() {
                 }
             } else {
                 // setBuilder({});
-                router.push(`/editor/${navigation}/?page=${page.id}`, undefined, { shallow: true })
+                // router.push(`/editor/${navigation}/?page=${page.id}`, undefined, { shallow: true });
+                // router.push('/editor/product?page=365470494298734672', { shallow: true });
+
+                const newUrl = `/editor/${navigation}?page=${page.id}`
+                window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+
+                let found = content.find(pa => pa.id == page.id);
+                console.log("page.loaded.from.current.content", { found });
+                setPage(found);
+
+                // router.push({
+                //     pathname: `/editor/${navigation}`,
+                //     query: {
+                //         page: page.id,
+                //     }
+                // }, undefined, { shallow: true })
             }
         }
     }
@@ -256,48 +271,50 @@ export default function EditorSidebar() {
         }
     }
 
-    const Directory = ({ page }) => {
+    const Directory = ({ directoryPage }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
         let pagination = JSON.parse(localStorage.getItem('pagination'));
-        let mapping = pagination[page?.id];
+        let mapping = pagination[directoryPage?.id];
         let pageOpened = mapping !== undefined ? mapping : false;
-        if (page?.id == 'book') {
+        if (directoryPage?.id == 'book') {
             pageOpened = true;
         }
 
         const [isExpanded, toggleExpanded] = useState(pageOpened);
         const [isShown, setIsShown] = useState(false);
-        const pages = [...content];
 
-        if (page?.id) {
-            let activeChildrenPages = page.children.filter(id => pages.some(paged => paged.id === id));
+        const pages = content;
+
+        if (directoryPage?.id) {
+            let activeChildrenPages = directoryPage.children.filter(id => pages.some(paged => paged.id === id));
             {/* Page name > Then children pages */ }
             if (activeChildrenPages.length > 0) {
                 return (
                     <DragDropContext onDragEnd={HandleOnDragEnd}>
-                        <StrictModeDroppable droppableId={`${page.id}`}>
+                        <StrictModeDroppable droppableId={`${directoryPage.id}`}>
                             {(provided, snapshot) => (
                                 <div
                                     {...provided.droppableProps}
                                     ref={provided.innerRef}
                                     className={`${snapshot.isDraggingOver == true ? '' : ''}`}>
 
-                                    <div className={`${page.id == 'book' ? '' : ''} ${page.position == 'child' ? 'folder' : ''}`}>
-                                        <div className={`${page.position === 'child' ? 'folder flex flex-row w-100 justify-between items-center cursor-pointer' : 'flex justify-between items-center cursor-pointer'} `}
-                                            onMouseEnter={() => setIsShown(true)} onMouseLeave={() => setIsShown(false)}
+                                    <div className={`${directoryPage.id == 'book' ? '' : ''} ${directoryPage.position == 'child' ? 'folder' : ''}`}>
+                                        <div className={`${directoryPage.position === 'child' ? 'folder flex flex-row w-100 justify-between items-center cursor-pointer' : 'flex justify-between items-center cursor-pointer'} `}
+                                        // onMouseEnter={() => setIsShown(true)} 
+                                        // onMouseLeave={() => setIsShown(false)}
                                         >
 
                                             <div className='flex flex-row items-center'>
-                                                {page.id != 'book' &&
+                                                {directoryPage.id != 'book' &&
                                                     <h2 className="folder-title text-sm font-medium flex items-center p-1 border ml-2"
                                                         onClick={() => {
                                                             let change = !isExpanded;
                                                             toggleExpanded(change);
-                                                            console.log("clicked.on.for.moving.id", page.id);
+                                                            console.log("clicked.on.for.moving.id", directoryPage.id);
 
                                                             // cold store
                                                             let toStore = { ...JSON.parse(localStorage.getItem('pagination')) };
-                                                            toStore[page.id] = change;
+                                                            toStore[directoryPage.id] = change;
                                                             localStorage.setItem('pagination', JSON.stringify(toStore));
                                                         }}>
                                                         {isExpanded == true ?
@@ -307,15 +324,15 @@ export default function EditorSidebar() {
                                                         }
                                                     </h2>
                                                 }
-                                                <h3 className={`${page.id == 'book' ? '' : 'file-name font-normal'} flex flex-row text-sm overflow-hidden`}
+                                                <h3 className={`${directoryPage.id == 'book' ? '' : 'file-name font-normal'} flex flex-row text-sm overflow-hidden`}
                                                     onClick={() => {
-                                                        HandleMoveToAPage(page);
+                                                        HandleMoveToAPage(directoryPage);
                                                     }}>
-                                                    {page.title} {Indicators(page)}
+                                                    {directoryPage.title} {Indicators(directoryPage)}
                                                 </h3>
                                             </div>
 
-                                            {page.id === 'book' ?
+                                            {directoryPage.id === 'book' ?
                                                 <Button size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
                                                 :
                                                 <div className='flex flex-row w-100 items-center'>
@@ -331,13 +348,13 @@ export default function EditorSidebar() {
                                                         floatingArrow={false}
                                                         trigger='hover'
                                                         dismissOnClick={true}>
-                                                        <Dropdown.Item onClick={() => HandleDeletePage(page)}>
+                                                        <Dropdown.Item onClick={() => HandleDeletePage(directoryPage)}>
                                                             Delete
                                                         </Dropdown.Item>
                                                     </Dropdown>
 
                                                     <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                                        onClick={() => { HandleAddPage("child", page.id) }}>
+                                                        onClick={() => { HandleAddPage("child", directoryPage.id) }}>
                                                         <span className='leading-none'>+</span>
                                                     </div>
                                                 </div>
@@ -346,7 +363,7 @@ export default function EditorSidebar() {
 
                                         <br />
                                         {/* {isExpanded == true && page.children.map((id) => < Directory key={id} page={pages.find(paged => paged.id === id)} />)} */}
-                                        {isExpanded == true && activeChildrenPages.map((id, index) => {
+                                        {activeChildrenPages.map((id, index) => {
                                             let found = pages.find(paged => paged.id === id);
                                             let activeFoundPages = found.children.filter(id => pages.some(paged => paged.id === id));
                                             if (found) {
@@ -364,7 +381,7 @@ export default function EditorSidebar() {
                                                                 className={`${snapshot.isDragging == true ? 'bg-gray-100' : ''} `}
                                                             >
                                                                 {/* {page.title} */}
-                                                                < Directory key={found.id} page={found} />
+                                                                <Directory page={found} directoryPage={found} />
                                                             </div>
                                                         )}
                                                     </Draggable>
@@ -385,11 +402,13 @@ export default function EditorSidebar() {
             }
 
             {/* Page name */ }
-            let allowed = page?.position == 'chapter';
+            let allowed = directoryPage?.position == 'chapter';
             return (
                 <>
-                    <div className={`${page.position === 'child' ? 'ml-5' : ''} flex flex-row w-100 justify-between items-center cursor-pointer`}
-                        onMouseEnter={() => { setIsShown(true); }} onMouseLeave={() => { setIsShown(false) }}>
+                    <div className={`${directoryPage.position === 'child' ? 'ml-5' : ''} flex flex-row w-100 justify-between items-center cursor-pointer`}
+                    // onMouseEnter={() => { setIsShown(true); }} 
+                    // onMouseLeave={() => { setIsShown(false) }}
+                    >
                         <div className='flex flex-row w-100 items-center'>
                             {allowed &&
                                 <h2 className="folder-title border text-sm font-medium flex items-center p-1 ml-2"
@@ -399,7 +418,7 @@ export default function EditorSidebar() {
 
                                         // cold store
                                         let toStore = { ...JSON.parse(localStorage.getItem('pagination')) };
-                                        toStore[page.id] = change;
+                                        toStore[directoryPage.id] = change;
                                         localStorage.setItem('pagination', JSON.stringify(toStore));
                                     }}>
                                     {isExpanded == true ?
@@ -412,14 +431,14 @@ export default function EditorSidebar() {
 
                             <h3 className="file-name text-sm overflow-hidden text-ellipsis flex flex-row"
                                 onClick={() => {
-                                    HandleMoveToAPage(page);
+                                    HandleMoveToAPage(directoryPage);
                                 }}>
-                                {page.title} {Indicators(page)}
+                                {directoryPage.title} {Indicators(directoryPage)}
                             </h3>
                         </div>
 
 
-                        {page.id === 'book' ?
+                        {directoryPage.id === 'book' ?
                             <Button size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
                             :
                             <div className='flex flex-row w-100 items-center'>
@@ -435,18 +454,17 @@ export default function EditorSidebar() {
                                     floatingArrow={false}
                                     trigger='hover'
                                     dismissOnClick={true}>
-                                    <Dropdown.Item onClick={() => HandleDeletePage(page)}>
+                                    <Dropdown.Item onClick={() => HandleDeletePage(directoryPage)}>
                                         Delete
                                     </Dropdown.Item>
                                 </Dropdown>
 
                                 <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                    onClick={() => { HandleAddPage("child", page.id) }}>
+                                    onClick={() => { HandleAddPage("child", directoryPage.id) }}>
                                     <span className='leading-none'>+</span>
                                 </div>
                             </div>
                         }
-
                     </div>
                     <br />
                 </>
@@ -485,7 +503,11 @@ export default function EditorSidebar() {
         )
     }
 
+    // COMPLETED: MADE ALOT CHANGES DOWN THIS TREEE OF COMPONENTS
     function SubPageNavigation() {
+
+        // CONFIGURA
+        // let navigation = "api"
 
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
         let productChapters = content.filter(child => child?.type === navigation && child?.position === 'chapter')
@@ -537,8 +559,8 @@ export default function EditorSidebar() {
                     }
                 </ul>
 
-                <div className="mt-4 mb-4" id="navigation">
-                    <Directory page={book} />
+                <div className="mt-4 mb-4" id="directory-list">
+                    <Directory page={book} directoryPage={book} />
                 </div>
             </div>
         )

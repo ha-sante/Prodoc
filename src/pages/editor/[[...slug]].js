@@ -34,9 +34,6 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import { diff } from 'deep-object-diff';
 
-console.log("store.is", store)
-
-
 export default function Editor() {
 
   const [content, setContent] = useAtom(contentAtom);
@@ -190,7 +187,7 @@ export default function Editor() {
 
   useEffect(() => {
     let nav = { slug, page: router.query.page };
-    console.log("nav.data.changed", { nav });
+    console.log("slug.content.changed", { nav });
 
     // - /PRODUCT OR /API LOADS : (GET ALL CONTENT AT THIS POINT)
     // - /PRODUCT/PAGE (NO CONTENT) : (GET ALL CONTENT) (FROM THE RESPONSE CHECK FOR THE PAGE)
@@ -200,8 +197,10 @@ export default function Editor() {
     if (Array.isArray(nav.slug)) {
 
       // SET OUR NAVIGATION VIEW
-      // setNavigation(slug[0])
-      setNavigation(slug[0]);
+      if (navigation !== slug[0]) {
+        setNavigation(slug[0]);
+      }
+
       // IF AT THE MAIN ENTRY ONLY (/product or /api)
       if (nav.page == null) {
         // GET ALL CONTENT ANEW
@@ -209,15 +208,12 @@ export default function Editor() {
 
           // SET THE NEW CONTENT
           console.log('get.all.content', { content: response.data, page_id: router.query.page });
-          // setContent(response.data);
           setContent(response.data);
 
           // SET THE CURRENT PAGE WE ARE ON
           if (nav.page != undefined) {
             let page = response.data.find(page => page.id == nav.page);
             console.log("slug.page.matched.content.new.load", { page });
-            // setPage({ ...page });
-            // setEdited(false);
             setPage(page);
             setEdited(false);
           }
@@ -233,22 +229,18 @@ export default function Editor() {
         if (content.length == 0) {
           // GET ALL CONTENT ANEW
           ContentAPIHandler('GET').then(response => {
+            console.log('get.all.content', { content: response.data, page_id: router.query.page });
 
             // SET THE NEW CONTENT
-            console.log('get.all.content', { content: response.data, page_id: router.query.page });
-            // setContent(response.data);
-            setContent(content);
+            setContent(response.data);
 
             // SET THE CURRENT PAGE WE ARE ON
             if (nav.page != undefined) {
               let page = response.data.find(page => page.id == nav.page);
-              console.log("slug.page.matched.new.loaded.content.page", { page });
-              // setPage({ ...page });
-              // setEdited(false);
+              console.log("slug.change.new.page", { page });
               setPage(page);
               setEdited(false);
             }
-
           }).catch(error => {
             console.log('error', error);
           })
@@ -257,16 +249,16 @@ export default function Editor() {
         // IF CONTENT EXISTS
         if (content.length > 0) {
           let page = content.find(page => page.id == nav.page);
-          console.log("slug.page.matched.preloaded.content.page", { page });
-          // setPage({ ...page });
-          // setEdited(false);
+          console.log("page.loaded.from.current.content", { page });
           setPage(page);
           setEdited(false);
         }
       }
 
     } else {
-      setNavigation('main');
+      if (navigation != 'main') {
+        setNavigation('main');
+      }
     }
   }, [slug]);
 
@@ -406,6 +398,7 @@ export default function Editor() {
   }
 
   function Navigation() {
+    console.log("editor.navigation.bar.rendered")
     return (
       <div className="p-2 sm:ml-64 sticky top-0 z-10">
         <div className="p-5 border-b-2 border-gray-200 w-[100%] mx-auto !bg-white border-dashed dark:border-gray-700">
@@ -447,7 +440,7 @@ export default function Editor() {
         <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
         <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} />
 
-        {!authenticated ?
+        {authenticated == false ?
           AuthenticationPage()
           :
           <div className="w-100">

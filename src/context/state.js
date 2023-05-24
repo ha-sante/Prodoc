@@ -164,11 +164,9 @@ store.set(permissionAtom, false)
 store.set(definitionsAtom, false)
 
 store.set(codeAtom, '{ privacy: "public" }')
-store.set(navigationAtom, 'main')
+store.set(navigationAtom, 'product')
 
 // STATIC DATA & METHODS
-console.log("store", store)
-
 export function JotaiAppStateProvider({ children }) {
   return (<Provider store={store}> {children} </Provider>);
 };

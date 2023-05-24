@@ -233,7 +233,7 @@ export default function BuilderEditor() {
                         let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE
                         let inputRef = useRef(); // CREATE A HOLD FOR THE INPUT
 
-                        console.log("rendering.input.content", { current_path, value_exists, current_value, input_type, required, inputValue, inputRef });
+                        // console.log("rendering.input.content", { current_path, value_exists, current_value, input_type, required, inputValue, inputRef });
 
                         useEffect(() => {
                             // Instruction we give here will render once component gets rendered
