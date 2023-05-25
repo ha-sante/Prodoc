@@ -149,7 +149,7 @@ export const authenticatedAtom = atom(false);
 export const permissionAtom = atom(false);
 export const definitionsAtom = atom(false);
 
-export const codeAtom = atom('{ privacy: "public" }');
+export const codeAtom = atom('');
 export const navigationAtom = atom('main');
 
 export const pageIdAtom = atom('');

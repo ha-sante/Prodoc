@@ -34,6 +34,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import { diff } from 'deep-object-diff';
 
+
 export default function Editor() {
 
   const [content, setContent] = useAtom(contentAtom);
@@ -53,7 +54,6 @@ export default function Editor() {
 
   // const [pageId, setPageId] = useAtom(pageIdAtom);
 
-
   const router = useRouter();
   const { slug } = router.query;
   const [password, setPassword] = useState('');
@@ -61,12 +61,14 @@ export default function Editor() {
   const [example, setExample] = useState('');
   const [processing, setProcessing] = useState(false);
 
+
+  // FUNCTIONS
   const authenticate = () => {
     let toastId = toast.loading('Authenticating...');
     axios.post('/api/auth', { password }).then(response => {
       toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
-      localStorage.setItem("authenticated", true);
+      typeof window !== undefined && localStorage.setItem("authenticated", true);
       // setAuthenticated(true);
     }).catch(error => {
       console.log(error);
@@ -180,23 +182,16 @@ export default function Editor() {
 
   useEffect(() => {
     // makes a request to the authentication child 
-    let valid = localStorage.getItem("authenticated");
+    let valid = typeof window !== undefined && localStorage.getItem("authenticated") ? true : false;
     console.log("authenticated", valid);
     if (valid) {
       // setAuthenticated(true);
     }
   }, []);
 
-  let locationHref = typeof window !== 'undefined' && window.location.href;
-
-  useEffect(() => {
-    console.log("window.location", { locationHref })
-  }, [locationHref]);
-
-
   useEffect(() => {
     let nav = { slug, page: router.query.page };
-    console.log("slug.content.changed", { nav, locationHref });
+    console.log("slug.url.changed", { nav });
 
     // - /PRODUCT OR /API LOADS : (GET ALL CONTENT AT THIS POINT)
     // - /PRODUCT/PAGE (NO CONTENT) : (GET ALL CONTENT) (FROM THE RESPONSE CHECK FOR THE PAGE)
@@ -271,6 +266,8 @@ export default function Editor() {
     }
   }, [slug]);
 
+
+  // COMPONENTS
   function AuthenticationPage() {
     return (
       <div className="w-[50vw] lg:w-96 mx-auto mt-60">
@@ -361,47 +358,16 @@ export default function Editor() {
   function HomePage() {
     return (
       <div className="p-5 pt-0 sm:ml-64 flex flex-row justify-between">
-
         <div className="p-4 w-[60%] mx-auto">
           <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
 
-            <div className='flex flex-row items-center justify-between mb-3'>
-              <h2 className="block text-lg font-medium text-gray-900 dark:text-white">Welcome Home 👋</h2>
-            </div>
-
-            <div className='mt-3 p-3 text-left'>
-
-              <div className='flex'>
-                <Avatar
-                  img="https://pbs.twimg.com/profile_images/1531031797252882433/YCkCRjKe_400x400.jpg"
-                  rounded={true}
-                  bordered={true}
-                />
-              </div>
-              <p className='pt-2 text-sm'>
-                Prodoc, is an open source product and api documentation tool.
-                My name is Henry and I am the first author/contributor to the prodoc open source tool.</p>
-
-              <p className='pt-2 text-sm'>
-                I built Prodoc as a solution to the lack of customizability offered in current documentation tools.
-                I built it, given I already had experience with building content systems. I am the founder of another productivity tool for content management.
-              </p>
-
-              <p className='pt-2 text-sm'>
-                My goal with Prodoc is for everyone to have a solid tool to setup their documentation websites and to get the best
-                of both worlds whiles doing it (easy management and front facing website customizability).
-                I hope you enjoy it and if anything, do reach out to the Open Source team <a href="https://github.com/ha-sante/Prodoc" target='_blank' className='underline'>here</a>
-              </p>
-
-
-              <p className='pt-3 text-sm'>
-                This place will be replaced with analytics data soon. 📊
-              </p>
+            <div className='flex flex-row items-center justify-between'>
+              <h2 className="block text-lg font-medium text-gray-900 dark:text-white">Welcome to Prodoc 👋</h2>
+              <p>Home will be updated soon.</p>
             </div>
 
           </div>
         </div>
-
       </div>
     )
   }
@@ -445,9 +411,8 @@ export default function Editor() {
 
   return (
     <main className="min-h-screen flex-col items-center justify-between">
-      <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
+      <ConfigurePrompt key={"configure-prompt-1"} />
       <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} setDefinitions={setDefinitions} />
-
 
       {authenticated ?
         AuthenticationPage()

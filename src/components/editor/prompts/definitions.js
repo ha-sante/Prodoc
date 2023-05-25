@@ -22,26 +22,14 @@ import axios from 'axios';
 const _ = require('lodash');
 
 export default function APIDefinitionsPrompt(props) {
+
     const [content, setContent] = useAtom(contentAtom);
-
-    const [pagination, setPagination] = useAtom(paginationAtom);
-    const [page, setPage] = useAtom(pageAtom);
-    const [builder, setBuilder] = useAtom(builderAtom);
-
-    const [configure, setConfigure] = useAtom(configureAtom);
-    const [edited, setEdited] = useAtom(editedAtom);
-    // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
-    const [permission, setPermission] = useAtom(permissionAtom);
     const [definitions, setDefinitions] = useAtom(definitionsAtom);
 
-    const [code, setCode] = useAtom(codeAtom);
-    const [navigation, setNavigation] = useAtom(navigationAtom);
-
-
-
     const [processing, setProcessing] = useState(false);
+    const [code, setCode] = useState('');
+
     const rootRef = useRef(null);
-    const [temp, setTemp] = useState({});
 
     const GetEveryPropertyInFull = (reference_path, referenced_object, components) => {
         console.warn("called.GetEveryPropertyInFull", { reference_path, referenced_object, components })

@@ -39,28 +39,15 @@ const StrictModeDroppable = ({ children, ...props }) => {
 const EditorSidebarComponent = () => {
 
     const [content, setContent] = useAtom(contentAtom);
-
-    const [pagination, setPagination] = useAtom(paginationAtom);
-    const [builder, setBuilder] = useAtom(builderAtom);
-
-    const [configure, setConfigure] = useAtom(configureAtom);
     const [edited, setEdited] = useAtom(editedAtom);
     const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
-    const [permission, setPermission] = useAtom(permissionAtom);
-    const [definitions, setDefinitions] = useAtom(definitionsAtom);
-
-    const [code, setCode] = useAtom(codeAtom);
-    const [navigation, setNavigation] = useAtom(navigationAtom);
 
     const setPageId = useSetAtom(pageIdAtom);
     const setPage = useSetAtom(pageAtom);
-    // // const setDefinitions = useSetAtom(pageAtom);
-    // const navigation = useAtomValue(navigationAtom);
-
+    const setDefinitions = useSetAtom(definitionsAtom);
+    const navigation = useAtomValue(navigationAtom);
 
     const router = useRouter();
-    // const [processing, setProcessing] = useState(false);
-    // const [navigation, setNavigation] = useState('main');
 
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
@@ -194,9 +181,10 @@ const EditorSidebarComponent = () => {
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
         if (page.type !== 'book') {
+            const newUrl = `/editor/${navigation}?page=${page.id}`
             if (edited == true) {
                 let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
-                console.log("permission.after.clicking.div", permission);
+                console.log("permission.to.move", permission);
                 switch (permission) {
                     case true:
                         // RESET THE PAGE'S OLD DATA BEFORE ROUTING
@@ -205,16 +193,13 @@ const EditorSidebarComponent = () => {
                         let anew = content;
                         anew[index] = page;
                         setContent(anew);
-                        // setEdited(false);
-                        // setBuilder({});
-                        router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
+                        setEdited(false);
+                        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
                         break;
                     case false:
                         break;
                 }
             } else {
-                // setBuilder({});
-                const newUrl = `/editor/${navigation}?page=${page.id}`
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
                 setPageId(page.id)
                 let found = content.find(pa => pa.id == page.id);
