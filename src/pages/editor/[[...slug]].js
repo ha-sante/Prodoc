@@ -69,12 +69,12 @@ export default function Editor() {
       toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
       typeof window !== undefined && localStorage.setItem("authenticated", true);
-      // setAuthenticated(true);
+      setAuthenticated(true);
     }).catch(error => {
       console.log(error);
       toast.error('Invalid auth details.');
       toast.dismiss(toastId);
-      // setAuthenticated(true);
+      setAuthenticated(true);
     });
   };
 
@@ -96,23 +96,10 @@ export default function Editor() {
     }
   }
 
-  const handlePageConfigChange = (configuration) => {
-    console.log("handling.change.via.props", { configuration });
-
-    let newContent = [...content];
-    let current_in_edit_page_index = content.findIndex((page) => page?.id == page.id);
-    let page = content.find((page) => page?.id == page.id);
-
-    newContent[current_in_edit_page_index] = { ...page, configuration };
-
-    setContent(newContent);
-    setEdited(true);
-    setConfigure(false);
-  }
 
   const handleSavePageData = () => {
     // GET THE DATA FOR THE UPDATED PAGE 
-    let page = content.find(page => page.id == page?.id);
+    // let page = content.find(page => page.id == page?.id);
     if (page) {
       setProcessing(true);
       let toastId = toast.loading('Saving this Page...');
@@ -185,7 +172,7 @@ export default function Editor() {
     let valid = typeof window !== undefined && localStorage.getItem("authenticated") ? true : false;
     console.log("authenticated", valid);
     if (valid) {
-      // setAuthenticated(true);
+      setAuthenticated(true);
     }
   }, []);
 
@@ -414,7 +401,7 @@ export default function Editor() {
       <ConfigurePrompt key={"configure-prompt-1"} />
       <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} setDefinitions={setDefinitions} />
 
-      {authenticated ?
+      {authenticated === false ?
         AuthenticationPage()
         :
         <div className="w-100">

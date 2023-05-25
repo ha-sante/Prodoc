@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { useState, useEffect, useContext, memo } from "react";
+import { useState, useEffect, useContext, memo, useMemo } from "react";
 import { useRouter } from 'next/router'
 
 import { Inter } from 'next/font/google'
@@ -225,7 +225,6 @@ const EditorSidebarComponent = () => {
                 // setEdited(false);
                 // setBuilder({});
                 setContent(anew);
-
                 router.push(`/editor`);
             }
         } else {
@@ -236,10 +235,8 @@ const EditorSidebarComponent = () => {
     }
 
     const HandleLogOut = () => {
-        if (typeof window !== 'undefined') {
-            typeof window !== 'undefined' && localStorage.removeItem("authenticated");
-            // setAuthenticated(false);
-        }
+        typeof window !== 'undefined' && localStorage.removeItem("authenticated");
+        setAuthenticated(false);
     }
 
     const Indicators = (page) => {
@@ -544,11 +541,16 @@ const EditorSidebarComponent = () => {
         )
     }
 
-    return (
-        <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-            {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
-        </aside>
-    )
+    const render = useMemo(() => {
+        // This function will only be called if passed in values change
+        return (
+            <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
+                {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
+            </aside>
+        );
+    }, [content, navigation]);
+
+    return render;
 }
 
 export default memo(EditorSidebarComponent);
