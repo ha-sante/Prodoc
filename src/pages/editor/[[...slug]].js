@@ -44,7 +44,7 @@ export default function Editor() {
 
   const [configure, setConfigure] = useAtom(configureAtom);
   const [edited, setEdited] = useAtom(editedAtom);
-  // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+  const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
   const [permission, setPermission] = useAtom(permissionAtom);
   const [definitions, setDefinitions] = useAtom(definitionsAtom);
 
@@ -424,7 +424,7 @@ export default function Editor() {
                 Configure
               </Button>
 
-              {false ?
+              {edited ?
                 <Button size="xs" color="warning" onClick={() => handleSavePageData()}>
                   Save Page Data Update
                   <CloudChange size="16" className="ml-2" color="#fff" />
@@ -443,56 +443,31 @@ export default function Editor() {
     )
   }
 
-
-
-  const EditorSidebarComponent = () => {
-    const [count, setCount] = useState(0);
-
-    const memoizedComponent = memo(() => {
-      return (
-        <div>
-          <EditorSidebar />
-        </div>
-      );
-    }, [count]);
-
-    return memoizedComponent;
-  };
-
-
   return (
     <main className="min-h-screen flex-col items-center justify-between">
-      {/* <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
-      <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} /> */}
+      <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
+      <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} setDefinitions={setDefinitions} />
 
-      {/* 
-        { false ?
-          AuthenticationPage()
-          :
-          <div className="w-100">
-            {slug == null ?
-              <div className="w-100">
-                <EditorSidebar />
-                {HomePage()}
-              </div>
-              :
-              <div className="w-100">
-                {page?.id !== undefined && Navigation()}
-                <EditorSidebar />
-                {navigation === 'api' && APIPage()}
-                {navigation === 'product' && EditorPage()}
-              </div>
-            }
-          </div>
-        } */}
 
-      <div className="w-100">
-        {Navigation()}
-        <EditorSidebar />
-        {navigation === 'api' && APIPage()}
-        {navigation === 'product' && EditorPage()}
-      </div>
-
+      {authenticated ?
+        AuthenticationPage()
+        :
+        <div className="w-100">
+          {slug == null ?
+            <div className="w-100">
+              <EditorSidebar />
+              {HomePage()}
+            </div>
+            :
+            <div className="w-100">
+              {page?.id !== undefined && Navigation()}
+              <EditorSidebar />
+              {navigation === 'api' && APIPage()}
+              {navigation === 'product' && EditorPage()}
+            </div>
+          }
+        </div>
+      }
     </main>
   )
 }

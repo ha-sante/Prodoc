@@ -15,7 +15,7 @@ import {
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
     DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, update
 } from '../../context/state';
-import { useStore, useAtom, useSetAtom } from "jotai";
+import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -40,23 +40,23 @@ const EditorSidebarComponent = () => {
 
     const [content, setContent] = useAtom(contentAtom);
 
-    // const [pagination, setPagination] = useAtom(paginationAtom);
-    // const [builder, setBuilder] = useAtom(builderAtom);
+    const [pagination, setPagination] = useAtom(paginationAtom);
+    const [builder, setBuilder] = useAtom(builderAtom);
 
-    // const [configure, setConfigure] = useAtom(configureAtom);
-    // const [edited, setEdited] = useAtom(editedAtom);
-    // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
-    // const [permission, setPermission] = useAtom(permissionAtom);
-    // const [definitions, setDefinitions] = useAtom(definitionsAtom);
+    const [configure, setConfigure] = useAtom(configureAtom);
+    const [edited, setEdited] = useAtom(editedAtom);
+    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    const [permission, setPermission] = useAtom(permissionAtom);
+    const [definitions, setDefinitions] = useAtom(definitionsAtom);
 
-    // const [code, setCode] = useAtom(codeAtom);
-    // const [navigation, setNavigation] = useAtom(navigationAtom);
+    const [code, setCode] = useAtom(codeAtom);
+    const [navigation, setNavigation] = useAtom(navigationAtom);
 
     const setPageId = useSetAtom(pageIdAtom);
     const setPage = useSetAtom(pageAtom);
+    // // const setDefinitions = useSetAtom(pageAtom);
+    // const navigation = useAtomValue(navigationAtom);
 
-    let navigation = 'api';
-    let edited = false;
 
     const router = useRouter();
     // const [processing, setProcessing] = useState(false);
@@ -214,25 +214,12 @@ const EditorSidebarComponent = () => {
                 }
             } else {
                 // setBuilder({});
-                // router.push(`/editor/${navigation}/?page=${page.id}`, undefined, { shallow: true });
-                // router.push('/editor/product?page=365470494298734672', { shallow: true });
-
                 const newUrl = `/editor/${navigation}?page=${page.id}`
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
-
                 setPageId(page.id)
-                // update("hello", page.id)
-
                 let found = content.find(pa => pa.id == page.id);
                 console.log("page.loaded.from.current.content", { found });
                 setPage(found);
-
-                // router.push({
-                //     pathname: `/editor/${navigation}`,
-                //     query: {
-                //         page: page.id,
-                //     }
-                // }, undefined, { shallow: true })
             }
         }
     }
@@ -515,9 +502,6 @@ const EditorSidebarComponent = () => {
     // COMPLETED: MADE ALOT CHANGES DOWN THIS TREEE OF COMPONENTS
     function SubPageNavigation() {
 
-        // CONFIGURA
-        // let navigation = "api"
-
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
         let productChapters = content.filter(child => child?.type === navigation && child?.position === 'chapter')
         let book = {
@@ -577,8 +561,7 @@ const EditorSidebarComponent = () => {
 
     return (
         <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-            {/* {navigation == 'main' ? MainNavigation() : SubPageNavigation()} */}
-            {SubPageNavigation()}
+            {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
         </aside>
     )
 }
