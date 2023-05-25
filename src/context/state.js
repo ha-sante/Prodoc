@@ -116,7 +116,7 @@ export function ContentAPIHandler(option, data) {
 
 
 // JOTAI STATE MANAGEMENT
-import { createStore, Provider, useStore, atom } from "jotai";
+import { createStore, Provider, useStore, atom, useAtom } from "jotai";
 let objguy = {
   content: [],
   pagination: {},
@@ -136,11 +136,12 @@ let objguy = {
 }
 export const store = createStore();
 
+// ATOMS
 export const contentAtom = atom([]);
 
 export const paginationAtom = atom({});
 export const pageAtom = atom({});
-export const builderAtom = atom({});
+export const builderAtom = atom({ name: "builder" });
 
 export const configureAtom = atom(false);
 export const editedAtom = atom(false);
@@ -151,24 +152,28 @@ export const definitionsAtom = atom(false);
 export const codeAtom = atom('{ privacy: "public" }');
 export const navigationAtom = atom('main');
 
-store.set(contentAtom, [])
+export const pageIdAtom = atom('');
 
-store.set(paginationAtom, {})
-store.set(pageAtom, {})
-store.set(builderAtom, {})
+// store.set(contentAtom, [])
 
-store.set(configureAtom, false)
-store.set(editedAtom, false)
-store.set(authenticatedAtom, false)
-store.set(permissionAtom, false)
-store.set(definitionsAtom, false)
+// store.set(paginationAtom, {})
+// store.set(pageAtom, {})
+// store.set(builderAtom, {})
 
-store.set(codeAtom, '{ privacy: "public" }')
-store.set(navigationAtom, 'product')
+// store.set(configureAtom, false)
+// store.set(editedAtom, false)
+// store.set(authenticatedAtom, false)
+// store.set(permissionAtom, false)
+// store.set(definitionsAtom, false)
+
+// store.set(codeAtom, '{ privacy: "public" }')
+// store.set(navigationAtom, 'product')
 
 // STATIC DATA & METHODS
 export function JotaiAppStateProvider({ children }) {
-  return (<Provider store={store}> {children} </Provider>);
+  return (<Provider store={store}>
+    {children}
+  </Provider>);
 };
 export const AppStateStoreProvider = JotaiAppStateProvider;
 

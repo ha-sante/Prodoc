@@ -28,7 +28,7 @@ export default function ConfigurePagePrompt(props) {
 
     const [configure, setConfigure] = useAtom(configureAtom);
     const [edited, setEdited] = useAtom(editedAtom);
-    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
     const [permission, setPermission] = useAtom(permissionAtom);
     const [definitions, setDefinitions] = useAtom(definitionsAtom);
 

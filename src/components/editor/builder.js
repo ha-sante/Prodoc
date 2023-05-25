@@ -35,15 +35,15 @@ export default function BuilderEditor() {
 
     const [pagination, setPagination] = useAtom(paginationAtom);
     const [page, setPage] = useAtom(pageAtom);
-    const [builder, setBuilder] = useAtom(builderAtom);
+    // const [builder, setBuilder] = useAtom(builderAtom);
 
     const [configure, setConfigure] = useAtom(configureAtom);
     const [edited, setEdited] = useAtom(editedAtom);
-    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
     const [permission, setPermission] = useAtom(permissionAtom);
     const [definitions, setDefinitions] = useAtom(definitionsAtom);
 
-    const [code, setCode] = useAtom(codeAtom);
+    // const [code, setCode] = useAtom(codeAtom);
     const [navigation, setNavigation] = useAtom(navigationAtom);
 
 
@@ -58,10 +58,10 @@ export default function BuilderEditor() {
     ]);
     const [selected, setSelected] = useState(0);
     const [base, setBase] = useState("");
-    // const [code, setCode] = useState(
-    //     `function add(a, b) { return a + b; }`
-    // );
-    // const [builder, setBuilder] = useState({});
+    const [code, setCode] = useState(
+        `function add(a, b) { return a + b; }`
+    );
+    const [builder, setBuilder] = useState({});
 
 
     useEffect(() => {

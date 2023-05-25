@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic';
 
-import { useState, useEffect, useContext, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useContext, useRef, useLayoutEffect, useMemo, memo } from "react";
 import { useRouter } from 'next/router'
 
 import { Label, TextInput, Checkbox, Button, Alert, Avatar, Modal } from "flowbite-react";
@@ -18,7 +18,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
+  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
   DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
@@ -44,12 +44,14 @@ export default function Editor() {
 
   const [configure, setConfigure] = useAtom(configureAtom);
   const [edited, setEdited] = useAtom(editedAtom);
-  const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+  // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
   const [permission, setPermission] = useAtom(permissionAtom);
   const [definitions, setDefinitions] = useAtom(definitionsAtom);
 
   const [code, setCode] = useAtom(codeAtom);
   const [navigation, setNavigation] = useAtom(navigationAtom);
+
+  // const [pageId, setPageId] = useAtom(pageIdAtom);
 
 
   const router = useRouter();
@@ -65,12 +67,12 @@ export default function Editor() {
       toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
       localStorage.setItem("authenticated", true);
-      setAuthenticated(true);
+      // setAuthenticated(true);
     }).catch(error => {
       console.log(error);
       toast.error('Invalid auth details.');
       toast.dismiss(toastId);
-      setAuthenticated(true);
+      // setAuthenticated(true);
     });
   };
 
@@ -181,13 +183,20 @@ export default function Editor() {
     let valid = localStorage.getItem("authenticated");
     console.log("authenticated", valid);
     if (valid) {
-      setAuthenticated(true);
+      // setAuthenticated(true);
     }
   }, []);
 
+  let locationHref = typeof window !== 'undefined' && window.location.href;
+
+  useEffect(() => {
+    console.log("window.location", { locationHref })
+  }, [locationHref]);
+
+
   useEffect(() => {
     let nav = { slug, page: router.query.page };
-    console.log("slug.content.changed", { nav });
+    console.log("slug.content.changed", { nav, locationHref });
 
     // - /PRODUCT OR /API LOADS : (GET ALL CONTENT AT THIS POINT)
     // - /PRODUCT/PAGE (NO CONTENT) : (GET ALL CONTENT) (FROM THE RESPONSE CHECK FOR THE PAGE)
@@ -415,7 +424,7 @@ export default function Editor() {
                 Configure
               </Button>
 
-              {edited ?
+              {false ?
                 <Button size="xs" color="warning" onClick={() => handleSavePageData()}>
                   Save Page Data Update
                   <CloudChange size="16" className="ml-2" color="#fff" />
@@ -434,13 +443,30 @@ export default function Editor() {
     )
   }
 
-  return (
-    <>
-      <main className="min-h-screen flex-col items-center justify-between">
-        <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
-        <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} />
 
-        {authenticated == false ?
+
+  const EditorSidebarComponent = () => {
+    const [count, setCount] = useState(0);
+
+    const memoizedComponent = memo(() => {
+      return (
+        <div>
+          <EditorSidebar />
+        </div>
+      );
+    }, [count]);
+
+    return memoizedComponent;
+  };
+
+
+  return (
+    <main className="min-h-screen flex-col items-center justify-between">
+      {/* <ConfigurePrompt key={"configure-prompt-1"} HandleConfigurationChange={handlePageConfigChange} />
+      <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} /> */}
+
+      {/* 
+        { false ?
           AuthenticationPage()
           :
           <div className="w-100">
@@ -458,8 +484,15 @@ export default function Editor() {
               </div>
             }
           </div>
-        }
-      </main>
-    </>
+        } */}
+
+      <div className="w-100">
+        {Navigation()}
+        <EditorSidebar />
+        {navigation === 'api' && APIPage()}
+        {navigation === 'product' && EditorPage()}
+      </div>
+
+    </main>
   )
 }

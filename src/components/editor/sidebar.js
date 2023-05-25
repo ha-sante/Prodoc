@@ -12,10 +12,10 @@ import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, Arro
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, update
 } from '../../context/state';
-import { useStore, useAtom } from "jotai";
+import { useStore, useAtom, useSetAtom } from "jotai";
 
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -36,27 +36,30 @@ const StrictModeDroppable = ({ children, ...props }) => {
     return <Droppable {...props}>{children}</Droppable>;
 };
 
-export default function EditorSidebar() {
+const EditorSidebarComponent = () => {
 
     const [content, setContent] = useAtom(contentAtom);
 
-    const [pagination, setPagination] = useAtom(paginationAtom);
-    const [_, setPage] = useAtom(pageAtom);
-    const [builder, setBuilder] = useAtom(builderAtom);
+    // const [pagination, setPagination] = useAtom(paginationAtom);
+    // const [builder, setBuilder] = useAtom(builderAtom);
 
-    const [configure, setConfigure] = useAtom(configureAtom);
-    const [edited, setEdited] = useAtom(editedAtom);
-    const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
-    const [permission, setPermission] = useAtom(permissionAtom);
-    const [definitions, setDefinitions] = useAtom(definitionsAtom);
+    // const [configure, setConfigure] = useAtom(configureAtom);
+    // const [edited, setEdited] = useAtom(editedAtom);
+    // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+    // const [permission, setPermission] = useAtom(permissionAtom);
+    // const [definitions, setDefinitions] = useAtom(definitionsAtom);
 
-    const [code, setCode] = useAtom(codeAtom);
-    const [navigation, setNavigation] = useAtom(navigationAtom);
+    // const [code, setCode] = useAtom(codeAtom);
+    // const [navigation, setNavigation] = useAtom(navigationAtom);
 
+    const setPageId = useSetAtom(pageIdAtom);
+    const setPage = useSetAtom(pageAtom);
 
+    let navigation = 'api';
+    let edited = false;
 
     const router = useRouter();
-    const [processing, setProcessing] = useState(false);
+    // const [processing, setProcessing] = useState(false);
     // const [navigation, setNavigation] = useState('main');
 
     let defaultRoutes = [
@@ -202,8 +205,8 @@ export default function EditorSidebar() {
                         let anew = content;
                         anew[index] = page;
                         setContent(anew);
-                        setEdited(false);
-                        setBuilder({});
+                        // setEdited(false);
+                        // setBuilder({});
                         router.push(`/editor/product/?page=${page.id}`, undefined, { shallow: true });
                         break;
                     case false:
@@ -216,6 +219,9 @@ export default function EditorSidebar() {
 
                 const newUrl = `/editor/${navigation}?page=${page.id}`
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+
+                setPageId(page.id)
+                // update("hello", page.id)
 
                 let found = content.find(pa => pa.id == page.id);
                 console.log("page.loaded.from.current.content", { found });
@@ -243,23 +249,25 @@ export default function EditorSidebar() {
                 let index = content.findIndex(page => page.id == page?.id);
                 let anew = content;
                 anew[index] = page;
-                setPage();
-                setEdited(false);
-                setBuilder({});
+                // setPage();
+                // setEdited(false);
+                // setBuilder({});
                 setContent(anew);
 
                 router.push(`/editor`);
             }
         } else {
-            setBuilder({});
-            setPage();
+            // setBuilder({});
+            // setPage();
             router.push(`/editor`);
         }
     }
 
     const HandleLogOut = () => {
-        localStorage.removeItem("authenticated");
-        setAuthenticated(false);
+        if (typeof window !== 'undefined') {
+            typeof window !== 'undefined' && localStorage.removeItem("authenticated");
+            // setAuthenticated(false);
+        }
     }
 
     const Indicators = (page) => {
@@ -273,7 +281,7 @@ export default function EditorSidebar() {
 
     const Directory = ({ directoryPage }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
-        let pagination = JSON.parse(localStorage.getItem('pagination'));
+        let pagination = JSON.parse(typeof window !== 'undefined' && localStorage.getItem('pagination'));
         let mapping = pagination[directoryPage?.id];
         let pageOpened = mapping !== undefined ? mapping : false;
         if (directoryPage?.id == 'book') {
@@ -282,7 +290,6 @@ export default function EditorSidebar() {
 
         const [isExpanded, toggleExpanded] = useState(pageOpened);
         const [isShown, setIsShown] = useState(false);
-
         const pages = content;
 
         if (directoryPage?.id) {
@@ -300,8 +307,8 @@ export default function EditorSidebar() {
 
                                     <div className={`${directoryPage.id == 'book' ? '' : ''} ${directoryPage.position == 'child' ? 'folder' : ''}`}>
                                         <div className={`${directoryPage.position === 'child' ? 'folder flex flex-row w-100 justify-between items-center cursor-pointer' : 'flex justify-between items-center cursor-pointer'} `}
-                                        // onMouseEnter={() => setIsShown(true)} 
-                                        // onMouseLeave={() => setIsShown(false)}
+                                            onMouseEnter={() => setIsShown(true)}
+                                            onMouseLeave={() => setIsShown(false)}
                                         >
 
                                             <div className='flex flex-row items-center'>
@@ -313,9 +320,9 @@ export default function EditorSidebar() {
                                                             console.log("clicked.on.for.moving.id", directoryPage.id);
 
                                                             // cold store
-                                                            let toStore = { ...JSON.parse(localStorage.getItem('pagination')) };
+                                                            let toStore = { ...JSON.parse(typeof window !== 'undefined' && localStorage.getItem('pagination')) };
                                                             toStore[directoryPage.id] = change;
-                                                            localStorage.setItem('pagination', JSON.stringify(toStore));
+                                                            typeof window !== 'undefined' && localStorage.setItem('pagination', JSON.stringify(toStore));
                                                         }}>
                                                         {isExpanded == true ?
                                                             <ArrowDown2 size="16" color="#111827" />
@@ -347,6 +354,7 @@ export default function EditorSidebar() {
                                                         arrowIcon={false}
                                                         floatingArrow={false}
                                                         trigger='hover'
+                                                        disabled={true}
                                                         dismissOnClick={true}>
                                                         <Dropdown.Item onClick={() => HandleDeletePage(directoryPage)}>
                                                             Delete
@@ -406,8 +414,8 @@ export default function EditorSidebar() {
             return (
                 <>
                     <div className={`${directoryPage.position === 'child' ? 'ml-5' : ''} flex flex-row w-100 justify-between items-center cursor-pointer`}
-                    // onMouseEnter={() => { setIsShown(true); }} 
-                    // onMouseLeave={() => { setIsShown(false) }}
+                        onMouseEnter={() => { setIsShown(true); }}
+                        onMouseLeave={() => { setIsShown(false) }}
                     >
                         <div className='flex flex-row w-100 items-center'>
                             {allowed &&
@@ -417,9 +425,9 @@ export default function EditorSidebar() {
                                         toggleExpanded(change);
 
                                         // cold store
-                                        let toStore = { ...JSON.parse(localStorage.getItem('pagination')) };
+                                        let toStore = { ...JSON.parse(typeof window !== 'undefined' && localStorage.getItem('pagination')) };
                                         toStore[directoryPage.id] = change;
-                                        localStorage.setItem('pagination', JSON.stringify(toStore));
+                                        typeof window !== 'undefined' && localStorage.setItem('pagination', JSON.stringify(toStore));
                                     }}>
                                     {isExpanded == true ?
                                         <ArrowDown2 size="16" color="#111827" />
@@ -453,6 +461,7 @@ export default function EditorSidebar() {
                                     arrowIcon={false}
                                     floatingArrow={false}
                                     trigger='hover'
+                                    disabled={true}
                                     dismissOnClick={true}>
                                     <Dropdown.Item onClick={() => HandleDeletePage(directoryPage)}>
                                         Delete
@@ -522,16 +531,16 @@ export default function EditorSidebar() {
         };
 
         // CHECK IF WE HAVE A NAVIGATION STYLING DATA ALREADY
-        if (localStorage.getItem('pagination') == null) {
-            localStorage.setItem('pagination', JSON.stringify({}));
+        if (typeof window !== 'undefined' && typeof window !== 'undefined' && localStorage.getItem('pagination') == null) {
+            typeof window !== 'undefined' && localStorage.setItem('pagination', JSON.stringify({}));
         }
 
         // IF YES, SET FOR EACH PARENT, THAT THEY SHOULD BE OPENED
         let toStore = {};
         productChapters.map(child => { if (child.position.includes('chapter')) { toStore[child.id] = true } });
         try {
-            if (Object.keys(JSON.parse(localStorage.getItem('pagination'))).length === 0) {
-                localStorage.setItem('pagination', JSON.stringify(toStore));
+            if (Object.keys(JSON.parse(typeof window !== 'undefined' && localStorage.getItem('pagination'))).length === 0) {
+                typeof window !== 'undefined' && localStorage.setItem('pagination', JSON.stringify(toStore));
             }
         } catch (error) {
             console.log("error", error);
@@ -568,7 +577,10 @@ export default function EditorSidebar() {
 
     return (
         <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-            {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
+            {/* {navigation == 'main' ? MainNavigation() : SubPageNavigation()} */}
+            {SubPageNavigation()}
         </aside>
     )
 }
+
+export default memo(EditorSidebarComponent);

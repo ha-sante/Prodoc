@@ -32,7 +32,7 @@ import {
 import { useStore, useAtom } from "jotai";
 
 
-export default function EditorComponent(props) {
+export default function PageEditor(props) {
   const ejInstance = useRef();
 
   const [content, setContent] = useAtom(contentAtom);
@@ -43,7 +43,7 @@ export default function EditorComponent(props) {
 
   const [configure, setConfigure] = useAtom(configureAtom);
   const [edited, setEdited] = useAtom(editedAtom);
-  const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
+  // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
   const [permission, setPermission] = useAtom(permissionAtom);
   const [definitions, setDefinitions] = useAtom(definitionsAtom);
 
