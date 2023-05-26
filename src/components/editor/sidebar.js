@@ -13,7 +13,7 @@ import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, Arro
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, update
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
@@ -36,7 +36,7 @@ const StrictModeDroppable = ({ children, ...props }) => {
     return <Droppable {...props}>{children}</Droppable>;
 };
 
-const EditorSidebarComponent = () => {
+const EditorSidebarComponent = (props) => {
 
     const [content, setContent] = useAtom(contentAtom);
     const [edited, setEdited] = useAtom(editedAtom);
@@ -54,13 +54,6 @@ const EditorSidebarComponent = () => {
         { icon: <Code1 size="16" color="#111827" />, title: "API Reference", id: 'api' },
         { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
-
-    // useEffect(() => {
-    //     console.log("rerendering.the.sidebar", { remote_navigation: navigation, navigation})
-    //     if (navigation !== navigation) {
-    //         setNavigation(navigation)
-    //     }
-    // }, [navigation]);
 
     function HandleAddPage(position, parent_id) {
         // PAGE IS SOMETHING
@@ -175,11 +168,13 @@ const EditorSidebarComponent = () => {
         }
     }
 
-    const HandleMoveToAPage = (page) => {
+    const HandleMoveToAPage = async (page) => {
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
+        let edited = await StorageHandler.get(`edited`);
+        console.log("move.to.page.edited", { edited, page })
         if (page.type !== 'book') {
             const newUrl = `/editor/${navigation}?page=${page.id}`
             if (edited == true) {
@@ -187,49 +182,45 @@ const EditorSidebarComponent = () => {
                 console.log("permission.to.move", permission);
                 switch (permission) {
                     case true:
-                        // RESET THE PAGE'S OLD DATA BEFORE ROUTING
-                        // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
-                        let index = content.findIndex(page => page.id == page?.id);
-                        let anew = content;
-                        anew[index] = page;
-                        setContent(anew);
-                        setEdited(false);
                         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+                        setEdited(false);
+                        StorageHandler.set(`edited`, false);
+                        // SET PAGE CONTENT
+                        let found = content.find(pa => pa.id == page.id);
+                        setPage(found);
+                        setPageId(page.id)
                         break;
                     case false:
                         break;
                 }
             } else {
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
-                setPageId(page.id)
                 let found = content.find(pa => pa.id == page.id);
-                console.log("page.loaded.from.current.content", { found });
                 setPage(found);
+                setPageId(page.id)
             }
         }
     }
 
-    const HandleBacktoMain = () => {
+    const HandleBacktoMain = async () => {
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
+        let edited = await StorageHandler.get(`edited`);
+        console.log("back.to.page.main", { edited })
+
         if (edited == true) {
             let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
             console.log("permission.after.clicking.div", permission);
             if (permission) {
-                let index = content.findIndex(page => page.id == page?.id);
-                let anew = content;
-                anew[index] = page;
-                // setPage();
-                // setEdited(false);
-                // setBuilder({});
-                setContent(anew);
+                setPage();
+                setEdited(false);
+                StorageHandler.set(`edited`, false);
                 router.push(`/editor`);
             }
         } else {
-            // setBuilder({});
-            // setPage();
+            setPage();
             router.push(`/editor`);
         }
     }

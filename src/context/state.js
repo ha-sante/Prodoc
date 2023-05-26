@@ -1,6 +1,7 @@
 import React, { Component, useContext, useState } from 'react';
 import { render } from 'react-dom';
 import axios from 'axios';
+import localForage from 'localforage';
 
 // DEFAULT DATAS
 export const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
@@ -111,6 +112,15 @@ export function ContentAPIHandler(option, data) {
     case 'PATCH':
       return axios.patch(`/api/content`, data);
       break;
+  }
+}
+
+export const StorageHandler = {
+  set: (name, value) => {
+    return typeof window !== undefined && localForage.setItem(name, value);
+  },
+  get: (name) => {
+    return typeof window !== undefined && localForage.getItem(name);
   }
 }
 

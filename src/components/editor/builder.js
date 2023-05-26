@@ -38,7 +38,6 @@ export default function BuilderEditor() {
     // const [builder, setBuilder] = useAtom(builderAtom);
 
     const [configure, setConfigure] = useAtom(configureAtom);
-    const [edited, setEdited] = useAtom(editedAtom);
     // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
     const [permission, setPermission] = useAtom(permissionAtom);
     const [definitions, setDefinitions] = useAtom(definitionsAtom);
@@ -237,7 +236,7 @@ export default function BuilderEditor() {
 
                         useEffect(() => {
                             // Instruction we give here will render once component gets rendered
-                            console.log("current.value.changed", current_value)
+                            // console.log("current.value.changed", current_value)
                         }, [current_value]);
 
                         return (

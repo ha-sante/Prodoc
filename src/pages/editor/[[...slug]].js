@@ -19,7 +19,7 @@ const inter = Inter({ subsets: ['latin'] })
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
   editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
-  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -93,6 +93,7 @@ export default function Editor() {
       anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
       setContent(anew);
       setEdited(true);
+      StorageHandler.set(`edited`, true);
     }
   }
 
@@ -107,11 +108,14 @@ export default function Editor() {
         console.log('response', response.data);
         setEdited(false);
         setProcessing(false);
+        StorageHandler.set(`edited`, false);
         toast.dismiss(toastId);
         toast.success("Page Updated");
       }).catch(error => {
         console.log('error', error);
         setProcessing(false);
+        toast.dismiss(toastId);
+        toast.error("Something went wrong - Page was not saved");
       });
     }
   }
@@ -167,6 +171,11 @@ export default function Editor() {
     EditorEditing();
   }
 
+
+  useEffect(() => {
+    console.log("page.in.edited.state.changed", { edited })
+  }, [edited]);
+
   useEffect(() => {
     // makes a request to the authentication child 
     let valid = typeof window !== undefined && localStorage.getItem("authenticated") ? true : false;
@@ -194,12 +203,15 @@ export default function Editor() {
 
       // IF AT THE MAIN ENTRY ONLY (/product or /api)
       if (nav.page == null) {
+        let toastId = toast.loading('Getting Pages Content...');
+
         // GET ALL CONTENT ANEW
         ContentAPIHandler('GET').then(response => {
 
           // SET THE NEW CONTENT
           console.log('get.all.content', { content: response.data, page_id: router.query.page });
           setContent(response.data);
+          toast.dismiss(toastId);
 
           // SET THE CURRENT PAGE WE ARE ON
           if (nav.page != undefined) {
@@ -207,10 +219,13 @@ export default function Editor() {
             console.log("slug.page.matched.content.new.load", { page });
             setPage(page);
             setEdited(false);
+            StorageHandler.set(`edited`, false);
           }
 
         }).catch(error => {
           console.log('error', error);
+          toast.dismiss(toastId);
+          toast.error('Recieved an error whiles getting pages content');
         })
       }
 
@@ -218,12 +233,15 @@ export default function Editor() {
       if (nav.page != null) {
         // IF NO CONTENT
         if (content.length == 0) {
+          let toastId = toast.loading('Getting Pages Content...');
+
           // GET ALL CONTENT ANEW
           ContentAPIHandler('GET').then(response => {
             console.log('get.all.content', { content: response.data, page_id: router.query.page });
 
             // SET THE NEW CONTENT
             setContent(response.data);
+            toast.dismiss(toastId);
 
             // SET THE CURRENT PAGE WE ARE ON
             if (nav.page != undefined) {
@@ -231,9 +249,12 @@ export default function Editor() {
               console.log("slug.change.new.page", { page });
               setPage(page);
               setEdited(false);
+              StorageHandler.set(`edited`, false);
             }
           }).catch(error => {
             console.log('error', error);
+            toast.dismiss(toastId);
+            toast.error('Recieved an error whiles getting pages content');
           })
         }
 
@@ -243,6 +264,7 @@ export default function Editor() {
           console.log("page.loaded.from.current.content", { page });
           setPage(page);
           setEdited(false);
+          StorageHandler.set(`edited`, false);
         }
       }
 
@@ -396,6 +418,12 @@ export default function Editor() {
     )
   }
 
+
+  function editorSidebarCallback() {
+    console.clear();
+    console.log("called.editor.sidebar.callback", { edited, page, content })
+  }
+
   return (
     <main className="min-h-screen flex-col items-center justify-between">
       <ConfigurePrompt key={"configure-prompt-1"} />
@@ -413,7 +441,7 @@ export default function Editor() {
             :
             <div className="w-100">
               {page?.id !== undefined && Navigation()}
-              <EditorSidebar />
+              <EditorSidebar callback={editorSidebarCallback} />
               {navigation === 'api' && APIPage()}
               {navigation === 'product' && EditorPage()}
             </div>

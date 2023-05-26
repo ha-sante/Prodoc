@@ -5,7 +5,7 @@ import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsa
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler
 } from '../../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -56,6 +56,7 @@ export default function ConfigurePagePrompt(props) {
             setPage(ready);
             setEdited(true);
             setConfigure(false);
+            StorageHandler.set(`edited`, true);
         } else {
             toast.error("Unable to save this data")
         }
