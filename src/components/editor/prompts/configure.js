@@ -29,30 +29,28 @@ export default function ConfigurePagePrompt(props) {
     const inputRef = useRef();
 
     useEffect(() => {
-        console.log("inputRef.called", { ref: inputRef.current, code, page })
-        if (inputRef.current) {
+        console.log("set.page.configuration", { ref: inputRef.current, code, page })
+        if (inputRef.current && page) {
             let found = content.find(item => item?.id == page?.id);
             let value = JSON.stringify(found?.configuration, undefined, 4);
-
             inputRef.current.value = JSON.stringify(found?.configuration, undefined, 4);
             setCode(value)
         }
     }, [configure]);
 
     const HandleSetConfiguration = () => {
-        console.log("configuration.inputRef", { value: inputRef.current.value, props });
         if (inputRef.current) {
             // GET THE UPDATED VALUE
             let update = inputRef.current.value;
-            console.log("configuration.updated", update);
+            // console.log("configuration.updated", update);
 
-            // // SET IT TO CONTENT LIST (PAGE)
+            // SET IT TO CONTENT LIST (PAGE)
             let new_configuration = eval('(' + update + ')');
-            console.log("configuration.new_configuration", new_configuration);
 
-            // // CALL FOR UPDATE INDICATORS ETC
+            // CALL FOR UPDATE INDICATORS ETC
             let ready = page;
             ready.configuration = new_configuration;
+            console.log("set.configuration", { ready });
             setPage(ready);
             setEdited(true);
             setConfigure(false);

@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { useState, useEffect, useContext, memo, useMemo } from "react";
+import { useState, useEffect, useContext, memo, useMemo, useRef } from "react";
 import { useRouter } from 'next/router'
 
 import { Inter } from 'next/font/google'
@@ -46,6 +46,9 @@ const EditorSidebarComponent = (props) => {
     const setPage = useSetAtom(pageAtom);
     const setDefinitions = useSetAtom(definitionsAtom);
     const navigation = useAtomValue(navigationAtom);
+    const page = useAtomValue(pageAtom);
+
+    const [highlighted, setHighlighted] = useState("");
 
     const router = useRouter();
 
@@ -155,7 +158,7 @@ const EditorSidebarComponent = (props) => {
         let dragged_page = content.find(page => page.id == result.draggableId);
         let dropped_on_page = content.find((page) => page.id == active_pages[endIndex]);
 
-        console.warn("side.bar.navigation.pages.before.refresh", { parent_page, parent_page_index, dragged_page, dropped_on_page });
+        console.warn("side.item.drag.end", { parent_page, parent_page_index, dragged_page, dropped_on_page });
         if (dropped_on_page) {
             parent_page.children = active_pages;
             parent_page.children[endIndex] = dragged_page.id;
@@ -164,7 +167,7 @@ const EditorSidebarComponent = (props) => {
             let newContent = [...content];
             newContent[parent_page_index] = parent_page;
             setContent(newContent);
-            console.warn("side.bar.navigation.pages.refreshed", { parent_page, parent_page_index, newContent });
+            console.warn("side.content.changed", { parent_page, parent_page_index, newContent });
         }
     }
 
@@ -174,7 +177,7 @@ const EditorSidebarComponent = (props) => {
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
         let edited = await StorageHandler.get(`edited`);
-        console.log("move.to.page.edited", { edited, page })
+        console.log("move.to.page.edited", { edited, page, content })
         if (page.type !== 'book') {
             const newUrl = `/editor/${navigation}?page=${page.id}`
             if (edited == true) {
@@ -182,13 +185,13 @@ const EditorSidebarComponent = (props) => {
                 console.log("permission.to.move", permission);
                 switch (permission) {
                     case true:
-                        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
                         setEdited(false);
                         StorageHandler.set(`edited`, false);
                         // SET PAGE CONTENT
                         let found = content.find(pa => pa.id == page.id);
                         setPage(found);
                         setPageId(page.id)
+                        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
                         break;
                     case false:
                         break;
@@ -197,7 +200,7 @@ const EditorSidebarComponent = (props) => {
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
                 let found = content.find(pa => pa.id == page.id);
                 setPage(found);
-                setPageId(page.id)
+                setPageId(found.id)
             }
         }
     }
@@ -239,7 +242,9 @@ const EditorSidebarComponent = (props) => {
         }
     }
 
-    const Directory = ({ directoryPage }) => {
+    const [refs, setRefs] = useState(new Map());
+    
+    const Directory = ({ directoryPage, index }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
         let pagination = JSON.parse(typeof window !== 'undefined' && localStorage.getItem('pagination'));
         let mapping = pagination[directoryPage?.id];
@@ -254,7 +259,7 @@ const EditorSidebarComponent = (props) => {
 
         if (directoryPage?.id) {
             let activeChildrenPages = directoryPage.children.filter(id => pages.some(paged => paged.id === id));
-            {/* Page name > Then children pages */ }
+            {/* PARENT PAGE RENDR - HAS CHILDREN WHICH WILL BE RECUSIVELY CREATED*/ }
             if (activeChildrenPages.length > 0) {
                 return (
                     <DragDropContext onDragEnd={HandleOnDragEnd}>
@@ -291,7 +296,7 @@ const EditorSidebarComponent = (props) => {
                                                         }
                                                     </h2>
                                                 }
-                                                <h3 className={`${directoryPage.id == 'book' ? '' : 'file-name font-normal'} flex flex-row text-sm overflow-hidden`}
+                                                <h3 className={`${directoryPage.id == 'book' ? '' : 'file-name font-normal'} flex flex-row text-sm overflow-hidden rounded`}
                                                     onClick={() => {
                                                         HandleMoveToAPage(directoryPage);
                                                     }}>
@@ -369,13 +374,21 @@ const EditorSidebarComponent = (props) => {
                 )
             }
 
-            {/* Page name */ }
+            {/* SINGLE PAGE RENDER - HAS NO CHILDREN AND IS A CHILD ITSELF */ }
             let allowed = directoryPage?.position == 'chapter';
+
+            useEffect(() => {
+                console.log("ref", refs)
+            }, [refs]);
+
             return (
                 <>
-                    <div className={`${directoryPage.position === 'child' ? 'ml-5' : ''} flex flex-row w-100 justify-between items-center cursor-pointer`}
+                    <div
+                        id={`nav-page-item-${directoryPage?.id}`}
+                        className={`${directoryPage.position === 'child' ? 'ml-5' : ''} nav-page-item flex flex-row w-100 justify-between items-center cursor-pointer `}
                         onMouseEnter={() => { setIsShown(true); }}
                         onMouseLeave={() => { setIsShown(false) }}
+                        ref={el => setRefs(refs.set(directoryPage.id, el))}
                     >
                         <div className='flex flex-row w-100 items-center'>
                             {allowed &&
@@ -397,9 +410,23 @@ const EditorSidebarComponent = (props) => {
                                 </h2>
                             }
 
-                            <h3 className="file-name text-sm overflow-hidden text-ellipsis flex flex-row"
+                            <h3 id="" className={`file-name text-sm overflow-hidden text-ellipsis flex flex-row`}
                                 onClick={() => {
                                     HandleMoveToAPage(directoryPage);
+                                    StorageHandler.set("pageClickedId", directoryPage.id);
+                                    typeof window !== undefined && localStorage.setItem("pageClickedId", directoryPage.id);
+
+
+                                    // SET THE COLOR OF THE ELEMENT
+                                    content.map(page => {
+                                        if (refs.get(page.id)) {
+                                            let element = refs.get(page.id)
+                                            element.classList.remove("border-l", "p", 'border-gray-400');
+                                        }
+                                    })
+
+                                    let element = refs.get(directoryPage.id)
+                                    element.classList.add("border-l", "p", 'border-gray-400');
                                 }}>
                                 {directoryPage.title} {Indicators(directoryPage)}
                             </h3>

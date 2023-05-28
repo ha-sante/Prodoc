@@ -173,8 +173,8 @@ export default function Editor() {
 
 
   useEffect(() => {
-    console.log("page.in.edited.state.changed", { edited })
-  }, [edited]);
+    console.log("", { edited })
+  }, [edited, page, content]);
 
   useEffect(() => {
     // makes a request to the authentication child 
@@ -215,9 +215,9 @@ export default function Editor() {
 
           // SET THE CURRENT PAGE WE ARE ON
           if (nav.page != undefined) {
-            let page = response.data.find(page => page.id == nav.page);
-            console.log("slug.page.matched.content.new.load", { page });
-            setPage(page);
+            let found = response.data.find(page => page.id == nav.page);
+            console.log("slug.page.matched.content.new.load", { found });
+            setPage(found);
             setEdited(false);
             StorageHandler.set(`edited`, false);
           }
@@ -245,9 +245,9 @@ export default function Editor() {
 
             // SET THE CURRENT PAGE WE ARE ON
             if (nav.page != undefined) {
-              let page = response.data.find(page => page.id == nav.page);
+              let found = response.data.find(page => page.id == nav.page);
               console.log("slug.change.new.page", { page });
-              setPage(page);
+              setPage(found);
               setEdited(false);
               StorageHandler.set(`edited`, false);
             }
@@ -260,9 +260,9 @@ export default function Editor() {
 
         // IF CONTENT EXISTS
         if (content.length > 0) {
-          let page = content.find(page => page.id == nav.page);
+          let found = content.find(page => page.id == nav.page);
           console.log("page.loaded.from.current.content", { page });
-          setPage(page);
+          setPage(found);
           setEdited(false);
           StorageHandler.set(`edited`, false);
         }
@@ -302,7 +302,7 @@ export default function Editor() {
   }
 
   function EditorPage() {
-    console.log("editor.page.reload.called")
+    // console.log("editor.page.reload.called")
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
@@ -382,7 +382,7 @@ export default function Editor() {
   }
 
   function Navigation() {
-    console.log("editor.navigation.bar.rendered")
+    // console.log("editor.navigation.bar.rendered")
     return (
       <div className="p-2 sm:ml-64 sticky top-0 z-10">
         <div className="p-5 border-b-2 border-gray-200 w-[100%] mx-auto !bg-white border-dashed dark:border-gray-700">
@@ -426,7 +426,7 @@ export default function Editor() {
 
   return (
     <main className="min-h-screen flex-col items-center justify-between">
-      <ConfigurePrompt key={"configure-prompt-1"} />
+      <ConfigurePrompt key={"configure-prompt"} />
       <DefinitionsPrompt key={"definitions-prompt"} definitions={definitions} setDefinitions={setDefinitions} />
 
       {authenticated === false ?
@@ -441,7 +441,7 @@ export default function Editor() {
             :
             <div className="w-100">
               {page?.id !== undefined && Navigation()}
-              <EditorSidebar callback={editorSidebarCallback} />
+              <EditorSidebar />
               {navigation === 'api' && APIPage()}
               {navigation === 'product' && EditorPage()}
             </div>

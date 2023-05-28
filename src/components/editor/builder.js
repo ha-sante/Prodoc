@@ -63,15 +63,15 @@ export default function BuilderEditor() {
     const [builder, setBuilder] = useState({});
 
 
-    useEffect(() => {
-        // SET THE PAGE SERVER ENDPOINT
-        if (page) {
-            let url = page?.content.api?.configuration?.servers[0].url;
-            console.log({ url });
-            setBase(url);
-            setBuilder({});
-        }
-    }, [page]);
+    // useEffect(() => {
+    //     // SET THE PAGE SERVER ENDPOINT
+    //     if (page) {
+    //         let url = page?.content.api?.configuration?.servers[0].url;
+    //         console.log({ url });
+    //         setBase(url);
+    //         setBuilder({});
+    //     }
+    // }, [page]);
 
     const RenderCodeArea = () => {
         let environment = environments[selected];
@@ -107,7 +107,7 @@ export default function BuilderEditor() {
                     }
                 });
             }
-            console.log({ har_format, endpoint })
+            // console.log({ har_format, endpoint })
 
             // HANDLE HEADER
             if (header) {
@@ -291,7 +291,7 @@ export default function BuilderEditor() {
                 let first_el_key = Object.keys(body)[0];
                 let property = _.get(body, first_el_key)?.schema;
                 //console.log("body", { has_body, body, property })
-                console.log("rendering.body.section")
+                // console.log("rendering.body.section")
 
                 return (<div>
                     <h2 className='text-lg font-medium mt-5'>

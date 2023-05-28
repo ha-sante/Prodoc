@@ -115,6 +115,10 @@ export function ContentAPIHandler(option, data) {
   }
 }
 
+localForage.config({
+  driver: localForage.LOCALSTORAGE
+});
+
 export const StorageHandler = {
   set: (name, value) => {
     return typeof window !== undefined && localForage.setItem(name, value);
@@ -181,9 +185,7 @@ export const pageIdAtom = atom('');
 
 // STATIC DATA & METHODS
 export function JotaiAppStateProvider({ children }) {
-  return (<Provider store={store}>
-    {children}
-  </Provider>);
+  return (<Provider store={store}>{children}</Provider>);
 };
 export const AppStateStoreProvider = JotaiAppStateProvider;
 
