@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useContext, memo, useMemo, useRef } from "react";
 import { useRouter } from 'next/router'
 
-import { Inter } from 'next/font/google'
+import { Inter, Lora } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
@@ -172,7 +172,6 @@ const EditorSidebarComponent = (props) => {
     }
 
     const [refs, setRefs] = useState(new Map());
-
     const ActivePageItemIndicator = (page) => {
         // SET THE COLOR OF THE ELEMENT
         content.map(item => {
@@ -185,6 +184,7 @@ const EditorSidebarComponent = (props) => {
         let element = refs.get(page.id)
         element.classList.add("border-l", "p", 'border-gray-400');
     }
+
 
     const HandleMoveToAPage = async (page) => {
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
@@ -251,7 +251,7 @@ const EditorSidebarComponent = (props) => {
         setAuthenticated(false);
     }
 
-    const Indicators = (page) => {
+    const HTTPMethodIndicators = (page) => {
         // IF THE VALUE IS API
         // RETURN A INDICATOR OF 
         if (page.type == "api" && page.content.api.type) {
@@ -272,6 +272,7 @@ const EditorSidebarComponent = (props) => {
         const [isExpanded, toggleExpanded] = useState(pageOpened);
         const [isShown, setIsShown] = useState(false);
         const pages = content;
+        const [loads, setLoads] = useState(0);
 
         if (directoryPage?.id) {
             let activeChildrenPages = directoryPage.children.filter(id => pages.some(paged => paged.id === id));
@@ -316,7 +317,7 @@ const EditorSidebarComponent = (props) => {
                                                     onClick={() => {
                                                         HandleMoveToAPage(directoryPage);
                                                     }}>
-                                                    {directoryPage.title} {Indicators(directoryPage)}
+                                                    {directoryPage.title} {HTTPMethodIndicators(directoryPage)}
                                                 </h3>
                                             </div>
 
@@ -400,7 +401,45 @@ const EditorSidebarComponent = (props) => {
                         className={`${directoryPage.position === 'child' ? 'ml-5' : ''} nav-page-item flex flex-row w-100 justify-between items-center cursor-pointer `}
                         onMouseEnter={() => { setIsShown(true); }}
                         onMouseLeave={() => { setIsShown(false) }}
-                        ref={el => setRefs(refs.set(directoryPage.id, el))}
+                        ref={el => {
+                            if (directoryPage?.id != "book") {
+
+                                // SET THE INITIAL PAGE ITEM
+                                if (el) {
+                                    let id = el.getAttribute("id");
+
+                                    let query = window.location.search;
+                                    let params = new URLSearchParams(query);
+                                    let page_id = params.get('page');
+
+                                    let selected = id.includes(page_id)
+
+                                    if (selected) {
+                                        el.classList.add("border-l", "p", 'border-gray-400');
+
+                                        // SCROLL INTO VIEW OF THE ELEMENT
+                                        const boundingBox = el.getBoundingClientRect();
+                                        if (boundingBox.top >= 0 && boundingBox.left >= 0 && boundingBox.bottom <= window.innerHeight && boundingBox.right <= window.innerWidth) {
+                                            // The element is already in view
+                                        } else {
+                                            // The element is not in view
+                                            // & this is our initial page load
+                                            console.log("loads", loads)
+                                            if(loads == 0){
+                                                el.scrollIntoView();
+                                                // let loadsAnew = loads + 1;
+                                                setLoads(1);
+                                            }
+                                        }
+
+                                    }
+                                }
+
+                                return setRefs(refs.set(directoryPage.id, el))
+                            } else {
+                                return null;
+                            }
+                        }}
                     >
                         <div className='flex flex-row w-100 items-center'>
                             {allowed &&
@@ -427,8 +466,9 @@ const EditorSidebarComponent = (props) => {
                                     HandleMoveToAPage(directoryPage);
                                     StorageHandler.set("pageClickedId", directoryPage.id);
                                     typeof window !== undefined && localStorage.setItem("pageClickedId", directoryPage.id);
+                                    setLoads(1);
                                 }}>
-                                {directoryPage.title} {Indicators(directoryPage)}
+                                {directoryPage.title} {HTTPMethodIndicators(directoryPage)}
                             </h3>
                         </div>
 
