@@ -81,7 +81,7 @@ export default function Editor() {
   const editorOnSaveHandler = (editor, title, description) => {
     console.log("Editor Data to Save::", { editor, title, description });
 
-    let index = content.findIndex(page => page.id == page?.id);
+    let index = content.findIndex(item => item.id == page?.id);
     let anew = content;
 
     let details = Object.keys(diff(editor, anew[index]?.content?.editor));
@@ -105,12 +105,21 @@ export default function Editor() {
       setProcessing(true);
       let toastId = toast.loading('Saving this Page...');
       ContentAPIHandler('PUT', page).then(response => {
+
+
+        // SET IT IN CONTENT LOADING
+        let contentAnew = [...content]
+        let currentPageIndex = content.findIndex(item => item.id == page?.id);
+        contentAnew[currentPageIndex] = page;
+
         console.log('response', response.data);
         setEdited(false);
         setProcessing(false);
         StorageHandler.set(`edited`, false);
+        setContent(contentAnew);
         toast.dismiss(toastId);
         toast.success("Page Updated");
+
       }).catch(error => {
         console.log('error', error);
         setProcessing(false);
@@ -173,8 +182,8 @@ export default function Editor() {
 
 
   useEffect(() => {
-    console.log("", { edited })
-  }, [edited, page, content]);
+    console.log("page.or.content.changed", { page, content })
+  }, [page, content]);
 
   useEffect(() => {
     // makes a request to the authentication child 
@@ -261,7 +270,7 @@ export default function Editor() {
         // IF CONTENT EXISTS
         if (content.length > 0) {
           let found = content.find(page => page.id == nav.page);
-          console.log("page.loaded.from.current.content", { page });
+          console.log("page.loaded.from.current.content", { found });
           setPage(found);
           setEdited(false);
           StorageHandler.set(`edited`, false);
@@ -416,12 +425,6 @@ export default function Editor() {
         </div>
       </div>
     )
-  }
-
-
-  function editorSidebarCallback() {
-    console.clear();
-    console.log("called.editor.sidebar.callback", { edited, page, content })
   }
 
   return (

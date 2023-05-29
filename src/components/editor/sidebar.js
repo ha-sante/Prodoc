@@ -171,6 +171,21 @@ const EditorSidebarComponent = (props) => {
         }
     }
 
+    const [refs, setRefs] = useState(new Map());
+
+    const ActivePageItemIndicator = (page) => {
+        // SET THE COLOR OF THE ELEMENT
+        content.map(item => {
+            if (refs.get(item.id)) {
+                let element = refs.get(item.id)
+                element.classList.remove("border-l", "p", 'border-gray-400');
+            }
+        })
+
+        let element = refs.get(page.id)
+        element.classList.add("border-l", "p", 'border-gray-400');
+    }
+
     const HandleMoveToAPage = async (page) => {
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
@@ -185,13 +200,15 @@ const EditorSidebarComponent = (props) => {
                 console.log("permission.to.move", permission);
                 switch (permission) {
                     case true:
-                        setEdited(false);
-                        StorageHandler.set(`edited`, false);
                         // SET PAGE CONTENT
-                        let found = content.find(pa => pa.id == page.id);
+                        let found = content.find(item => item.id == page.id);
+                        console.log("page.to.replace.on.move", found);
                         setPage(found);
                         setPageId(page.id)
+                        setEdited(false);
+                        StorageHandler.set(`edited`, false);
                         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+                        ActivePageItemIndicator(page);
                         break;
                     case false:
                         break;
@@ -201,6 +218,7 @@ const EditorSidebarComponent = (props) => {
                 let found = content.find(pa => pa.id == page.id);
                 setPage(found);
                 setPageId(found.id)
+                ActivePageItemIndicator(page);
             }
         }
     }
@@ -242,8 +260,6 @@ const EditorSidebarComponent = (props) => {
         }
     }
 
-    const [refs, setRefs] = useState(new Map());
-    
     const Directory = ({ directoryPage, index }) => {
         // KNOW IF THIS PAGE IS OPENED OR NOT
         let pagination = JSON.parse(typeof window !== 'undefined' && localStorage.getItem('pagination'));
@@ -377,10 +393,6 @@ const EditorSidebarComponent = (props) => {
             {/* SINGLE PAGE RENDER - HAS NO CHILDREN AND IS A CHILD ITSELF */ }
             let allowed = directoryPage?.position == 'chapter';
 
-            useEffect(() => {
-                console.log("ref", refs)
-            }, [refs]);
-
             return (
                 <>
                     <div
@@ -415,18 +427,6 @@ const EditorSidebarComponent = (props) => {
                                     HandleMoveToAPage(directoryPage);
                                     StorageHandler.set("pageClickedId", directoryPage.id);
                                     typeof window !== undefined && localStorage.setItem("pageClickedId", directoryPage.id);
-
-
-                                    // SET THE COLOR OF THE ELEMENT
-                                    content.map(page => {
-                                        if (refs.get(page.id)) {
-                                            let element = refs.get(page.id)
-                                            element.classList.remove("border-l", "p", 'border-gray-400');
-                                        }
-                                    })
-
-                                    let element = refs.get(directoryPage.id)
-                                    element.classList.add("border-l", "p", 'border-gray-400');
                                 }}>
                                 {directoryPage.title} {Indicators(directoryPage)}
                             </h3>

@@ -62,7 +62,6 @@ export default function BuilderEditor() {
     );
     const [builder, setBuilder] = useState({});
 
-
     // useEffect(() => {
     //     // SET THE PAGE SERVER ENDPOINT
     //     if (page) {
@@ -379,8 +378,48 @@ export default function BuilderEditor() {
         }
     }
 
-    const OperationsView = () => {
+    const APIRequestRequester = () => {
 
+        return (
+            <div className='border shadow-sm rounded-lg p-3'>
+                <p className='mb-2'>Test/Send Requests</p>
+
+                <div>
+                    <h2 className='text-2xl font-bold text-gray-900'>
+                        Languages/Environments
+                    </h2>
+                    <div className='flex gap-2 content-between'>
+                        {environments.map((language, index) => {
+                            return (
+                                <div key={language?.name}
+                                    className={`border mt-2 mb-2 p-2 text-center cursor-pointer w-1/3 ${selected == index ? "border-gray-400" : ""}`}
+                                    onClick={() => { setSelected(index) }}>
+                                    <Image src={language.logo} alt="me" width="30" height="30" className='mx-auto h-[20px] w-[20px]' />
+                                    <p className='mt-2 text-xs'>{language.name}</p>
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    <p className='text-sm font-normal mt-3 mb-2 text-gray-900'>
+                        Request
+                    </p>
+                    <div className='border p-2'>
+                        <Editor
+                            value={code}
+                            onValueChange={code => setCode(code)}
+                            highlight={code => highlight(code != undefined ? code : "", languages.js)}
+                            padding={10}
+                            style={{
+                                fontFamily: '"Fira code", "Fira Mono", monospace',
+                                fontSize: 12,
+                            }}
+                        />
+                    </div>
+                </div>
+
+            </div>
+        )
     }
 
     return (
@@ -401,44 +440,7 @@ export default function BuilderEditor() {
             </div>
 
             <div className="p-4 rounded-lg dark:border-gray-700 w-[40%]">
-                <div className='border shadow-sm rounded-lg p-3'>
-                    <p className='mb-2'>Test/Send Requests</p>
-
-                    <div>
-                        <h2 className='text-2xl font-bold text-gray-900'>
-                            Languages/Environments
-                        </h2>
-                        <div className='flex gap-2 content-between'>
-                            {environments.map((language, index) => {
-                                return (
-                                    <div key={language?.name}
-                                        className={`border mt-2 mb-2 p-2 text-center cursor-pointer w-1/3 ${selected == index ? "border-gray-400" : ""}`}
-                                        onClick={() => { setSelected(index) }}>
-                                        <Image src={language.logo} alt="me" width="30" height="30" className='mx-auto h-[20px] w-[20px]' />
-                                        <p className='mt-2 text-xs'>{language.name}</p>
-                                    </div>
-                                )
-                            })}
-                        </div>
-
-                        <p className='text-sm font-normal mt-3 mb-2 text-gray-900'>
-                            Request
-                        </p>
-                        <div className='border p-2'>
-                            <Editor
-                                value={code}
-                                onValueChange={code => setCode(code)}
-                                highlight={code => highlight(code != undefined ? code : "", languages.js)}
-                                padding={10}
-                                style={{
-                                    fontFamily: '"Fira code", "Fira Mono", monospace',
-                                    fontSize: 12,
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                </div>
+                <APIRequestRequester />
             </div>
 
         </div>
