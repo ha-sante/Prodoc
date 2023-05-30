@@ -7,7 +7,7 @@ import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
-import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
+import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner } from "flowbite-react";
 import { Copy, DocumentCopy } from 'iconsax-react';
 
 import {
@@ -379,8 +379,6 @@ export default function BuilderEditor() {
     }
 
 
-
-
     const APIRequestDataForm = useMemo(() => {
         return (
             <div className='border shadow-sm rounded-lg p-5'>
@@ -452,6 +450,15 @@ export default function BuilderEditor() {
                         />
 
                     </div>
+
+                    <Button size="xs" color="gray"
+                        className='rounded-none !border-gray-300 w-[100%] mt-2 pt-2 pb-2 !outline-none focus:ring-transparent' onClick={() => { }}>
+                        <span className="pr-3">
+                            Send Request
+                        </span>
+                        <Spinner size='sm' aria-label="Spinner button example" />
+                    </Button>
+
                 </div>
 
             </div>
