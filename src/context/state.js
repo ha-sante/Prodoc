@@ -115,10 +115,6 @@ export function ContentAPIHandler(option, data) {
   }
 }
 
-localForage.config({
-  driver: localForage.LOCALSTORAGE
-});
-
 export const StorageHandler = {
   set: (name, value) => {
     return typeof window !== undefined && localForage.setItem(name, value);

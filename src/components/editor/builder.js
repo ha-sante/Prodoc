@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useMemo } from "react";
 import { useRouter } from 'next/router'
 
 import { Inter } from 'next/font/google'
@@ -32,35 +32,31 @@ import HTTPSnippet from 'httpsnippet';
 
 export default function BuilderEditor() {
     const [content, setContent] = useAtom(contentAtom);
-
     const [pagination, setPagination] = useAtom(paginationAtom);
     const [page, setPage] = useAtom(pageAtom);
     // const [builder, setBuilder] = useAtom(builderAtom);
-
-    const [configure, setConfigure] = useAtom(configureAtom);
+    // const [configure, setConfigure] = useAtom(configureAtom);
     // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
-    const [permission, setPermission] = useAtom(permissionAtom);
-    const [definitions, setDefinitions] = useAtom(definitionsAtom);
-
-    // const [code, setCode] = useAtom(codeAtom);
-    const [navigation, setNavigation] = useAtom(navigationAtom);
-
-
+    // const [permission, setPermission] = useAtom(permissionAtom);
+    // const [definitions, setDefinitions] = useAtom(definitionsAtom);
+    const [code, setCode] = useAtom(codeAtom);
+    // const [navigation, setNavigation] = useAtom(navigationAtom);
     const router = useRouter();
     const [environments, setEnvironments] = useState([
-        { logo: "/editor/curl.svg", name: "cURL", target: "shell" },
-        { logo: "/editor/javascript.svg", name: "JavaScript", target: "javascript" },
-        { logo: "/editor/python.svg", name: "Python", target: "python" },
-        { logo: "/editor/node.svg", name: "Node.js", target: "node" },
-        { logo: "/editor/go.svg", name: "Golang", target: "go" },
-        { logo: "/editor/ruby.svg", name: "Ruby", target: "ruby" },
+        { logo: "/editor/curl.svg", name: "cURL", target: "shell", client: '' },
+        { logo: "/editor/javascript.svg", name: "JavaScript", target: "javascript", client: "fetch" },
+        { logo: "/editor/python.svg", name: "Python", target: "python", client: '' },
+        { logo: "/editor/node.svg", name: "Node.js", target: "node", client: '' },
+        { logo: "/editor/go.svg", name: "Golang", target: "go", client: '' },
+        { logo: "/editor/ruby.svg", name: "Ruby", target: "ruby", client: '' },
     ]);
     const [selected, setSelected] = useState(0);
-    const [base, setBase] = useState("");
-    const [code, setCode] = useState(
-        `function add(a, b) { return a + b; }`
-    );
+    // const [base, setBase] = useState("");
+    // const [code, setCode] = useState(
+    //     `// Code example per language selected & form data filled`
+    // );
     const [builder, setBuilder] = useState({});
+    const [refs, setRefs] = useState(new Map());
 
     // useEffect(() => {
     //     // SET THE PAGE SERVER ENDPOINT
@@ -72,8 +68,8 @@ export default function BuilderEditor() {
     //     }
     // }, [page]);
 
-    const RenderCodeArea = () => {
-        let environment = environments[selected];
+    const RenderCodeArea = (index) => {
+        let environment = environments[index !== undefined ? index : selected];
         let template = ``;
 
         if (page) {
@@ -146,7 +142,7 @@ export default function BuilderEditor() {
             const options = { indent: '\t' };
 
             try {
-                const output = snippet.convert(environment.target.toLowerCase(), '', options);
+                const output = snippet.convert(environment.target.toLowerCase(), environment.client, options);
                 // console.log(output);
                 if (output) {
                     setCode(output);
@@ -157,10 +153,9 @@ export default function BuilderEditor() {
 
         }
     }
-
     useEffect(() => {
         RenderCodeArea();
-    }, [selected, builder]);
+    }, [page]);
 
     const Indicators = (page) => {
         // IF THE VALUE IS API
@@ -224,19 +219,13 @@ export default function BuilderEditor() {
                         // ELSE, RENDER THE FORM BLOCK AS RECIEVED
                         let builder_path_label = key; // GET THE CURRENT END OF THE STICK WE ARE ON
                         let current_path = paths.split("/"); // SPLIT CURRENT PATH INTO ARRAY OF KEYS
-                        let value_exists = _.has(builder, [...current_path, builder_path_label, block.name]); // CHECK IF VALUE IS SET FOR CURRENT INPUT
-                        let current_value = _.get(builder, [...current_path, builder_path_label, block.name]); // GET THAT VALUE
+                        let value_exists = _.has(builder, [...current_path, builder_path_label]); // CHECK IF VALUE IS SET FOR CURRENT INPUT
+                        let current_value = _.get(builder, [...current_path, builder_path_label]); // GET THAT VALUE
                         let input_type = block?.type ? input_mappings[block.type] : "text"; // GET THE VALUE ACCEPTED FOR THE INPUT
                         let required = block?.nullable ? block?.nullable : false; // GET IF ITS REQUIRED OR NOT
-                        let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE
-                        let inputRef = useRef(); // CREATE A HOLD FOR THE INPUT
-
-                        // console.log("rendering.input.content", { current_path, value_exists, current_value, input_type, required, inputValue, inputRef });
-
-                        useEffect(() => {
-                            // Instruction we give here will render once component gets rendered
-                            // console.log("current.value.changed", current_value)
-                        }, [current_value]);
+                        let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE                        
+                        let pathName = [...current_path, builder_path_label].join("-")
+                        // console.log("rendering.input.content", { current_path, value_exists, current_value, input_type, required, inputValue });
 
                         return (
                             <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
@@ -245,25 +234,34 @@ export default function BuilderEditor() {
                                     <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
                                 </p>
                                 <TextInput
-                                    id={key}
+                                    id={pathName}
                                     type={input_type}
                                     className='w-[30%]'
                                     placeholder={`${key}`}
                                     required={required}
-                                    ref={inputRef}
-                                    defaultValue={current_value}
-                                    onChange={(e) => {
-                                        let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
-                                        console.log("input.member.edited", { ref: inputRef, value, builder });
-                                        let local = builder;
-                                        _.set(local, [...current_path, builder_path_label], value);
-                                        console.log("builder.data.update", { local })
-                                        e.target.focus();
-                                        setBuilder({ ...local });
+                                    defaultValue={inputValue}
+                                    ref={el => {
 
-                                        // // ORIGINAL
-                                        // setInputValue({ [key]: value });
-                                        // console.log("block.input.changed", { value, local, current_value, builder: builder })
+                                        if (el) {
+                                            el.addEventListener('keyup', (e) => {
+                                                let path = e.target.id.split("-");
+                                                let value = e.target.value;
+
+                                                console.log("input.e", { path, e });
+                                                console.log("input.value.change", value);
+
+                                                let local = builder;
+                                                _.set(local, path, value);
+                                                setBuilder(local);
+
+                                                console.log("builder", { local });
+
+                                                e.target.focus();
+                                                RenderCodeArea();
+                                            });
+                                        }
+
+                                        return setRefs(refs.set(pathName, el))
                                     }}
                                 />
                             </div>
@@ -302,6 +300,7 @@ export default function BuilderEditor() {
         }
     }
 
+    // RETURNS FORMS FOR 3 TYPES OF REQUEST PARAMETERS (HEADER, QUERY, PATH & COOKIE PARAMS)
     const ParametersSection = () => {
         // GO OVER EACH PARAMETER
         // GROUP THEM BY THEIR PARAMETER TYPE
@@ -378,6 +377,24 @@ export default function BuilderEditor() {
         }
     }
 
+
+
+
+    const APIRequestDataForm = useMemo(() => {
+        return (
+            <div className='border shadow-sm rounded-lg p-5'>
+                <p className='mb-2'>Build Requests</p>
+
+                <h2 className='text-2xl font-bold text-gray-900'>
+                    {page?.title}
+                </h2>
+                <p className='flex items-center gap-4'>{Indicators(page)} Endpoint:  {page?.content?.api?.endpoint}</p>
+                {ParametersSection()}
+                {BodySection()}
+            </div>
+        )
+    }, [page, selected]);
+
     const APIRequestRequester = () => {
 
         return (
@@ -393,7 +410,10 @@ export default function BuilderEditor() {
                             return (
                                 <div key={language?.name}
                                     className={`border mt-2 mb-2 p-2 text-center cursor-pointer w-1/3 ${selected == index ? "border-gray-400" : ""}`}
-                                    onClick={() => { setSelected(index) }}>
+                                    onClick={() => {
+                                        setSelected(index);
+                                        RenderCodeArea(index);
+                                    }}>
                                     <Image src={language.logo} alt="me" width="30" height="30" className='mx-auto h-[20px] w-[20px]' />
                                     <p className='mt-2 text-xs'>{language.name}</p>
                                 </div>
@@ -424,19 +444,9 @@ export default function BuilderEditor() {
 
     return (
         <div className="flex flex-row justify-between">
-            {/* // builder */}
-            {/* api preview */}
-            <div className="p-4 rounded-lg dark:border-gray-700 w-[60%]">
-                <div className='border shadow-sm rounded-lg p-5'>
-                    <p className='mb-2'>Build Requests</p>
 
-                    <h2 className='text-2xl font-bold text-gray-900'>
-                        {page?.title}
-                    </h2>
-                    <p className='flex items-center gap-4'>{Indicators(page)} Endpoint:  {page?.content?.api?.endpoint}</p>
-                    {ParametersSection()}
-                    {BodySection()}
-                </div>
+            <div className="p-4 rounded-lg dark:border-gray-700 w-[60%]">
+                {APIRequestDataForm}
             </div>
 
             <div className="p-4 rounded-lg dark:border-gray-700 w-[40%]">
