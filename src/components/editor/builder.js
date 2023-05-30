@@ -8,7 +8,7 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
-import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
+import { Copy, DocumentCopy } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -29,6 +29,7 @@ import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism.css'; //Example style, you can use another
 
 import HTTPSnippet from 'httpsnippet';
+import copyToClipboard from 'copy-to-clipboard';
 
 export default function BuilderEditor() {
     const [content, setContent] = useAtom(contentAtom);
@@ -421,9 +422,21 @@ export default function BuilderEditor() {
                         })}
                     </div>
 
-                    <p className='text-sm font-normal mt-3 mb-2 text-gray-900'>
-                        Request
-                    </p>
+
+                    <div className='flex justify-between'>
+                        <p className='text-sm font-normal mt-3 mb-2 text-gray-900'>
+                            Request
+                        </p>
+                        <p className='text-sm font-normal mt-3 mb-2 text-gray-900 cursor-pointer' onClick={() => {
+                            copyToClipboard(code, {
+                                debug: true,
+                                message: 'Press #{key} to copy',
+                            });
+                            toast("Request code copied")
+                        }}>
+                            <DocumentCopy size="16" color="#4f4f4f" />
+                        </p>
+                    </div>
                     <div className='border p-2'>
                         <Editor
                             value={code}
@@ -432,9 +445,12 @@ export default function BuilderEditor() {
                             padding={10}
                             style={{
                                 fontFamily: '"Fira code", "Fira Mono", monospace',
-                                fontSize: 12,
+                                fontSize: 10,
+                                maxHeight: "280px",
+                                overflowY: "scroll"
                             }}
                         />
+
                     </div>
                 </div>
 
