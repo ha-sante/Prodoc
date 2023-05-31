@@ -145,6 +145,72 @@ export default function BuilderEditor() {
         setProcessing(false);
     }, [page]);
 
+    useEffect(() => {
+        let responses = _.keys(page?.content?.api?.responses).map(key => {
+            return ({
+                code: key,
+                data: page?.content?.api?.responses[key]
+            })
+        });
+
+        console.log("response", responses);
+
+        const random = {
+            choice: (array) => {
+                return array[Math.floor(Math.random() * array.length)];
+            },
+            randint: (min, max) => {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            },
+            uniform: (min, max) => {
+                return Math.random() * (max - min) + min;
+            }
+        };
+
+        function generateFakeData(schema) {
+            let data = {};
+            if (schema.properties) {
+                Object.keys(schema.properties).map((key, index) => {
+                    let property = schema.properties[key];
+                    let type = property.type;
+                    // console.log("schema.loop", { property, type });
+                    if (type === 'string') {
+                        data[key] = random.choice(['foo', 'bar', 'baz']);
+                    } else if (type === 'integer') {
+                        data[key] = random.randint(0, 100);
+                    } else if (type === 'float') {
+                        data[key] = random.uniform(0, 100);
+                    } else if (type === 'boolean') {
+                        data[key] = random.choice([true, false]);
+                    } else if (type === 'array') {
+                        let fake_array_data = generateFakeData(schema.properties[key].items);
+                        console.log("fake_array_data", fake_array_data);
+                        data[key] = [fake_array_data];
+                    } else if (type === 'object') {
+                        let results = generateFakeData(property);
+                        console.log("fake_object_data.results", results);
+                        data[key] = { ...results };
+                    } else {
+                        console.log("property.type.not.mapped", { schema, type, property });
+                        // throw new Error(`Unknown type: ${type}`);
+                    }
+                })
+            }
+            return data;
+        }
+
+        let results = "";
+
+        responses.map((response, index) => {
+            _.keys(response.data?.content).map((contentType, index) => {
+                let schema = response.data.content[contentType].schema;
+                results += `//${contentType} \n ${json5.stringify(generateFakeData(schema), undefined, 4)} \n \n`;
+            })
+        })
+
+        setDemo(results);
+    }, [page, demoIndex]);
+
     const Indicators = (page) => {
         // IF THE VALUE IS API
         // RETURN A INDICATOR OF 
@@ -442,54 +508,12 @@ export default function BuilderEditor() {
     }
 
     const APIRequestResponseViewer = () => {
-
         let responses = _.keys(page?.content?.api?.responses).map(key => {
             return ({
                 code: key,
                 data: page?.content?.api?.responses[key]
             })
         });
-
-        console.log("response", responses);
-
-        const random = {
-            choice: (array) => {
-                return array[Math.floor(Math.random() * array.length)];
-            },
-            randint: (min, max) => {
-                return Math.floor(Math.random() * (max - min + 1)) + min;
-            },
-            uniform: (min, max) => {
-                return Math.random() * (max - min) + min;
-            }
-        };
-
-        function generateFakeData(schema) {
-            let data = {};
-            Object.keys(schema.properties).map((key, index) => {
-                let property = schema.properties[key];
-                let type = property.type;
-                console.log("schema.loop", { property, type });
-                if (type === 'string') {
-                    data[key] = random.choice(['foo', 'bar', 'baz']);
-                } else if (type === 'integer') {
-                    data[key] = random.randint(0, 100);
-                } else if (type === 'float') {
-                    data[key] = random.uniform(0, 100);
-                } else if (type === 'boolean') {
-                    data[key] = random.choice([true, false]);
-                } else if (type === 'array') {
-                    data[key] = [];
-                } else if (type === 'object') {
-                    data[key] = {}
-                } else {
-                    throw new Error(`Unknown type: ${type}`);
-                }
-            })
-
-            return data;
-        }
-
         return (
             <div className='border shadow-sm rounded-lg p-3 mt-3'>
                 <div className='flex justify-between items-center'>
@@ -537,14 +561,12 @@ export default function BuilderEditor() {
                                                 onClick={() => {
                                                     setDemoIndex(index);
 
-                                                    let results = "";
-
-                                                    _.keys(response.data?.content).map((contentType, index) => {
-                                                        let schema = response.data.content[contentType].schema;
-                                                        results += `//${contentType} \n ${json5.stringify(generateFakeData(schema), undefined, 4)} \n \n`;
-                                                    })
-
-                                                    setDemo(results);
+                                                    // let results = "";
+                                                    // _.keys(response.data?.content).map((contentType, index) => {
+                                                    //     let schema = response.data.content[contentType].schema;
+                                                    //     results += `//${contentType} \n ${json5.stringify(generateFakeData(schema), undefined, 4)} \n \n`;
+                                                    // })
+                                                    // setDemo(results);
                                                 }}>
                                                 <p className='text-xs w-auto'>{response.code}</p>
                                             </div>
