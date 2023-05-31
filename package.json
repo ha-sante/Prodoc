@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@apidevtools/swagger-parser": "^10.1.0",
     "@blocknote/core": "^0.6.2",
     "@blocknote/react": "^0.6.2",
     "@dnd-kit/sortable": "^7.0.2",

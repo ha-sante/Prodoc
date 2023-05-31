@@ -18,7 +18,7 @@ import 'prismjs/themes/prism.css'; //Example style, you can use another
 import JSON5 from 'json5'
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
-
+import SwaggerParser from "@apidevtools/swagger-parser";
 const _ = require('lodash');
 
 export default function APIDefinitionsPrompt(props) {
@@ -32,31 +32,34 @@ export default function APIDefinitionsPrompt(props) {
     const rootRef = useRef(null);
 
     const GetEveryPropertyInFull = (reference_path, referenced_object, components) => {
-        console.warn("called.GetEveryPropertyInFull", { reference_path, referenced_object, components })
-        // CHECK IF ANY OF ITS CHILDREN KEYS ARE OBJECTS WITH REFERENCE 
+        // console.log("called.GetEveryPropertyInFull", { reference_path, referenced_object, components })
         let local = {};
         Object.keys(referenced_object).map((key) => {
             let ref_value = referenced_object[key];
-            console.warn("local.variable.changed", { local });
-            local[key] = ref_value;
+            local[key] = ref_value; // PREHANDLES FOR WHEN KEY IS NONE OF THE BELOW
 
             if (key == "$ref") {
                 // GET THE REFRENCE DATA POINT
-                let names = ref_value.split("/").splice(2);
-                let new_referenced_object = _.get(components, names);
+                console.log("ref.value.is.$ref", ref_value);
+                let names = ref_value.split("/").splice(2); // - REMOVES #/
+                let new_referenced_object = _.get(components, names); // GET THE OBJECT FROM COMPONENTS
+
                 // CHECK IF ANY OF THE PROPERTY VALUES IS OF NAME "$REF"
                 let results = GetEveryPropertyInFull(reference_path, new_referenced_object, components);
 
+                // ADD THE NEW OBJECT TO THE OLD
                 local = { ...local, ...results };
             }
-            console.warn("local.variable.changed", { local });
+
+            // console.warn("local.variable.changed", { local });
 
             if (_.isPlainObject(ref_value)) {
                 // CHECK IF ANY OF THE PROPERTY VALUES IS OF NAME "$REF"
                 let results = GetEveryPropertyInFull(reference_path, ref_value, components);
                 local[key] = results;
             }
-            console.warn("local.variable.changed", { local });
+
+            // console.log("local.variable.changed", { local });
         });
         return local;
     }
@@ -82,107 +85,127 @@ export default function APIDefinitionsPrompt(props) {
                     security: data?.security ? data?.security : [],
                     servers: data?.servers ? data?.servers : [],
 
-                    parameters: data?.parameters ? data?.parameters.map((block) => GetEveryPropertyInFull("", block, components)) : [],
-                    responses: _.keys(data?.responses).map((key) => GetEveryPropertyInFull("", data?.responses[key], components)),
-                    requestBody: _.keys(data?.requestBody).map((key) => GetEveryPropertyInFull("", data?.requestBody[key], components)),
-                    // parameters,
-                    // requestBody,
-                    // responses,
+                    // parameters, requestBody, response
+                    // parameters: data?.parameters ? data?.parameters.map((block) => GetEveryPropertyInFull("", block, components)) : [],
+                    // requestBody: _.keys(data?.requestBody).map((key) => GetEveryPropertyInFull("", data?.requestBody[key], components)),
+                    // responses: _.keys(data?.responses).map((key) => GetEveryPropertyInFull("", data?.responses[key], components)),
+                    parameters: data?.parameters ? data?.parameters : [],
+                    requestBody: data?.requestBody,
+                    responses: data?.responses,
                 }
             },
         };
     }
 
-    const HandleGenerateAPIPages = () => {
+    const HandleGenerateAPIPages = async () => {
         setProcessing(true);
         let json = JSON5.parse(code);
         console.log("code.data", { json });
 
-        // PREPARE PARENT AND CHILD PAGES FOR STORAGE
-        let paths = json?.paths;
-        let components = json?.components;
-        let { openapi, info, servers, security } = Object(json);
+        try {
+            let api = await SwaggerParser.dereference(json);
+            console.log("api = ", api)
+            // console.log("API name: %s, Version: %s", api.info.title, api.info.version);
 
-        let methods = ["get", "post", "put", "delete", "patch", "connect", "head", "trace", "options"];
-        let pages = [];
-        let chapters = [];
-        let mappings = {};
+            // PREPARE PARENT AND CHILD PAGES FOR STORAGE
+            let paths = api?.paths;
+            let components = api?.components;
+            let { openapi, info, servers, security } = Object(api);
 
-        // CREATE ALL CHILD PAGES
-        Object.keys(paths).map((url, index) => {
-            let endpoint = paths[url];
-            methods.map((name) => {
-                let data = endpoint[name];
-                if (data) {
-                    let page = ReturnHandlingForAllMethods(data, url, components, paths, name);
+            let methods = ["get", "post", "put", "delete", "patch", "connect", "head", "trace", "options"];
+            let pages = [];
+            let chapters = [];
+            let mappings = {};
 
-                    page.content.api["configuration"] = {};
-                    page.content.api.configuration.servers = servers ? servers : [];
-                    page.content.api.configuration.openapi = openapi ? openapi : "";
-                    page.content.api.configuration.info = info ? info : {};
+            let childLoopRuns = 0;
 
-                    pages.push(page);
-                    page.content.api.tags.map((tag) => {
-                        _.has(mappings, tag) ? [] : mappings[tag] = { 'children': [], page: {} };
-                        mappings[tag]['children'].push(page);
-                    });
-                }
+            // CREATE ALL CHILD PAGES
+            Object.keys(paths).map((url, index) => {
+                childLoopRuns += 1
+                let endpoint = paths[url];
+                // console.log("generated.api.endpoint", { childLoopRuns, endpoint });
+
+                // EACH METHOD - GO OVER THE CHILD PATHS HTTP REQUEST METHODS LISTING
+                // - CHECK IF THE PATH HAS A CHILD OF THE TESTED METHOD
+                // - IF TRUE, GET A SCHEMA TO DATA SET OF THE PATH HTTP METHOD
+                methods.map((name) => {
+                    let data = endpoint[name];
+                    if (data) {
+                        let page = ReturnHandlingForAllMethods(data, url, components, paths, name);
+                        // console.log("generated.api.child.page", page);
+
+                        page.content.api["configuration"] = {};
+                        page.content.api.configuration.servers = servers ? servers : [];
+                        page.content.api.configuration.openapi = openapi ? openapi : "";
+                        page.content.api.configuration.info = info ? info : {};
+                        pages.push(page);
+                        page.content.api.tags.map((tag) => {
+                            _.has(mappings, tag) ? [] : mappings[tag] = { 'children': [], page: {} };
+                            mappings[tag]['children'].push(page);
+                        });
+                    }
+                })
+            });
+
+            // CREATE PARENT PAGES
+            Object.keys(mappings).map((label) => {
+                let page = {
+                    ...DEFAULT_PAGE_DATA,
+                    type: "api",
+                    position: "chapter",
+                    title: label,
+                    description: `${label} - Overview Page`,
+                    content: {
+                        ...DEFAULT_PAGE_DATA?.content,
+                        api: {}
+                    },
+                };
+
+                page.content.api["configuration"] = {};
+                page.content.api.configuration.servers = servers ? servers : [];
+                page.content.api.configuration.openapi = openapi ? openapi : "";
+                page.content.api.configuration.info = info ? info : {};
+
+                mappings[label].page = page;
+                chapters.push(page);
             })
-        });
 
-        // CREATE PARENT PAGES
-        Object.keys(mappings).map((label) => {
-            let page = {
-                ...DEFAULT_PAGE_DATA,
-                type: "api",
-                position: "chapter",
-                title: label,
-                description: `${label} - Overview Page`,
-                content: {
-                    ...DEFAULT_PAGE_DATA?.content,
-                    api: {}
-                },
-            };
+            toast.success("Converted spec JSON to pages content type.");
+            let toastId = toast.loading("Persisting content & creating pages for it.");
 
-            page.content.api["configuration"] = {};
-            page.content.api.configuration.servers = servers ? servers : [];
-            page.content.api.configuration.openapi = openapi ? openapi : "";
-            page.content.api.configuration.info = info ? info : {};
+            let configuration = { openapi: [json], }
+            let bulk = { pages, mappings, chapters, configuration };
+            console.log("generated.api.pages", bulk);
 
-            mappings[label].page = page;
-            chapters.push(page);
-        })
-
-        toast.success("Converted spec JSON to pages content type.");
-        let toastId = toast.loading("Persisting content & creating pages for it.");
-
-        let configuration = { openapi: [json], }
-        let bulk = { pages, mappings, chapters, configuration };
-        // console.log("all.child.pages", bulk);
-
-        // BULK CREATE THE CONTENT PAGES
-        ContentAPIHandler('PATCH', bulk).then(response => {
-            // GET THE NEW CONTENT LIST
-            ContentAPIHandler('GET').then(response => {
-                // SET NEW CONTENT
-                setContent(response.data);
-                setProcessing(false);
-                toast.dismiss(toastId);
-                toast.success("Creating/Recreating your api pages complete");
-                setDefinitions(false);
+            // BULK CREATE THE CONTENT PAGES
+            ContentAPIHandler('PATCH', bulk).then(response => {
+                // GET THE NEW CONTENT LIST
+                ContentAPIHandler('GET').then(response => {
+                    // SET NEW CONTENT
+                    setContent(response.data);
+                    setProcessing(false);
+                    toast.dismiss(toastId);
+                    toast.success("Creating/Recreating your api pages complete");
+                    setDefinitions(false);
+                }).catch(error => {
+                    console.log('error', error);
+                    setProcessing(false);
+                });
             }).catch(error => {
                 console.log('error', error);
                 setProcessing(false);
             });
-        }).catch(error => {
-            console.log('error', error);
-            setProcessing(false);
-        });
+
+        }
+        catch (err) {
+            console.error(err);
+            toast.error("Something went wrong - Parsing your spec to pages failed. (Check your console for logs)");
+        }
     }
 
-    useEffect(() => {
-        setProcessing(false);
-    }, []);
+    // useEffect(() => {
+    //     setProcessing(false);
+    // }, []);
 
     return (
         <div ref={rootRef} className='w-[100%]'>

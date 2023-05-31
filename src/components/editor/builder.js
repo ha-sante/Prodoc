@@ -30,18 +30,11 @@ import 'prismjs/themes/prism.css'; //Example style, you can use another
 
 import HTTPSnippet from 'httpsnippet';
 import copyToClipboard from 'copy-to-clipboard';
+import json5 from 'json5';
 
 export default function BuilderEditor() {
-    const [content, setContent] = useAtom(contentAtom);
-    const [pagination, setPagination] = useAtom(paginationAtom);
     const [page, setPage] = useAtom(pageAtom);
-    // const [builder, setBuilder] = useAtom(builderAtom);
-    // const [configure, setConfigure] = useAtom(configureAtom);
-    // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
-    // const [permission, setPermission] = useAtom(permissionAtom);
-    // const [definitions, setDefinitions] = useAtom(definitionsAtom);
     const [code, setCode] = useAtom(codeAtom);
-    // const [navigation, setNavigation] = useAtom(navigationAtom);
     const router = useRouter();
     const [environments, setEnvironments] = useState([
         { logo: "/editor/curl.svg", name: "cURL", target: "shell", client: '' },
@@ -52,22 +45,14 @@ export default function BuilderEditor() {
         { logo: "/editor/ruby.svg", name: "Ruby", target: "ruby", client: '' },
     ]);
     const [selected, setSelected] = useState(0);
-    // const [base, setBase] = useState("");
-    // const [code, setCode] = useState(
-    //     `// Code example per language selected & form data filled`
-    // );
     const [builder, setBuilder] = useState({});
     const [refs, setRefs] = useState(new Map());
+    const [response, setResponse] = useState("// Rendering of your request response");
+    const [viewer, setViewer] = useState('demo');
+    const [demoIndex, setDemoIndex] = useState(0);
+    const [demo, setDemo] = useState("");
+    const [processing, setProcessing] = useState(false);
 
-    // useEffect(() => {
-    //     // SET THE PAGE SERVER ENDPOINT
-    //     if (page) {
-    //         let url = page?.content.api?.configuration?.servers[0].url;
-    //         console.log({ url });
-    //         setBase(url);
-    //         setBuilder({});
-    //     }
-    // }, [page]);
 
     const RenderCodeArea = (index) => {
         let environment = environments[index !== undefined ? index : selected];
@@ -156,6 +141,8 @@ export default function BuilderEditor() {
     }
     useEffect(() => {
         RenderCodeArea();
+        setBuilder({});
+        setProcessing(false);
     }, [page]);
 
     const Indicators = (page) => {
@@ -167,42 +154,24 @@ export default function BuilderEditor() {
         }
     }
 
-    const TrazeForm = ({ property, paths }) => {
-        // FIRST PART OF LOOP = BODY
-        if (_.isPlainObject(property.properties)) {
-            Object.keys(Object.fromEntries(Object.entries(property.properties).sort())).map((key, index) => {
-                let block = { ...property.properties[key], name: key };
-
-                // IF TREE, HAS AN OBJECT AGAIN, LOOP THROUGH THAT
-                if (_.isPlainObject(block.properties)) {
-                    let new_paths = paths + `/${block.name}`;
-                    TrazeForm(block, new_paths);
-                }
-
-                // SET NORMAL VALUE PATH
-                // VALUE
-            })
-        }
-    }
-
-    const Formations = ({ property, paths }) => {
+    const Formations = ({ fields, paths }) => {
         let input_mappings = { string: "text", integer: "number", object: "text" };
-        //console.log("Formations", { paths, property });
+        // console.log("Formations", { paths, fields });
 
         // SET THE STATE FOR ALL THE OBJECT PROPERTIES NAMES AT THE PATH
-        if (_.isPlainObject(property.properties)) {
+        if (_.isPlainObject(fields)) {
             // GO OVER EACH MEMBER WITH OBJECT.KEYS
             // RENDER AN INPUT FOR THEM IF THEY ARE OF TYPE STRING
             // IF OBJECT, RETURN THIS FUNCTION
             return (
                 <div>
-                    {Object.keys(Object.fromEntries(Object.entries(property.properties).sort())).map((key, index) => {
-                        let block = property.properties[key];
-                        block.name = key; // set property name to its's key
+                    {Object.keys(Object.fromEntries(Object.entries(fields).sort())).map((key, index) => {
+                        let block = fields[key];
+                        block.name = key; // set fields name to its's key
                         //console.warn("block", block);
 
                         // IF TREE, HAS AN OBJECT AGAIN, LOOP THROUGH THAT
-                        if (_.isPlainObject(block.properties)) {
+                        if (_.isPlainObject(block?.properties)) {
                             let new_paths = paths + `/${block.name}`;
                             //console.log("block.is.of.type.object", { new_paths, block })
                             return (
@@ -211,11 +180,12 @@ export default function BuilderEditor() {
                                         <span className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
                                     </p>
                                     <div className='ml-4 mt-2'>
-                                        <Formations property={block} paths={new_paths} />
+                                        <Formations fields={block?.properties} paths={new_paths} />
                                     </div>
                                 </div>
                             )
                         }
+
 
                         // ELSE, RENDER THE FORM BLOCK AS RECIEVED
                         let builder_path_label = key; // GET THE CURRENT END OF THE STICK WE ARE ON
@@ -226,11 +196,12 @@ export default function BuilderEditor() {
                         let required = block?.nullable ? block?.nullable : false; // GET IF ITS REQUIRED OR NOT
                         let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE                        
                         let pathName = [...current_path, builder_path_label].join("-")
-                        // console.log("rendering.input.content", { current_path, value_exists, current_value, input_type, required, inputValue });
+                        // console.log("rendering.input.content", { block, current_path, value_exists, current_value, input_type, required, inputValue });
 
                         return (
                             <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
-                                <p className='text-black flex flex-row items-center'>{block.name}
+                                <p className='text-black flex flex-row items-center'>
+                                    {block.name}
                                     <span className='ml-2 text-xs font-normal text-gray-400'>{block.type}</span>
                                     <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
                                 </p>
@@ -283,19 +254,21 @@ export default function BuilderEditor() {
      */
     const BodySection = () => {
         if (page) {
-            let has_body = page?.content?.api?.requestBody?.length > 0;
+            let body_keys = _.keys(page?.content?.api?.requestBody?.content);
+            let has_body = body_keys?.length > 0; // READS THE DATA PER OPEN API-SPEC FORMAT https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=components/parameters.-,requestBody,-Request%20Body%20Object
             if (has_body) {
-                let body = page?.content?.api?.requestBody[0]; // is an object of element name and content\
-                let first_el_key = Object.keys(body)[0];
-                let property = _.get(body, first_el_key)?.schema;
-                //console.log("body", { has_body, body, property })
-                // console.log("rendering.body.section")
+                let body_schema_selected = body_keys[0];
+                let body = page?.content?.api?.requestBody?.content[body_schema_selected]; // GETS THE FIRST BODY SCHEMA TYPE (TODO: ALLOW EDITING/SELECTION)
+                let fields = body?.schema.properties;
+
+                // console.log("body", { has_body, body, fields })
+                console.log("rendering.body.section")
 
                 return (<div>
                     <h2 className='text-lg font-medium mt-5'>
                         Request Body
                     </h2>
-                    <Formations property={property} paths={"body"} />
+                    <Formations fields={fields} paths={"body"} />
                 </div>)
             }
         }
@@ -309,7 +282,7 @@ export default function BuilderEditor() {
         // CREATE ITS SECTION OF THE VIEW BLOCK
         // RENDER IT IN THE VIEW
         if (page) {
-            let parameters = page?.content?.api?.parameters;
+            let parameters = page?.content?.api?.parameters; // USES PARAMS DATA PER OPEN-API-SPEC FORMAT https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=programming%20naming%20conventions.-,parameters,-%5BParameter%20Object
             let input_mappings = { string: "text", integer: "number" };
             //console.log("parameters", { parameters })
             if (parameters) {
@@ -378,7 +351,6 @@ export default function BuilderEditor() {
         }
     }
 
-
     const APIRequestDataForm = useMemo(() => {
         return (
             <div className='border shadow-sm rounded-lg p-5'>
@@ -395,7 +367,6 @@ export default function BuilderEditor() {
     }, [page, selected]);
 
     const APIRequestRequester = () => {
-
         return (
             <div className='border shadow-sm rounded-lg p-3'>
                 <p className='mb-2'>Test/Send Requests</p>
@@ -444,7 +415,7 @@ export default function BuilderEditor() {
                             style={{
                                 fontFamily: '"Fira code", "Fira Mono", monospace',
                                 fontSize: 10,
-                                maxHeight: "280px",
+                                maxHeight: "220px",
                                 overflowY: "scroll"
                             }}
                         />
@@ -452,13 +423,150 @@ export default function BuilderEditor() {
                     </div>
 
                     <Button size="xs" color="gray"
-                        className='rounded-none !border-gray-300 w-[100%] mt-2 pt-2 pb-2 !outline-none focus:ring-transparent' onClick={() => { }}>
+                        className='rounded-none !border-gray-300 w-[100%] mt-2 pt-2 pb-2 !outline-none focus:ring-transparent' onClick={() => {
+                            setProcessing(true);
+                        }}>
                         <span className="pr-3">
                             Send Request
                         </span>
-                        <Spinner size='sm' aria-label="Spinner button example" />
+                        {
+                            processing &&
+                            <Spinner size='sm' aria-label="Spinner button example" />
+                        }
                     </Button>
 
+                </div>
+
+            </div>
+        )
+    }
+
+    const APIRequestResponseViewer = () => {
+
+        let responses = _.keys(page?.content?.api?.responses).map(key => {
+            return ({
+                code: key,
+                data: page?.content?.api?.responses[key]
+            })
+        });
+
+        console.log("response", responses);
+
+        const random = {
+            choice: (array) => {
+                return array[Math.floor(Math.random() * array.length)];
+            },
+            randint: (min, max) => {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            },
+            uniform: (min, max) => {
+                return Math.random() * (max - min) + min;
+            }
+        };
+
+        function generateFakeData(schema) {
+            let data = {};
+            Object.keys(schema.properties).map((key, index) => {
+                let property = schema.properties[key];
+                let type = property.type;
+                console.log("schema.loop", { property, type });
+                if (type === 'string') {
+                    data[key] = random.choice(['foo', 'bar', 'baz']);
+                } else if (type === 'integer') {
+                    data[key] = random.randint(0, 100);
+                } else if (type === 'float') {
+                    data[key] = random.uniform(0, 100);
+                } else if (type === 'boolean') {
+                    data[key] = random.choice([true, false]);
+                } else if (type === 'array') {
+                    data[key] = [];
+                } else if (type === 'object') {
+                    data[key] = {}
+                } else {
+                    throw new Error(`Unknown type: ${type}`);
+                }
+            })
+
+            return data;
+        }
+
+        return (
+            <div className='border shadow-sm rounded-lg p-3 mt-3'>
+                <div className='flex justify-between items-center'>
+                    <p className='mb-2'>Request Response</p>
+
+                    <div className='flex justify-between items-center'>
+
+                        <p className={`text-sm cursor-pointer ${viewer == 'live' ? "font-bold text-gray-800" : "font-normal text-gray-900 "}`} onClick={() => {
+                            setViewer("live");
+                        }}>
+                            Live
+                        </p>
+
+                        <p className={`text-sm cursor-pointer ml-3 ${viewer == 'demo' ? "font-bold text-gray-800" : "font-normal text-gray-900 "}`} onClick={() => {
+                            setViewer("demo");
+                        }}>
+                            Demo
+                        </p>
+
+                    </div>
+                </div>
+
+                <div className='border p-2'>
+                    {viewer == 'live' ?
+                        <div className=''>
+                            {/* <Editor
+                            value={response}
+                            highlight={response => highlight(response != undefined ? response : "", languages.js)}
+                            padding={10}
+                            style={{
+                                fontFamily: '"Fira code", "Fira Mono", monospace',
+                                fontSize: 10,
+                                maxHeight: "220px",
+                                overflowY: "scroll"
+                            }}
+                        /> */}
+                        </div>
+                        :
+                        <div className=''>
+                            <div className='flex justify-start items-center'>
+                                {responses.map((response, index) => {
+                                    if (response.data.content) {
+                                        return (
+                                            <div key={index} className={`rounded-none border w-auto mr-2 pr-2 pl-2 cursor-pointer ${demoIndex == index ? 'bg-blue-700 text-white border-blue-700' : ''}`}
+                                                onClick={() => {
+                                                    setDemoIndex(index);
+
+                                                    let results = "";
+
+                                                    _.keys(response.data?.content).map((contentType, index) => {
+                                                        let schema = response.data.content[contentType].schema;
+                                                        results += `//${contentType} \n ${json5.stringify(generateFakeData(schema), undefined, 4)} \n \n`;
+                                                    })
+
+                                                    setDemo(results);
+                                                }}>
+                                                <p className='text-xs w-auto'>{response.code}</p>
+                                            </div>
+                                        )
+                                    }
+                                })
+                                }
+                            </div>
+
+                            <Editor
+                                value={demo}
+                                highlight={demo => highlight(demo != undefined ? demo : "", languages.js)}
+                                padding={10}
+                                style={{
+                                    fontFamily: '"Fira code", "Fira Mono", monospace',
+                                    fontSize: 10,
+                                    maxHeight: "220px",
+                                    overflowY: "scroll"
+                                }}
+                            />
+                        </div>
+                    }
                 </div>
 
             </div>
@@ -474,6 +582,7 @@ export default function BuilderEditor() {
 
             <div className="p-4 rounded-lg dark:border-gray-700 w-[40%]">
                 <APIRequestRequester />
+                <APIRequestResponseViewer />
             </div>
 
         </div>

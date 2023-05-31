@@ -124,6 +124,15 @@ export const StorageHandler = {
   }
 }
 
+export const LogHandler = {
+  info: (name, value) => {
+    return console.log(name, value);
+  },
+  warn: (name, value) => {
+    return console.warn(name, value);
+  }
+}
+
 
 // JOTAI STATE MANAGEMENT
 import { createStore, Provider, useStore, atom, useAtom } from "jotai";
