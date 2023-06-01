@@ -47,6 +47,7 @@ const EditorSidebarComponent = (props) => {
     const setDefinitions = useSetAtom(definitionsAtom);
     const navigation = useAtomValue(navigationAtom);
     const page = useAtomValue(pageAtom);
+    const setBuilder = useSetAtom(builderAtom);
 
     const [highlighted, setHighlighted] = useState("");
 
@@ -203,6 +204,7 @@ const EditorSidebarComponent = (props) => {
                         // SET PAGE CONTENT
                         let found = content.find(item => item.id == page.id);
                         console.log("page.to.replace.on.move", found);
+                        setBuilder();
                         setPage(found);
                         setPageId(page.id)
                         setEdited(false);
@@ -216,6 +218,7 @@ const EditorSidebarComponent = (props) => {
             } else {
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
                 let found = content.find(pa => pa.id == page.id);
+                setBuilder();
                 setPage(found);
                 setPageId(found.id)
                 ActivePageItemIndicator(page);
@@ -425,7 +428,7 @@ const EditorSidebarComponent = (props) => {
                                             // The element is not in view
                                             // & this is our initial page load
                                             console.log("loads", loads)
-                                            if(loads == 0){
+                                            if (loads == 0) {
                                                 el.scrollIntoView();
                                                 // let loadsAnew = loads + 1;
                                                 setLoads(1);

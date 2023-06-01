@@ -31,10 +31,13 @@ import 'prismjs/themes/prism.css'; //Example style, you can use another
 import HTTPSnippet from 'httpsnippet';
 import copyToClipboard from 'copy-to-clipboard';
 import json5 from 'json5';
+import axios from 'axios';
 
 export default function BuilderEditor() {
     const [page, setPage] = useAtom(pageAtom);
     const [code, setCode] = useAtom(codeAtom);
+    const [builder, setBuilder] = useAtom(builderAtom);
+
     const router = useRouter();
     const [environments, setEnvironments] = useState([
         { logo: "/editor/curl.svg", name: "cURL", target: "shell", client: '' },
@@ -45,14 +48,55 @@ export default function BuilderEditor() {
         { logo: "/editor/ruby.svg", name: "Ruby", target: "ruby", client: '' },
     ]);
     const [selected, setSelected] = useState(0);
-    const [builder, setBuilder] = useState({});
     const [refs, setRefs] = useState(new Map());
     const [response, setResponse] = useState("// Rendering of your request response");
     const [viewer, setViewer] = useState('demo');
     const [demoIndex, setDemoIndex] = useState(0);
     const [demo, setDemo] = useState("");
     const [processing, setProcessing] = useState(false);
+    const [serverURL, setServerURL] = useState('');
+    const [paramRefs, setParamRefs] = useState(new Map());
 
+    const SendRequest = () => {
+        // SEND THE REQUEST - WITH PARAMS AND BODY
+        // LOAD THE RESPONSE - INTO RESPONSE AS A JSON STRING
+        setProcessing(true);
+        let request = {
+            baseURL: serverURL, // SERVER ENDPOINT
+            url: page?.content?.api?.endpoint,
+            method: page?.content.api.method
+        }
+        // HANDLE PARAMETERS
+        let parameters = builder.parameters;
+        if (parameters.path) {
+            _.mapKeys(parameters.path, function (value, key) {
+                let new_endpoint = _.replace(request.url, `{${key}}`, value);
+                if (new_endpoint) {
+                    request.url = new_endpoint;
+                }
+            });
+        }
+        if (parameters.header) {
+            request.headers = parameters.header;
+        }
+        if (parameters.query) {
+            request.params = parameters.query;
+        }
+
+
+        axios({
+            method: 'post',
+            url: '/user/12345',
+            data: {
+                firstName: 'Fred',
+                lastName: 'Flintstone'
+            },
+            params: {
+                ID: 12345
+            },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+    }
 
     const RenderCodeArea = (index) => {
         let environment = environments[index !== undefined ? index : selected];
@@ -140,9 +184,10 @@ export default function BuilderEditor() {
         }
     }
     useEffect(() => {
+        setBuilder();
         RenderCodeArea();
-        setBuilder({});
         setProcessing(false);
+        setServerURL(page?.content?.api?.configuration?.servers[0].url);
     }, [page]);
 
     useEffect(() => {
@@ -152,7 +197,6 @@ export default function BuilderEditor() {
                 data: page?.content?.api?.responses[key]
             })
         });
-
         console.log("response", responses);
 
         const random = {
@@ -184,14 +228,14 @@ export default function BuilderEditor() {
                         data[key] = random.choice([true, false]);
                     } else if (type === 'array') {
                         let fake_array_data = generateFakeData(schema.properties[key].items);
-                        console.log("fake_array_data", fake_array_data);
+                        // console.log("fake_array_data", fake_array_data);
                         data[key] = [fake_array_data];
                     } else if (type === 'object') {
                         let results = generateFakeData(property);
-                        console.log("fake_object_data.results", results);
+                        // console.log("fake_object_data.results", results);
                         data[key] = { ...results };
                     } else {
-                        console.log("property.type.not.mapped", { schema, type, property });
+                        // console.log("property.type.not.mapped", { schema, type, property });
                         // throw new Error(`Unknown type: ${type}`);
                     }
                 })
@@ -252,7 +296,6 @@ export default function BuilderEditor() {
                             )
                         }
 
-
                         // ELSE, RENDER THE FORM BLOCK AS RECIEVED
                         let builder_path_label = key; // GET THE CURRENT END OF THE STICK WE ARE ON
                         let current_path = paths.split("/"); // SPLIT CURRENT PATH INTO ARRAY OF KEYS
@@ -262,7 +305,7 @@ export default function BuilderEditor() {
                         let required = block?.nullable ? block?.nullable : false; // GET IF ITS REQUIRED OR NOT
                         let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE                        
                         let pathName = [...current_path, builder_path_label].join("-")
-                        // console.log("rendering.input.content", { block, current_path, value_exists, current_value, input_type, required, inputValue });
+                        console.log("rendering.input.content", { block, current_path, value_exists, current_value, input_type, required, inputValue });
 
                         return (
                             <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
@@ -327,8 +370,8 @@ export default function BuilderEditor() {
                 let body = page?.content?.api?.requestBody?.content[body_schema_selected]; // GETS THE FIRST BODY SCHEMA TYPE (TODO: ALLOW EDITING/SELECTION)
                 let fields = body?.schema.properties;
 
-                // console.log("body", { has_body, body, fields })
-                console.log("rendering.body.section")
+                console.log("body", { has_body, body, fields, builder })
+                // console.log("rendering.body.section")
 
                 return (<div>
                     <h2 className='text-lg font-medium mt-5'>
@@ -350,7 +393,7 @@ export default function BuilderEditor() {
         if (page) {
             let parameters = page?.content?.api?.parameters; // USES PARAMS DATA PER OPEN-API-SPEC FORMAT https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=programming%20naming%20conventions.-,parameters,-%5BParameter%20Object
             let input_mappings = { string: "text", integer: "number" };
-            //console.log("parameters", { parameters })
+            console.log("parameters", { parameters, builder })
             if (parameters) {
                 let header_params = parameters.filter(param => param["in"] == "header");
                 let query_params = parameters.filter(param => param["in"] == "query");
@@ -365,53 +408,50 @@ export default function BuilderEditor() {
                 ];
 
                 return (<div className='mb-4'>
-                    {
-                        grouped.map((block, block_index) => {
-                            if (block.child.length > 0) {
-                                let builder_path_label = block.label.toLowerCase();
-                                return (
-                                    <div key={block_index}>
-                                        <h2 className='text-lg font-medium mt-5'>
-                                            {block.label} Params
-                                        </h2>
+                    {grouped.map((block, block_index) => {
+                        if (block.child.length > 0) {
+                            let builder_path_label = block.label.toLowerCase();
+                            return (
+                                <div key={builder_path_label}>
+                                    <h2 className='text-lg font-medium mt-5'>
+                                        {block.label} Params
+                                    </h2>
 
-                                        {
-                                            block.child.map((param, param_index) => {
-                                                let value_exists = _.has(builder, ["parameters", builder_path_label, param.name]);
-                                                let current_value = _.get(builder, ["parameters", builder_path_label, param.name]);
-                                                let input_type = param?.schema ? input_mappings[param.schema.type] : "text";
-                                                let required = param?.required ? param?.required : false;
-                                                return (
-                                                    <div key={param_index} className='flex flex-row gap-2 mb-2 justify-between items-center'>
-                                                        <p>{param.name}
-                                                            <span className='ml-2 text-xs font-normal text-gray-400'>{param.schema.type}</span>
-                                                            <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
-                                                        </p>
-                                                        <TextInput
-                                                            id={param.name}
-                                                            type={input_type}
-                                                            className='w-[30%]'
-                                                            placeholder={param.name}
-                                                            required={required}
-                                                            value={current_value}
-                                                            onChange={(e) => {
-                                                                let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
-                                                                let local = builder;
-                                                                _.set(local, ["parameters", builder_path_label, param.name], value);
-                                                                setBuilder(local);
-                                                                //console.log("param.input.changed", { value, local, current_value, builder: builder })
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )
-                                            })
-                                        }
+                                    {block.child.map((param, param_index) => {
+                                        let value_exists = _.has(builder, ["parameters", builder_path_label, param.name]);
+                                        let current_value = _.get(builder, ["parameters", builder_path_label, param.name]);
+                                        let input_type = param?.schema ? input_mappings[param.schema.type] : "text";
+                                        let required = param?.required ? param?.required : false;
+                                        let pathName = ["parameters", builder_path_label, param.name].join("-")
 
-                                    </div >
-                                )
-                            }
-                        })
-                    }
+                                        return (
+                                            <div key={pathName} className='flex flex-row gap-2 mb-2 justify-between items-center'>
+                                                <p>{param.name}
+                                                    <span className='ml-2 text-xs font-normal text-gray-400'>{param.schema.type}</span>
+                                                    <span className='text-xs font-normal text-gray-400'>{required ? " *" : ""}</span>
+                                                </p>
+                                                <TextInput
+                                                    id={pathName}
+                                                    type={input_type}
+                                                    className='w-[30%]'
+                                                    placeholder={param.name}
+                                                    required={required}
+                                                    value={current_value}
+                                                    onChange={(e) => {
+                                                        let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
+                                                        let local = builder;
+                                                        _.set(local, ["parameters", builder_path_label, param.name], value);
+                                                        setBuilder(local);
+                                                        console.log("param.input.changed", { value, local, current_value, builder: builder })
+                                                    }}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+                                </div >
+                            )
+                        }
+                    })}
                 </div >);
             }
         }
@@ -490,7 +530,7 @@ export default function BuilderEditor() {
 
                     <Button size="xs" color="gray"
                         className='rounded-none !border-gray-300 w-[100%] mt-2 pt-2 pb-2 !outline-none focus:ring-transparent' onClick={() => {
-                            setProcessing(true);
+                            SendRequest();
                         }}>
                         <span className="pr-3">
                             Send Request
