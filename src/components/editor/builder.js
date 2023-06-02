@@ -36,7 +36,7 @@ import axios from 'axios';
 export default function BuilderEditor() {
     const [page, setPage] = useAtom(pageAtom);
     const [code, setCode] = useAtom(codeAtom);
-    const [builder, setBuilder] = useAtom(builderAtom);
+    // const [builder, setBuilder] = useAtom(builderAtom);
 
     const router = useRouter();
     const [environments, setEnvironments] = useState([
@@ -56,6 +56,7 @@ export default function BuilderEditor() {
     const [processing, setProcessing] = useState(false);
     const [serverURL, setServerURL] = useState('');
     const [paramRefs, setParamRefs] = useState(new Map());
+    const [builder, setBuilder] = useState({});
 
     const SendRequest = () => {
         // SEND THE REQUEST - WITH PARAMS AND BODY
@@ -184,7 +185,7 @@ export default function BuilderEditor() {
         }
     }
     useEffect(() => {
-        setBuilder();
+        setBuilder(null);
         RenderCodeArea();
         setProcessing(false);
         setServerURL(page?.content?.api?.configuration?.servers[0].url);
@@ -304,8 +305,8 @@ export default function BuilderEditor() {
                         let input_type = block?.type ? input_mappings[block.type] : "text"; // GET THE VALUE ACCEPTED FOR THE INPUT
                         let required = block?.nullable ? block?.nullable : false; // GET IF ITS REQUIRED OR NOT
                         let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE                        
-                        let pathName = [...current_path, builder_path_label].join("-")
-                        console.log("rendering.input.content", { block, current_path, value_exists, current_value, input_type, required, inputValue });
+                        let pathName = [...current_path, builder_path_label].join("'")
+                        // console.log("rendering.input.content", { block, current_path, value_exists, current_value, input_type, required, inputValue });
 
                         return (
                             <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
@@ -325,7 +326,7 @@ export default function BuilderEditor() {
 
                                         if (el) {
                                             el.addEventListener('keyup', (e) => {
-                                                let path = e.target.id.split("-");
+                                                let path = e.target.id.split("'");
                                                 let value = e.target.value;
 
                                                 console.log("input.e", { path, e });
@@ -361,7 +362,7 @@ export default function BuilderEditor() {
      * 
      * @returns {number} The api request body form UI component with conditionally recusive children
      */
-    const BodySection = () => {
+    const BodySection = (builder) => {
         if (page) {
             let body_keys = _.keys(page?.content?.api?.requestBody?.content);
             let has_body = body_keys?.length > 0; // READS THE DATA PER OPEN API-SPEC FORMAT https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=components/parameters.-,requestBody,-Request%20Body%20Object
@@ -384,7 +385,7 @@ export default function BuilderEditor() {
     }
 
     // RETURNS FORMS FOR 3 TYPES OF REQUEST PARAMETERS (HEADER, QUERY, PATH & COOKIE PARAMS)
-    const ParametersSection = () => {
+    const ParametersSection = (builder) => {
         // GO OVER EACH PARAMETER
         // GROUP THEM BY THEIR PARAMETER TYPE
         // FOR EACH CATEGORY
@@ -422,7 +423,9 @@ export default function BuilderEditor() {
                                         let current_value = _.get(builder, ["parameters", builder_path_label, param.name]);
                                         let input_type = param?.schema ? input_mappings[param.schema.type] : "text";
                                         let required = param?.required ? param?.required : false;
-                                        let pathName = ["parameters", builder_path_label, param.name].join("-")
+                                        let pathName = ["parameters", builder_path_label, `${param.name}`].join("'")
+                                        let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE                        
+                                        // console.log("parameters.group.child.loop", { current_value, inputValue, pathName });
 
                                         return (
                                             <div key={pathName} className='flex flex-row gap-2 mb-2 justify-between items-center'>
@@ -436,13 +439,29 @@ export default function BuilderEditor() {
                                                     className='w-[30%]'
                                                     placeholder={param.name}
                                                     required={required}
-                                                    value={current_value}
-                                                    onChange={(e) => {
-                                                        let value = input_type == "number" ? _.toNumber(e.target.value) : e.target.value;
-                                                        let local = builder;
-                                                        _.set(local, ["parameters", builder_path_label, param.name], value);
-                                                        setBuilder(local);
-                                                        console.log("param.input.changed", { value, local, current_value, builder: builder })
+                                                    defaultValue={inputValue}
+                                                    ref={el => {
+
+                                                        if (el) {
+                                                            el.addEventListener('keyup', (e) => {
+                                                                let path = e.target.id.split("'");
+                                                                let value = e.target.value;
+
+                                                                console.log("input.e", { path, e });
+                                                                console.log("input.value.change", value);
+
+                                                                let local = builder;
+                                                                _.set(local, path, value);
+                                                                setBuilder(local);
+
+                                                                console.log("builder", { local });
+
+                                                                e.target.focus();
+                                                                RenderCodeArea();
+                                                            });
+                                                        }
+
+                                                        return setParamRefs(paramRefs.set(pathName, el))
                                                     }}
                                                 />
                                             </div>
@@ -458,6 +477,34 @@ export default function BuilderEditor() {
     }
 
     const APIRequestDataForm = useMemo(() => {
+        setBuilder({});
+        console.log("api.form.refreshed", { refs, paramRefs });
+        // TODO: CHOOSE SERVER BASE ENDPOINT
+
+        // EMPTY ALL INPUTS AND PARAMETER FIELDS
+        if (paramRefs.size > 0) {
+            paramRefs.forEach((element, key) => {
+                if (element) {
+                    element.value = "";
+                    // let el = paramRefs.get(key);
+                    // el?.value = "";
+                }
+                console.log(`Key: ${key}, element:`, { element });
+            });
+        }
+
+
+        if (refs.size > 0) {
+            refs.forEach((element, key) => {
+                if (element) {
+                    element.value = "";
+                    // let el = refs.get(key);
+                    // el?.value = "";
+                }
+                console.log(`Key: ${key}, element:`, { element });
+            });
+        }
+
         return (
             <div className='border shadow-sm rounded-lg p-5'>
                 <p className='mb-2'>Build Requests</p>
@@ -466,11 +513,11 @@ export default function BuilderEditor() {
                     {page?.title}
                 </h2>
                 <p className='flex items-center gap-4'>{Indicators(page)} Endpoint:  {page?.content?.api?.endpoint}</p>
-                {ParametersSection()}
-                {BodySection()}
+                {ParametersSection({})}
+                {BodySection({})}
             </div>
         )
-    }, [page, selected]);
+    }, [page]);
 
     const APIRequestRequester = () => {
         return (

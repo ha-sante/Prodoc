@@ -8,7 +8,7 @@ import { Inter, Lora } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
-import { Box, Logout, Code1, Setting3, LogoutCurve, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
+import { Box, Logout, Code1, Setting3, Map1 as MapIcon, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -56,6 +56,7 @@ const EditorSidebarComponent = (props) => {
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
         { icon: <Code1 size="16" color="#111827" />, title: "API Reference", id: 'api' },
+        { icon: <MapIcon size="16" color="#111827" />, title: "Walkthrough", id: 'walkthrough' },
         { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
 
