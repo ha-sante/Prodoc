@@ -99,7 +99,7 @@ export default function ConfigurePagePrompt() {
                     {/* <p> {JSON.stringify(page?.configuration)} </p> */}
 
                     <Textarea
-                        id="code-area"
+                        id="page-config-code-area"
                         placeholder="Write page configuration as a Javascript Object"
                         required={true}
                         rows={4}

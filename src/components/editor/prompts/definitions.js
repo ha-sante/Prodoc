@@ -229,7 +229,7 @@ export default function APIDefinitionsPrompt(props) {
                         <Textarea
                             type="text"
                             value={code}
-                            id="code-area"
+                            id="api-spec-code-area"
                             placeholder="Paste content of Spec File here"
                             onChange={e => {
                                 let value = e.target.value; 2
