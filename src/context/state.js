@@ -172,6 +172,7 @@ export const codeAtom = atom('');
 export const navigationAtom = atom('main');
 
 export const pageIdAtom = atom('');
+export const serverAtom = atom('');
 
 // store.set(contentAtom, [])
 

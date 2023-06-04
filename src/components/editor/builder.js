@@ -7,13 +7,13 @@ import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
-import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner } from "flowbite-react";
-import { Copy, DocumentCopy } from 'iconsax-react';
+import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner, Tooltip } from "flowbite-react";
+import { Copy, DocumentCopy, Setting2 } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, serverAtom
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -64,6 +64,7 @@ export default function BuilderEditor() {
     const [demo, setDemo] = useState("");
     const [code, setCode] = useState("");
     const [serverURL, setServerURL] = useState('');
+    const [servers, setServers] = useAtom(serverAtom);
 
     // INDICATORS
     const [processing, setProcessing] = useState(false);
@@ -121,7 +122,6 @@ export default function BuilderEditor() {
 
             setProcessing(false);
         }).catch(error => {
-            toast.error("Request was not successfully.", { position: "bottom-right" })
             console.log("request.error", error);
 
 
@@ -131,6 +131,20 @@ export default function BuilderEditor() {
                 console.log(error.response.data);
                 console.log(error.response.status);
                 console.log(error.response.headers);
+
+                let message = "";
+                if (error.code) {
+                    message += `code: ${error.code} \n`
+                }
+                if (error.message) {
+                    message += `message: ${error.code} \n`
+                }
+                if (error.name) {
+                    message += `name: ${error.name} \n`
+                }
+
+                // name, code, message
+                setResponse(message);
             } else if (error.request) {
                 // The request was made but no response was received
                 // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
@@ -150,9 +164,26 @@ export default function BuilderEditor() {
 
                 // name, code, message
                 setResponse(message);
+                toast.error("Request was not successfully.", { position: "bottom-right" })
+
             } else {
                 // Something happened in setting up the request that triggered an Error
                 console.log('Error', error.message);
+
+                let message = "";
+                if (error.code) {
+                    message += `code: ${error.code} \n`
+                }
+                if (error.message) {
+                    message += `message: ${error.code} \n`
+                }
+                if (error.name) {
+                    message += `name: ${error.name} \n`
+                }
+
+                // name, code, message
+                setResponse(message);
+                toast.error("Something went wrong with the request.", { position: "bottom-right" })
             }
             console.log(error.config);
 
@@ -167,7 +198,7 @@ export default function BuilderEditor() {
             // GET FORM DATA
             let { body, parameters } = Object(builder);
             let { header, path, query } = Object(parameters);
-            let base = page?.content.api?.configuration?.servers[0].url;
+            let base = serverURL ? serverURL : page?.content?.api?.configuration?.servers[0]?.url;
             let endpoint = page?.content.api.endpoint;
 
             let har_format = {
@@ -241,6 +272,7 @@ export default function BuilderEditor() {
                 }
             } catch (error) {
                 //console.log("error.generating.code.example", { error });
+                toast.error("Hit a severe error whiles turning this form content into a code example, from the api spec - debug or contact support");
             }
 
         }
@@ -259,7 +291,6 @@ export default function BuilderEditor() {
         setResponse("");
         setDemo("");
         setCode("");
-        setServerURL(page?.content?.api?.configuration?.servers[0].url);
         setProcessing(false);
 
         // RESET
@@ -284,6 +315,15 @@ export default function BuilderEditor() {
                 }
                 // console.log(`Key: ${key}, element:`, { element });
             });
+        }
+
+
+        // HANDLE PAGE SERVERS - BOTH PARENT AND THE CHILD'S COMBINED (PER OPEN API SPEC) - https://spec.openapis.org/oas/v3.1.0#pathsObject
+        let collection = [...page?.content?.api?.servers, ...page?.content?.api?.configuration?.servers];
+        console.log("servers.collection", collection)
+        if (collection) {
+            setServers(collection);
+            setServerURL(collection[0].url);
         }
 
         // RENDER THE NEW DATA
@@ -360,9 +400,14 @@ export default function BuilderEditor() {
         ResetBuilderState();
     }, [page]);
 
+
     useEffect(() => {
         RenderCodeArea(selected);
-        // console.log("builder.data.updated", builder)
+        console.log("serverURL.data.updated", serverURL)
+    }, [serverURL]);
+
+    useEffect(() => {
+        RenderCodeArea(selected);
     }, [builder]);
 
     useEffect(() => {
@@ -594,12 +639,38 @@ export default function BuilderEditor() {
                 <h2 className='text-2xl font-bold text-gray-900'>
                     {page?.title}
                 </h2>
-                <p className='flex items-center gap-4'>{Indicators(page)} Endpoint:  {page?.content?.api?.endpoint}</p>
+                <div className='flex items-center gap-2 font-normal text-sm mb-2 mt-2'>
+                    {Indicators(page)}
+
+                    <div className='flex items-center gap-1'>
+                        {servers?.length > 1 &&
+                            <Dropdown inline label={<Setting2 size={14} />} arrowIcon={false} className='border mr-0'>
+                                {servers.map((server, index) => {
+                                    if (server.description) {
+                                        <Tooltip key={index} content={server.description} placement="right">
+                                            <Dropdown.Item onClick={() => setServerURL(server.url)}>
+                                                {server.url}
+                                            </Dropdown.Item>
+                                        </Tooltip>
+                                    }
+
+                                    return (
+                                        <Dropdown.Item key={index} onClick={() => setServerURL(server.url)}>
+                                            {server.url}
+                                        </Dropdown.Item>
+                                    )
+                                })}
+                            </Dropdown>}
+                        <p>{serverURL}{page?.content?.api?.endpoint}</p>
+                    </div>
+
+                </div>
+
                 <ParametersSection />
                 <BodySection />
             </div>
         )
-    }, [page]);
+    }, [page, serverURL, servers]);
 
     const APIRequestRequester = () => {
         //console.log("api.requestor.view.refreshed", { builder, code })
@@ -733,8 +804,7 @@ export default function BuilderEditor() {
                                             </div>
                                         )
                                     }
-                                })
-                                }
+                                })}
                             </div>
 
                             <Editor
