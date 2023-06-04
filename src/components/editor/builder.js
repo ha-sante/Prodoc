@@ -74,6 +74,9 @@ export default function BuilderEditor() {
         // SEND THE REQUEST - WITH PARAMS AND BODY
         // LOAD THE RESPONSE - INTO RESPONSE AS A JSON STRING
         setProcessing(true);
+        setViewer("live");
+        setResponse("");
+
         let request = {
             baseURL: serverURL, // SERVER ENDPOINT
             url: page?.content?.api?.endpoint,
@@ -106,7 +109,55 @@ export default function BuilderEditor() {
 
         console.log("axios.final.object = ", { request, page });
 
-        // axios();
+        // SEND REQUEST TO THE BACKEND
+        // STORE THE 
+        axios(request).then(response => {
+            console.log("request.response", response);
+            // console.log(response.data);
+            // console.log(response.status);
+            // console.log(response.statusText);
+            // console.log(response.headers);
+            // console.log(response.config);
+
+            setProcessing(false);
+        }).catch(error => {
+            toast.error("Request was not successfully.", { position: "bottom-right" })
+            console.log("request.error", error);
+
+
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.log(error.response.data);
+                console.log(error.response.status);
+                console.log(error.response.headers);
+            } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                console.log(error.request);
+
+                let message = "";
+                if (error.code) {
+                    message += `code: ${error.code} \n`
+                }
+                if (error.message) {
+                    message += `message: ${error.code} \n`
+                }
+                if (error.name) {
+                    message += `name: ${error.name} \n`
+                }
+
+                // name, code, message
+                setResponse(message);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                console.log('Error', error.message);
+            }
+            console.log(error.config);
+
+            setProcessing(false);
+        })
     }
 
     const RenderCodeArea = (index) => {
@@ -311,11 +362,11 @@ export default function BuilderEditor() {
 
     useEffect(() => {
         RenderCodeArea(selected);
-        console.log("builder.data.updated", builder)
+        // console.log("builder.data.updated", builder)
     }, [builder]);
 
     useEffect(() => {
-        console.log("refs.data.updated", { bodyRefs, paramRefs })
+        // console.log("refs.data.updated", { bodyRefs, paramRefs })
     }, [bodyRefs, paramRefs]);
 
     useEffect(() => {
@@ -390,11 +441,11 @@ export default function BuilderEditor() {
                                                     let path = e.target.id.split("'");
                                                     let value = e.target.value;
 
-                                                    console.log("input.value.changed.before.builder", builder);
+                                                    // console.log("input.value.changed.before.builder", builder);
                                                     let local = builder;
                                                     let update = _.set(local, path, value);
                                                     setBuilder({ ...update });
-                                                    console.log("input.value.changed.after.builder", builder);
+                                                    // console.log("input.value.changed.after.builder", builder);
 
                                                     // TODO: Handle input values of a different type from text
                                                     e.target.focus();
@@ -500,12 +551,13 @@ export default function BuilderEditor() {
                                                             el.addEventListener('keyup', (e) => {
                                                                 let path = e.target.id.split("'");
                                                                 let value = e.target.value;
-                                                                // console.log("input.e", { path, e });
-                                                                // console.log("input.value.change", value);
+
+                                                                // console.log("input.value.changed.before.builder", builder);
                                                                 let local = builder;
                                                                 let update = _.set(local, path, value);
                                                                 setBuilder({ ...update });
-                                                                // console.log("builder", { local });
+                                                                // console.log("input.value.changed.after.builder", builder);
+
                                                                 e.target.focus();
                                                             });
                                                         }
@@ -612,10 +664,7 @@ export default function BuilderEditor() {
                         <span className="pr-3">
                             Send Request
                         </span>
-                        {
-                            processing &&
-                            <Spinner size='sm' aria-label="Spinner button example" />
-                        }
+                        {processing && <Spinner size='sm' aria-label="Spinner button example" />}
                     </Button>
 
                 </div>
@@ -656,17 +705,19 @@ export default function BuilderEditor() {
                 <div className='border p-2'>
                     {viewer == 'live' ?
                         <div className=''>
-                            {/* <Editor
-                            value={response}
-                            highlight={response => highlight(response != undefined ? response : "", languages.js)}
-                            padding={10}
-                            style={{
-                                fontFamily: '"Fira code", "Fira Mono", monospace',
-                                fontSize: 10,
-                                maxHeight: "220px",
-                                overflowY: "scroll"
-                            }}
-                        /> */}
+                            {processing && <p className='text-xs'>Request in process...</p>}
+
+                            <Editor
+                                value={response}
+                                highlight={response => highlight(response != undefined ? response : "", languages.js)}
+                                padding={10}
+                                style={{
+                                    fontFamily: '"Fira code", "Fira Mono", monospace',
+                                    fontSize: 10,
+                                    maxHeight: "220px",
+                                    overflowY: "scroll"
+                                }}
+                            />
                         </div>
                         :
                         <div className=''>
@@ -677,13 +728,6 @@ export default function BuilderEditor() {
                                             <div key={index} className={`rounded-none border w-auto mr-2 pr-2 pl-2 cursor-pointer ${demoIndex == index ? 'bg-blue-700 text-white border-blue-700' : ''}`}
                                                 onClick={() => {
                                                     setDemoIndex(index);
-
-                                                    // let results = "";
-                                                    // _.keys(response.data?.content).map((contentType, index) => {
-                                                    //     let schema = response.data.content[contentType].schema;
-                                                    //     results += `//${contentType} \n ${json5.stringify(generateFakeData(schema), undefined, 4)} \n \n`;
-                                                    // })
-                                                    // setDemo(results);
                                                 }}>
                                                 <p className='text-xs w-auto'>{response.code}</p>
                                             </div>
