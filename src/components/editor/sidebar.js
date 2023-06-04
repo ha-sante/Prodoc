@@ -205,7 +205,7 @@ const EditorSidebarComponent = (props) => {
                         // SET PAGE CONTENT
                         let found = content.find(item => item.id == page.id);
                         console.log("page.to.replace.on.move", found);
-                        setBuilder();
+                        setBuilder({});
                         setPage(found);
                         setPageId(page.id)
                         setEdited(false);
@@ -219,7 +219,7 @@ const EditorSidebarComponent = (props) => {
             } else {
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
                 let found = content.find(pa => pa.id == page.id);
-                setBuilder();
+                setBuilder({});
                 setPage(found);
                 setPageId(found.id)
                 ActivePageItemIndicator(page);

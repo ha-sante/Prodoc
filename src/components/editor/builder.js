@@ -35,6 +35,7 @@ import axios from 'axios';
 
 export default function BuilderEditor() {
     const [page, setPage] = useAtom(pageAtom);
+    const [builder, setBuilder] = useAtom(builderAtom);
 
     const router = useRouter();
     const [environments, setEnvironments] = useState([
@@ -45,28 +46,30 @@ export default function BuilderEditor() {
         { logo: "/editor/go.svg", name: "Golang", target: "go", client: '' },
         { logo: "/editor/ruby.svg", name: "Ruby", target: "ruby", client: '' },
     ]);
-    // visuals
+
+    // VISUALS
     const [selected, setSelected] = useState(0);
     const [viewer, setViewer] = useState('demo');
     const [demoIndex, setDemoIndex] = useState(0);
 
-    // inputs
-    const [refs, setRefs] = useState(new Map());
+    // INPUTS
+    const [bodyRefs, setBodyRefs] = useState(new Map());
     const [paramRefs, setParamRefs] = useState(new Map());
 
-    // forms
-    const [builder, setBuilder] = useState({});
+    // FORMS
+    // const [builder, setBuilder] = useState({});
 
-    // holders
+    // HOLDERS
     const [response, setResponse] = useState("// Rendering of your request response");
     const [demo, setDemo] = useState("");
     const [code, setCode] = useState("");
     const [serverURL, setServerURL] = useState('');
 
-    // indicators
+    // INDICATORS
     const [processing, setProcessing] = useState(false);
 
 
+    // FUNCTIONS
     const SendRequest = () => {
         // SEND THE REQUEST - WITH PARAMS AND BODY
         // LOAD THE RESPONSE - INTO RESPONSE AS A JSON STRING
@@ -208,27 +211,27 @@ export default function BuilderEditor() {
         setServerURL(page?.content?.api?.configuration?.servers[0].url);
         setProcessing(false);
 
-        //console.log("api.form.refreshed", { refs, paramRefs });
+        // RESET
+        setBodyRefs(new Map());
+        setParamRefs(new Map());
+
+        //console.log("api.form.refreshed", { bodyRefs, paramRefs });
         // TODO: CHOOSE SERVER BASE ENDPOINT
         // EMPTY ALL INPUTS AND PARAMETER FIELDS
         if (paramRefs.size > 0) {
             paramRefs.forEach((element, key) => {
                 if (element) {
                     element.value = "";
-                    // let el = paramRefs.get(key);
-                    // el?.value = "";
                 }
-                // //console.log(`Key: ${key}, element:`, { element });
+                // console.log(`Key: ${key}, element:`, { element });
             });
         }
-        if (refs.size > 0) {
-            refs.forEach((element, key) => {
+        if (bodyRefs.size > 0) {
+            bodyRefs.forEach((element, key) => {
                 if (element) {
                     element.value = "";
-                    // let el = refs.get(key);
-                    // el?.value = "";
                 }
-                // //console.log(`Key: ${key}, element:`, { element });
+                // console.log(`Key: ${key}, element:`, { element });
             });
         }
 
@@ -236,17 +239,7 @@ export default function BuilderEditor() {
         RenderCodeArea(0);
     }
 
-    // USE EFFECTS
-    useEffect(() => {
-        ResetBuilderState();
-    }, [page]);
-
-    useEffect(() => {
-        RenderCodeArea(selected);
-        console.log("builder.data.updated", { builder, demo })
-    }, [builder]);
-
-    useEffect(() => {
+    const RenderRequestResponseDemo = () => {
         let responses = _.keys(page?.content?.api?.responses).map(key => {
             return ({
                 code: key,
@@ -309,6 +302,24 @@ export default function BuilderEditor() {
         })
 
         setDemo(results);
+    }
+
+    // EXECUTIONS
+    useEffect(() => {
+        ResetBuilderState();
+    }, [page]);
+
+    useEffect(() => {
+        RenderCodeArea(selected);
+        console.log("builder.data.updated", builder)
+    }, [builder]);
+
+    useEffect(() => {
+        console.log("refs.data.updated", { bodyRefs, paramRefs })
+    }, [bodyRefs, paramRefs]);
+
+    useEffect(() => {
+        RenderRequestResponseDemo();
     }, [page, demoIndex]);
 
 
@@ -373,23 +384,26 @@ export default function BuilderEditor() {
                                         required={required}
                                         defaultValue={inputValue}
                                         ref={el => {
-
+                                            // console.log("body.input.element", { el });
                                             if (el) {
                                                 el.addEventListener('keyup', (e) => {
                                                     let path = e.target.id.split("'");
                                                     let value = e.target.value;
+
+                                                    console.log("input.value.changed.before.builder", builder);
                                                     let local = builder;
-                                                    _.set(local, path, value);
+                                                    let update = _.set(local, path, value);
+                                                    setBuilder({ ...update });
+                                                    console.log("input.value.changed.after.builder", builder);
 
-                                                    switch (block_type) {
-                                                    }
-
-                                                    setBuilder({ ...local });
+                                                    // TODO: Handle input values of a different type from text
                                                     e.target.focus();
                                                 });
+
+                                                return setBodyRefs(bodyRefs.set(pathName, el))
                                             }
 
-                                            return setRefs(refs.set(pathName, el))
+                                            return null
                                         }}
                                     />
                                 </div>
@@ -400,7 +414,7 @@ export default function BuilderEditor() {
                 )
             }
 
-            return (<div><p>I visited here</p></div>)
+            return (<div><p>Something happened, the form rendering reached this point. (It's not supposed to - debug)</p></div>)
         }
 
         if (page) {
@@ -486,12 +500,12 @@ export default function BuilderEditor() {
                                                             el.addEventListener('keyup', (e) => {
                                                                 let path = e.target.id.split("'");
                                                                 let value = e.target.value;
-                                                                // //console.log("input.e", { path, e });
-                                                                // //console.log("input.value.change", value);
+                                                                // console.log("input.e", { path, e });
+                                                                // console.log("input.value.change", value);
                                                                 let local = builder;
-                                                                _.set(local, path, value);
-                                                                setBuilder({ ...local });
-                                                                // //console.log("builder", { local });
+                                                                let update = _.set(local, path, value);
+                                                                setBuilder({ ...update });
+                                                                // console.log("builder", { local });
                                                                 e.target.focus();
                                                             });
                                                         }
