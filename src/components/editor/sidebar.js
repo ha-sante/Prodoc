@@ -184,7 +184,9 @@ const EditorSidebarComponent = (props) => {
         })
 
         let element = refs.get(page.id)
-        element.classList.add("border-l", "p", 'border-gray-400');
+        if (element) {
+            element.classList.add("border-l", "p", 'border-gray-400');
+        }
     }
 
 
@@ -258,9 +260,9 @@ const EditorSidebarComponent = (props) => {
     const HTTPMethodIndicators = (page) => {
         // IF THE VALUE IS API
         // RETURN A INDICATOR OF 
-        if (page.type == "api" && page.content.api.type) {
+        if (page.type == "api" && page.content.api?.type) {
             let colors = { get: "success", post: "info", put: "indigo", delete: "failure", patch: "warning" }
-            return <Badge color={colors[page.content.api.type]} className='inline ml-2'>{page.content.api.type}</Badge>
+            return <Badge color={colors[page.content.api?.type]} className='inline ml-2'>{page.content.api?.type}</Badge>
         }
     }
 
@@ -325,6 +327,7 @@ const EditorSidebarComponent = (props) => {
                                                 </h3>
                                             </div>
 
+
                                             {directoryPage.id === 'book' ?
                                                 <Button size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
                                                 :
@@ -347,10 +350,13 @@ const EditorSidebarComponent = (props) => {
                                                         </Dropdown.Item>
                                                     </Dropdown>
 
-                                                    <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                                        onClick={() => { HandleAddPage("child", directoryPage.id) }}>
-                                                        <span className='leading-none'>+</span>
-                                                    </div>
+                                                    {directoryPage?.type != "api" &&
+                                                        <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                                            onClick={() => { HandleAddPage("child", directoryPage.id) }}>
+                                                            <span className='leading-none'>+</span>
+                                                        </div>
+                                                    }
+
                                                 </div>
                                             }
                                         </div>
@@ -477,6 +483,7 @@ const EditorSidebarComponent = (props) => {
                         </div>
 
 
+
                         {directoryPage.id === 'book' ?
                             <Button size="xs" className='' onClick={() => { HandleAddPage("chapter") }}>+</Button>
                             :
@@ -499,12 +506,17 @@ const EditorSidebarComponent = (props) => {
                                     </Dropdown.Item>
                                 </Dropdown>
 
-                                <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                    onClick={() => { HandleAddPage("child", directoryPage.id) }}>
-                                    <span className='leading-none'>+</span>
-                                </div>
+                                {directoryPage?.type != "api" &&
+                                    <div>
+                                        <div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
+                                            onClick={() => { HandleAddPage("child", directoryPage.id) }}>
+                                            <span className='leading-none'>+</span>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         }
+
                     </div>
                     <br />
                 </>

@@ -1,28 +1,30 @@
 const fauna = require('../../integrations/fauna.js');
 let q = fauna.q;
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
     const method = req.method;
     const body = req.body;
     const params = req.query;
 
+    console.log("recieved.request", { method, params });
     switch (method) {
         case "POST":
             // Process a POST request
-            fauna.client.query(
-                q.Let({
-                    create_id: q.NewId(),
-                    create: q.Create(q.Ref(q.Collection('Content'), q.Var("create_id")), { data: q.Merge(body, { id: q.Var("create_id") }) }),
-                }, q.Var("create"))
-            ).then((result) => {
+            try {
+                let result = await fauna.client.query(
+                    q.Let({
+                        create_id: q.NewId(),
+                        create: q.Create(q.Ref(q.Collection('Content'), q.Var("create_id")), { data: q.Merge(body, { id: q.Var("create_id") }) }),
+                    }, q.Var("create"))
+                );
                 res.status(200).json(result.data)
-            }).catch(error => {
+            } catch (error) {
                 res.status(404).send(error)
-            });
+            }
             break;
         case "GET":
             // Process a GET request
-            fauna.client.query(
+            return fauna.client.query(
                 q.Map(
                     q.Paginate(q.Documents(q.Collection("Content")), { size: 100000 }),
                     q.Lambda("x", q.Get(q.Var("x")))
@@ -36,7 +38,7 @@ export default function handler(req, res) {
             break;
         case "PUT":
             // Process a PUT request
-            fauna.client.query(
+            return fauna.client.query(
                 q.Update(q.Ref(q.Collection('Content'), body.id), { data: { ...body } })
             ).then(result => {
                 res.status(200).send(result.data);
@@ -44,21 +46,21 @@ export default function handler(req, res) {
                 res.status(404).send(error)
             });
             break;
-
         case "DELETE":
             // Process a DELETE request
-            fauna.client.query(
+            return fauna.client.query(
                 q.Delete(q.Ref(q.Collection('Content'), params.id))
             ).then(result => {
                 res.status(200).send(result.data);
             }).catch(error => {
                 res.status(404).send(error)
             });
+            break;
         case "PATCH":
             // Process a PATCH request
             // BULK UPLOADING OF CHAPTER & PAGES 
             // !FOR PROCESSING BULK API CONTENT ONLY
-            fauna.client.query(
+            await fauna.client.query(
                 q.Let(
                     {
                         // DELETE ALL API CONTENT STORED CURRENTLY
@@ -71,6 +73,24 @@ export default function handler(req, res) {
 
                         // UPDATE CONFIGURATIONS WITH THE NEWLY RECIEVED DATA
                         configured: q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }),
+                    },
+                    q.Var("deleted")
+                )
+            )
+
+            return fauna.client.query(
+                q.Let(
+                    {
+                        // // DELETE ALL API CONTENT STORED CURRENTLY
+                        // deleted: q.Map(
+                        //     q.Paginate(
+                        //         q.Match(q.Index("find_content_by_type"), "api")
+                        //     ),
+                        //     q.Lambda("ref", q.Delete(q.Var("ref")))
+                        // ),
+
+                        // UPDATE CONFIGURATIONS WITH THE NEWLY RECIEVED DATA
+                        // configured: q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }),
 
                         // CREATE THE API PAGES ANEW
                         chapters: q.Map(body.chapters,
@@ -128,9 +148,25 @@ export default function handler(req, res) {
                     q.Var("update_chapters")
                 )
             ).then(result => {
+                console.log("request.result", result);
                 res.status(200).send(result);
             }).catch(error => {
+                console.log("request.error", error);
                 res.status(404).send(error)
             });
+
+            break;
+        default:
+            console.log("request.method.not.supported", method);
+            res.status(404).send({ message: "Request method not supported" });
     }
+
 }
+export const config = {
+    api: {
+        responseLimit: '20mb',
+        bodyParser: {
+            sizeLimit: '20mb',
+        },
+    },
+};

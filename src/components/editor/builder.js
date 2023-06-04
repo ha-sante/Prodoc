@@ -55,6 +55,7 @@ export default function BuilderEditor() {
     // INPUTS
     const [bodyRefs, setBodyRefs] = useState(new Map());
     const [paramRefs, setParamRefs] = useState(new Map());
+    const [otherRefs, setOtherRefs] = useState(new Map());
 
     // FORMS
     // const [builder, setBuilder] = useState({});
@@ -319,8 +320,13 @@ export default function BuilderEditor() {
 
 
         // HANDLE PAGE SERVERS - BOTH PARENT AND THE CHILD'S COMBINED (PER OPEN API SPEC) - https://spec.openapis.org/oas/v3.1.0#pathsObject
-        let collection = [...page?.content?.api?.servers, ...page?.content?.api?.configuration?.servers];
-        console.log("servers.collection", collection)
+        let collection = [];
+        if (page?.content?.api?.servers) {
+            collection = [...page?.content?.api?.servers, ...collection];
+        }
+        if(page?.content?.api?.configuration?.servers){
+            collection = [...collection, ...page?.content?.api?.configuration?.servers];
+        }
         if (collection) {
             setServers(collection);
             setServerURL(collection[0].url);
@@ -400,19 +406,13 @@ export default function BuilderEditor() {
         ResetBuilderState();
     }, [page]);
 
-
     useEffect(() => {
         RenderCodeArea(selected);
-        console.log("serverURL.data.updated", serverURL)
     }, [serverURL]);
 
     useEffect(() => {
         RenderCodeArea(selected);
     }, [builder]);
-
-    useEffect(() => {
-        // console.log("refs.data.updated", { bodyRefs, paramRefs })
-    }, [bodyRefs, paramRefs]);
 
     useEffect(() => {
         RenderRequestResponseDemo();
@@ -626,9 +626,9 @@ export default function BuilderEditor() {
         const Indicators = (page) => {
             // IF THE VALUE IS API
             // RETURN A INDICATOR OF 
-            if (page.type == "api" && page.content.api.type) {
+            if (page.type == "api" && page.content.api?.type) {
                 let colors = { get: "success", post: "info", put: "indigo", delete: "failure", patch: "warning" }
-                return <Badge color={colors[page.content.api.type]} className='inline rounded-full'>{page.content.api.type}</Badge>
+                return <Badge color={colors[page.content.api?.type]} className='inline rounded-full'>{page.content.api?.type}</Badge>
             }
         }
 
@@ -672,8 +672,83 @@ export default function BuilderEditor() {
         )
     }, [page, serverURL, servers]);
 
+
+    // READS - https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=is%20false.-,security,-%5BSecurity%20Requirement
     const APIRequestRequester = () => {
         //console.log("api.requestor.view.refreshed", { builder, code })
+
+        const RequestAuthSection = () => {
+            let api_security_schemes_needed = page?.content?.api?.security;
+
+            // IF IT'S UNDEFINED, USE THE PARENT VERSIO
+            if (api_security_schemes_needed === undefined) {
+
+            }
+
+            return (
+                <div>
+                    {api_security_schemes_needed.map((security, index) => {
+
+                        let security_type = _.keys(security)[0];
+                        let security_scheme = _.keys(security)[0];
+
+                        // PAGE CHILD SECURITY https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=is%20false.-,security,-%5BSecurity%20Requirement
+                        // - if it's not present, use the parent security.
+                        // - if it's [{}] : Security is optional
+                        // - if it's [] : Scurity is not needed
+
+                        return (
+                            <div key={index} className='mt-3 mb-3'>
+
+                                <div className='flex justify-between items-center'>
+                                    <p className='text-sm font-normal  text-gray-900'>
+                                        Authorization
+                                    </p>
+                                    <p className='font-medium text-xs text-gray-900'>
+                                        {security_type.toUpperCase()}
+                                    </p>
+                                </div>
+
+
+                                {/* <TextInput
+                                    id={pathName}
+                                    type={input_type}
+                                    className='w-[30%]'
+                                    placeholder={`${key}`}
+                                    required={required}
+                                    defaultValue={inputValue}
+                                    ref={el => {
+                                        // console.log("body.input.element", { el });
+                                        if (el) {
+                                            el.addEventListener('keyup', (e) => {
+                                                let path = e.target.id.split("'");
+                                                let value = e.target.value;
+
+                                                // console.log("input.value.changed.before.builder", builder);
+                                                // let local = builder;
+                                                // let update = _.set(local, path, value);
+                                                // setBuilder({ ...update });
+                                                // console.log("input.value.changed.after.builder", builder);
+
+
+                                                e.target.focus();
+                                            });
+
+                                            return setBodyRefs(bodyRefs.set(pathName, el))
+                                        }
+
+                                        return null
+                                    }}
+                                /> */}
+                            </div>
+                        )
+                    })}
+                </div>
+            );
+        }
+
+
+
         return (
             <div className='border shadow-sm rounded-lg p-3'>
                 <p className='mb-2'>Test/Send Requests</p>
@@ -698,6 +773,7 @@ export default function BuilderEditor() {
                         })}
                     </div>
 
+                    {page?.content?.api?.security && <RequestAuthSection />}
 
                     <div className='flex justify-between'>
                         <p className='text-sm font-normal mt-3 mb-2 text-gray-900'>
@@ -758,11 +834,11 @@ export default function BuilderEditor() {
 
                     <div className='flex justify-between items-center'>
 
-                        <p className={`text-sm cursor-pointer ${viewer == 'live' ? "font-bold text-gray-800" : "font-normal text-gray-900 "}`} onClick={() => {
+                        {response != '' && <p className={`text-sm cursor-pointer ${viewer == 'live' ? "font-bold text-gray-800" : "font-normal text-gray-900 "}`} onClick={() => {
                             setViewer("live");
                         }}>
                             Live
-                        </p>
+                        </p>}
 
                         <p className={`text-sm cursor-pointer ml-3 ${viewer == 'demo' ? "font-bold text-gray-800" : "font-normal text-gray-900 "}`} onClick={() => {
                             setViewer("demo");

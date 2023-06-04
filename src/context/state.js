@@ -110,7 +110,12 @@ export function ContentAPIHandler(option, data) {
       return axios.delete(`/api/content?id=${data.id}`);
       break;
     case 'PATCH':
-      return axios.patch(`/api/content`, data);
+      return axios({
+        method: 'PATCH',
+        url: '/api/content',
+        data: data,
+        timeout: 300000 // 5 minutes in milliseconds
+      })
       break;
   }
 }

@@ -121,7 +121,7 @@ export default function APIDefinitionsPrompt(props) {
 
             // CREATE ALL CHILD PAGES
             Object.keys(paths).map((url, index) => {
-                childLoopRuns += 1
+                childLoopRuns += 1;
                 let endpoint = paths[url];
                 // console.log("generated.api.endpoint", { childLoopRuns, endpoint });
 
@@ -138,7 +138,10 @@ export default function APIDefinitionsPrompt(props) {
                         page.content.api.configuration.servers = servers ? servers : [];
                         page.content.api.configuration.openapi = openapi ? openapi : "";
                         page.content.api.configuration.info = info ? info : {};
+                        page.content.api.configuration.security = security ? security : [];
                         pages.push(page);
+
+                        // PAGE TO THEIR PARENT MAPPINGS
                         page.content.api.tags.map((tag) => {
                             _.has(mappings, tag) ? [] : mappings[tag] = { 'children': [], page: {} };
                             mappings[tag]['children'].push(page);
@@ -165,6 +168,7 @@ export default function APIDefinitionsPrompt(props) {
                 page.content.api.configuration.servers = servers ? servers : [];
                 page.content.api.configuration.openapi = openapi ? openapi : "";
                 page.content.api.configuration.info = info ? info : {};
+                page.content.api.configuration.security = security ? security : [];
 
                 mappings[label].page = page;
                 chapters.push(page);
