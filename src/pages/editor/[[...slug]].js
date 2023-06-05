@@ -18,8 +18,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
-  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler, logger
+  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 

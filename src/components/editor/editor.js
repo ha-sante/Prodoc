@@ -26,8 +26,7 @@ import Components from './tools/components'
 
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, logger
+  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, ContentAPIHandler, logger, EditorPageBlocksHandler
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -59,7 +58,7 @@ export default function PageEditor(props) {
         ejInstance.current = editor;
       },
       autofocus: false,
-      data: page !== undefined ? page?.content?.editor : DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
+      data: page !== undefined ? page?.content?.editor : EditorPageBlocksHandler("This is the title of your page", "This is the description of your page"),
       onChange: async () => {
         let output = await editor.saver.save();
         props.onSave(output, output.blocks[0]?.data?.text, output.blocks[1]?.data?.text);

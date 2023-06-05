@@ -22,19 +22,28 @@ export const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
     {
       "type": "header",
       "data": {
-        "text": "This is the Title of your page!",
+        "text": "Page Title here",
         "level": 1
       }
     },
     {
       "type": "paragraph",
       "data": {
-        "text": "<i>This is the description of your page</i>",
+        "text": "<i>Page Description here</i>",
         "level": 1
       }
     },
   ]
 }
+
+const PAGE_CONFIGURATION = {
+  privacy: "public", // or hidden
+  purpose: "page", // or external_link
+  depricated: false,
+  external_link: { url: "" },
+  seo: { image: "", title: "", description: "", slug: "" },
+};
+
 export const DEFAULT_PAGE_DATA = {
   type: "api",
   position: "child",
@@ -42,14 +51,80 @@ export const DEFAULT_PAGE_DATA = {
   description: "",
   content: { editor: "", mdx: "", api: {} },
   children: [],
-  configuration: {
-    privacy: "public", // or hidden
-    purpose: "page", // or external_link
-    depricated: false,
-    external_link: { url: "" },
-    seo: { image: "", title: "", description: "", slug: "" },
+  configuration: PAGE_CONFIGURATION
+}
+
+export function EditorPageBlocksHandler(title, description) {
+  return ({
+    "time": new Date().getTime(),
+    "blocks": [
+      {
+        "type": "header",
+        "data": {
+          "text": title,
+          "level": 1
+        }
+      },
+      {
+        "type": "paragraph",
+        "data": {
+          "text": `<i>${description}</i>`,
+          "level": 1
+        }
+      },
+    ]
+  })
+}
+
+export function NewPageHandler(navigation, position, title, description) {
+  console.log({ navigation, position, title, description })
+  let new_page = {}
+  switch (navigation) {
+    case "product":
+      new_page = {
+        type: "product", position, title, description,
+        content: { editor: EditorPageBlocksHandler(title, description), mdx: "", api: {} },
+        children: [],
+        configuration: PAGE_CONFIGURATION
+      };
+      return (new_page);
+      break;
+    case "api":
+      new_page = {
+        type: "api", position, title, description,
+        content: { editor: EditorPageBlocksHandler(title, description), mdx: "", api: {} },
+        children: [],
+        configuration: PAGE_CONFIGURATION
+      };
+      return (new_page);
+      break;
+    case "walkthroughs":
+      new_page = {
+        type: "walkthroughs", position, title, description,
+        content: { editor: EditorPageBlocksHandler(title, description), mdx: "", api: {} },
+        children: [],
+        configuration: PAGE_CONFIGURATION,
+        // WALKTHROUGH SPECIFIC
+        logo: "",
+        category: ""
+      };
+      return (new_page);
+      break;
+    default:
+      return new_page;
+  }
+
+}
+
+export const StorageHandler = {
+  set: (name, value) => {
+    return typeof window !== undefined && localForage.setItem(name, value);
+  },
+  get: (name) => {
+    return typeof window !== undefined && localForage.getItem(name);
   }
 }
+
 
 // API CALLS 
 export function ContentAPIHandler(option, data) {
@@ -77,47 +152,11 @@ export function ContentAPIHandler(option, data) {
   }
 }
 
-export const StorageHandler = {
-  set: (name, value) => {
-    return typeof window !== undefined && localForage.setItem(name, value);
-  },
-  get: (name) => {
-    return typeof window !== undefined && localForage.getItem(name);
-  }
-}
-
-export const LogHandler = {
-  info: (name, value) => {
-    return console.log(name, value);
-  },
-  warn: (name, value) => {
-    return console.warn(name, value);
-  }
-}
-
-
 // JOTAI STATE MANAGEMENT
 import { createStore, Provider, useStore, atom, useAtom } from "jotai";
-let objguy = {
-  content: [],
-  pagination: {},
-  page: {},
-  configure: false,
-  code: '{ privacy: "public" }',
-  edited: false,
-  authenticated: false,
-  permission: false,
-  definitions: false,
-  navigation: 'main',
-  builder: {},
-
-  DEFAULT_INITIAL_PAGE_BLOCKS_DATA,
-  DEFAULT_PAGE_DATA,
-  ContentAPIHandler
-}
 export const store = createStore();
 
-// ATOMS
+// - ATOMS
 export const contentAtom = atom([]);
 
 export const paginationAtom = atom({});
@@ -136,22 +175,7 @@ export const navigationAtom = atom('main');
 export const pageIdAtom = atom('');
 export const serverAtom = atom('');
 
-// store.set(contentAtom, [])
-
-// store.set(paginationAtom, {})
-// store.set(pageAtom, {})
-// store.set(builderAtom, {})
-
-// store.set(configureAtom, false)
-// store.set(editedAtom, false)
-// store.set(authenticatedAtom, false)
-// store.set(permissionAtom, false)
-// store.set(definitionsAtom, false)
-
-// store.set(codeAtom, '{ privacy: "public" }')
-// store.set(navigationAtom, 'product')
-
-// STATIC DATA & METHODS
+// - STATIC DATA & METHODS
 export function JotaiAppStateProvider({ children }) {
   return (<Provider store={store}>{children}</Provider>);
 };

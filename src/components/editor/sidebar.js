@@ -12,8 +12,7 @@ import { Box, Logout, Code1, Setting3, Map1 as MapIcon, ArrowLeft, ArrowRight2, 
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler, logger
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, NewPageHandler, ContentAPIHandler, StorageHandler, logger
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
@@ -37,6 +36,7 @@ const StrictModeDroppable = ({ children, ...props }) => {
 };
 
 const EditorSidebarComponent = (props) => {
+    const router = useRouter();
 
     const [content, setContent] = useAtom(contentAtom);
     const [edited, setEdited] = useAtom(editedAtom);
@@ -50,10 +50,7 @@ const EditorSidebarComponent = (props) => {
     const setBuilder = useSetAtom(builderAtom);
 
     const [highlighted, setHighlighted] = useState("");
-
-    const router = useRouter();
-
-    let defaultRoutes = [
+    const defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
         { icon: <Code1 size="16" color="#111827" />, title: "API Reference", id: 'api' },
         { icon: <MapIcon size="16" color="#111827" />, title: "Walkthroughs", id: 'walkthroughs' },
@@ -61,23 +58,30 @@ const EditorSidebarComponent = (props) => {
     ];
 
     function HandleAddPage(position, parent_id) {
-        // PAGE IS SOMETHING
-        let page = {
-            type: navigation,
-            position: position,
-            title: position == 'chapter' ? "Added Chapter Page" : "Added Child Page",
-            description: "",
-            content: { editor: DEFAULT_INITIAL_PAGE_BLOCKS_DATA, mdx: "" },
-            children: [],
-            configuration: {
-                privacy: "public", // or hidden
-                purpose: "page", // or external_link
-                depricated: false,
-                external_link: { url: "" },
-                seo: { image: "", title: "", description: "", slug: "" },
-            }
+
+        // NAVIGATION CORRESPONDING CHILD TITLES
+        let titles = {
+            product: "Product",
+            product_chapter: "Documentation Section",
+            product_child: "Documentation Page",
+
+            api: "API",
+            api_chapter: "API Collection",
+            api_child: "API Request",
+
+            walkthroughs: "Product Walkthrough",
+            walkthroughs_chapter: "Product Walkthrough",
+            walkthroughs_child: "Walkthrough Step"
         };
-        logger.log({ page, parent_id, position });
+
+        logger.info(navigation);
+        logger.info(position);
+
+        // PAGE IS SOMETHING
+        let title = titles[`${navigation}_${position}`];
+        let description = "Page Description here"
+        let page = NewPageHandler(navigation, position, title, description);
+        logger.debug({ page, parent_id, position, title });
         let toastId = toast.loading('Adding the new Page...');
 
         // GET ALL THE LATEST CONTENT
@@ -114,7 +118,7 @@ const EditorSidebarComponent = (props) => {
             }
 
         }).catch(error => {
-            logger.log('error', error);
+            logger.error('error', error);
             toast.dismiss(toastId);
             toast.error('Got an error saving this page!');
         })
@@ -188,7 +192,6 @@ const EditorSidebarComponent = (props) => {
             element.classList.add("border-l", "p", 'border-gray-400');
         }
     }
-
 
     const HandleMoveToAPage = async (newPage) => {
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
@@ -269,6 +272,7 @@ const EditorSidebarComponent = (props) => {
 
     const HandleLogOut = () => {
         typeof window !== 'undefined' && localStorage.removeItem("authenticated");
+        typeof window !== 'undefined' && localStorage.removeItem("pagination");
         setAuthenticated(false);
     }
 
@@ -377,8 +381,7 @@ const EditorSidebarComponent = (props) => {
                                         </div>
 
                                         <br />
-                                        {/* {isExpanded == true && page.children.map((id) => < Directory key={id} page={pages.find(paged => paged.id === id)} />)} */}
-                                        {activeChildrenPages.map((id, index) => {
+                                        {isExpanded == true && activeChildrenPages.map((id, index) => {
                                             let found = pages.find(paged => paged.id === id);
                                             let activeFoundPages = found.children.filter(id => pages.some(paged => paged.id === id));
                                             if (found) {
@@ -418,7 +421,6 @@ const EditorSidebarComponent = (props) => {
 
             {/* SINGLE PAGE RENDER - HAS NO CHILDREN AND IS A CHILD ITSELF */ }
             let allowed = directoryPage?.position == 'chapter';
-
             return (
                 <>
                     <div

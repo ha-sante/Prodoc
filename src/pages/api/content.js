@@ -35,13 +35,12 @@ export default async function handler(req, res) {
                 // SEND REPLY
                 res.status(200).json(result.data)
             } catch (error) {
-                console.log("got.error.performing.the.operations", error)
+                console.log("content.post.error", error)
                 res.status(404).send(error)
             }
             break;
         case "GET":
             // Process a GET request
-
             let cache_valid = await kv.get("content_cache_valid");
             console.log("get.content.cache_valid", cache_valid);
 
