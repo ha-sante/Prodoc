@@ -19,7 +19,7 @@ const inter = Inter({ subsets: ['latin'] })
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
   editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
-  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler
+  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler, logger
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -71,7 +71,7 @@ export default function Editor() {
       typeof window !== undefined && localStorage.setItem("authenticated", true);
       setAuthenticated(true);
     }).catch(error => {
-      console.log(error);
+      logger.error(error);
       toast.error('Invalid auth details.');
       toast.dismiss(toastId);
       setAuthenticated(true);
@@ -79,14 +79,14 @@ export default function Editor() {
   };
 
   const editorOnSaveHandler = (editor, title, description) => {
-    console.log("Editor Data to Save::", { editor, title, description });
+    logger.log("Editor Data to Save::", { editor, title, description });
 
     let index = content.findIndex(item => item.id == page?.id);
     let anew = content;
 
     let details = Object.keys(diff(editor, anew[index]?.content?.editor));
     let undifferent = details.length == 1 && details[0] == 'time';
-    console.log("editor.new.content.difference", { undifferent, details });
+    logger.log("editor.new.content.difference", { undifferent, details });
 
     if (undifferent == false) {
       // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
@@ -112,7 +112,7 @@ export default function Editor() {
         let currentPageIndex = content.findIndex(item => item.id == page?.id);
         contentAnew[currentPageIndex] = page;
 
-        console.log('response', response.data);
+        logger.log('response', response.data);
         setEdited(false);
         setProcessing(false);
         StorageHandler.set(`edited`, false);
@@ -121,7 +121,7 @@ export default function Editor() {
         toast.success("Page Updated");
 
       }).catch(error => {
-        console.log('error', error);
+        logger.log('error', error);
         setProcessing(false);
         toast.dismiss(toastId);
         toast.error("Something went wrong - Page was not saved");
@@ -182,13 +182,13 @@ export default function Editor() {
 
 
   useEffect(() => {
-    console.log("page.or.content.changed", { page, content })
+    logger.log("page.or.content.changed", { page, content })
   }, [page, content]);
 
   useEffect(() => {
     // makes a request to the authentication child 
     let valid = typeof window !== undefined && localStorage.getItem("authenticated") ? true : false;
-    console.log("authenticated", valid);
+    logger.log("authenticated", valid);
     if (valid) {
       setAuthenticated(true);
     }
@@ -196,7 +196,7 @@ export default function Editor() {
 
   useEffect(() => {
     let nav = { slug, page: router.query.page };
-    console.log("slug.url.changed", { nav });
+    logger.log("slug.url.changed", { nav });
 
     // - /PRODUCT OR /API LOADS : (GET ALL CONTENT AT THIS POINT)
     // - /PRODUCT/PAGE (NO CONTENT) : (GET ALL CONTENT) (FROM THE RESPONSE CHECK FOR THE PAGE)
@@ -218,21 +218,21 @@ export default function Editor() {
         ContentAPIHandler('GET').then(response => {
 
           // SET THE NEW CONTENT
-          console.log('get.all.content', { content: response.data, page_id: router.query.page });
+          logger.log('get.all.content', { content: response.data, page_id: router.query.page });
           setContent(response.data);
           toast.dismiss(toastId);
 
           // SET THE CURRENT PAGE WE ARE ON
           if (nav.page != undefined) {
             let found = response.data.find(page => page.id == nav.page);
-            console.log("slug.page.matched.content.new.load", { found });
+            logger.log("slug.page.matched.content.new.load", { found });
             setPage(found);
             setEdited(false);
             StorageHandler.set(`edited`, false);
           }
 
         }).catch(error => {
-          console.log('error', error);
+          logger.log('error', error);
           toast.dismiss(toastId);
           toast.error('Recieved an error whiles getting pages content');
         })
@@ -246,7 +246,7 @@ export default function Editor() {
 
           // GET ALL CONTENT ANEW
           ContentAPIHandler('GET').then(response => {
-            console.log('get.all.content', { content: response.data, page_id: router.query.page });
+            logger.log('get.all.content', { content: response.data, page_id: router.query.page });
 
             // SET THE NEW CONTENT
             setContent(response.data);
@@ -255,13 +255,13 @@ export default function Editor() {
             // SET THE CURRENT PAGE WE ARE ON
             if (nav.page != undefined) {
               let found = response.data.find(page => page.id == nav.page);
-              console.log("slug.change.new.page", { page });
+              logger.log("slug.change.new.page", { page });
               setPage(found);
               setEdited(false);
               StorageHandler.set(`edited`, false);
             }
           }).catch(error => {
-            console.log('error', error);
+            logger.log('error', error);
             toast.dismiss(toastId);
             toast.error('Recieved an error whiles getting pages content');
           })
@@ -270,7 +270,7 @@ export default function Editor() {
         // IF CONTENT EXISTS
         if (content.length > 0) {
           let found = content.find(page => page.id == nav.page);
-          console.log("page.loaded.from.current.content", { found });
+          logger.log("page.loaded.from.current.content", { found });
           setPage(found);
           setEdited(false);
           StorageHandler.set(`edited`, false);
@@ -311,7 +311,7 @@ export default function Editor() {
   }
 
   function EditorPage() {
-    // console.log("editor.page.reload.called")
+    // logger.log("editor.page.reload.called")
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
@@ -373,6 +373,34 @@ export default function Editor() {
     )
   }
 
+
+  function WalkthroughsPage() {
+    return (
+      <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
+
+        {page?.id !== undefined && page?.type == "api" ?
+          <div className="p-4 w-[100%] mx-auto">
+            <h1>WELCOME TO THE WALKTHROUGHS API</h1>
+          </div>
+          :
+          <div className="p-4 w-[80%] mx-auto">
+            <div className="p-4 rounded-lg dark:border-gray-700">
+
+              <div className='flex flex-row items-center justify-between mb-3 mt-6 text-center'>
+                <p className="text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
+                  <ArrowLeft2 size="16" className="mr-2" />
+                  Click/Create a new page to start editing
+                </p>
+              </div>
+
+            </div>
+          </div>
+        }
+
+      </div>
+    )
+  }
+
   function HomePage() {
     return (
       <div className="p-5 pt-0 sm:ml-64 flex flex-row justify-between">
@@ -391,7 +419,7 @@ export default function Editor() {
   }
 
   function Navigation() {
-    // console.log("editor.navigation.bar.rendered")
+    // logger.log("editor.navigation.bar.rendered")
     return (
       <div className="p-2 sm:ml-64 sticky top-0 z-10">
         <div className="p-5 border-b-2 border-gray-200 w-[100%] mx-auto !bg-white border-dashed dark:border-gray-700">
@@ -447,6 +475,7 @@ export default function Editor() {
               <EditorSidebar />
               {navigation === 'api' && APIPage()}
               {navigation === 'product' && EditorPage()}
+              {navigation === 'walkthroughs' && WalkthroughsPage()}
             </div>
           }
         </div>

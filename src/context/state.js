@@ -2,6 +2,18 @@ import React, { Component, useContext, useState } from 'react';
 import { render } from 'react-dom';
 import axios from 'axios';
 import localForage from 'localforage';
+const loglevel = require("loglevel");
+
+// loglevel.config({
+//   development: {
+//     "level": "debug"
+//   },
+//   production: {
+//     "level": "error"
+//   }
+// });
+
+export const logger = loglevel;
 
 // DEFAULT DATAS
 export const DEFAULT_INITIAL_PAGE_BLOCKS_DATA = {
@@ -38,61 +50,6 @@ export const DEFAULT_PAGE_DATA = {
     seo: { image: "", title: "", description: "", slug: "" },
   }
 }
-
-// REACT CONTEXT STATEMENT MANAGEMENT
-// const AppContext = React.createContext();
-// export function AppStateProvider({ children }) {
-//   const [content, setContent] = useState([]);
-//   const [pagination, setPagination] = useState({});
-//   const [page, setPage] = useState();
-//   const [configure, setConfigure] = useState(false);
-//   const [code, setCode] = useState('{ privacy: "public" }');
-//   const [edited, setEdited] = useState(false);
-//   const [authenticated, setAuthenticated] = useState(false);
-//   const [permission, setPermission] = useState();
-//   const [definitions, setDefinitions] = useState(false);
-//   const [navigation, setNavigation] = useState('main');
-//   const [builder, setBuilder] = useState({});
-
-//   // API CALLS 
-//   function ContentAPIHandler(option, data) {
-//     switch (option) {
-//       case 'POST':
-//         return axios.post('/api/content', data);
-//         break;
-//       case 'GET':
-//         return axios.get('/api/content');
-//         break;
-//       case 'PUT':
-//         return axios.put('/api/content', data);
-//         break;
-//       case 'DELETE':
-//         return axios.delete(`/api/content?id=${data.id}`);
-//         break;
-//       case 'PATCH':
-//         return axios.patch(`/api/content`, data);
-//         break;
-//     }
-//   }
-
-//   const data = {
-//     builder, setBuilder,
-//     navigation, setNavigation,
-//     definitions, setDefinitions,
-//     edited, setEdited,
-//     permission, setPermission,
-//     code, setCode,
-//     authenticated, setAuthenticated,
-//     configure, setConfigure, content, setContent, pagination, setPagination,
-//     page, setPage, ContentAPIHandler, DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA
-//   };
-
-//   return (
-//     <AppContext.Provider value={data}> {children} </AppContext.Provider>
-//   );
-// };
-// export const AppStateContext = AppContext;
-
 
 // API CALLS 
 export function ContentAPIHandler(option, data) {

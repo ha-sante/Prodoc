@@ -13,7 +13,7 @@ import { Box, Logout, Code1, Setting3, Map1 as MapIcon, ArrowLeft, ArrowRight2, 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler, logger
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
@@ -56,7 +56,7 @@ const EditorSidebarComponent = (props) => {
     let defaultRoutes = [
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
         { icon: <Code1 size="16" color="#111827" />, title: "API Reference", id: 'api' },
-        { icon: <MapIcon size="16" color="#111827" />, title: "Walkthrough", id: 'walkthrough' },
+        { icon: <MapIcon size="16" color="#111827" />, title: "Walkthroughs", id: 'walkthroughs' },
         { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
 
@@ -77,13 +77,12 @@ const EditorSidebarComponent = (props) => {
                 seo: { image: "", title: "", description: "", slug: "" },
             }
         };
-        console.log({ page, parent_id, position });
+        logger.log({ page, parent_id, position });
         let toastId = toast.loading('Adding the new Page...');
 
         // GET ALL THE LATEST CONTENT
         ContentAPIHandler('POST', page).then(response => {
-            console.log('response', response.data);
-            toast.success('Child Page created & saved');
+            logger.log('response', response.data);
 
             if (parent_id) {
                 // AFTER CREATION, OF THE CHILD PAGE
@@ -94,7 +93,7 @@ const EditorSidebarComponent = (props) => {
                 parent_page.children.push(response.data.id);
 
                 ContentAPIHandler('PUT', parent_page).then(response2 => {
-                    console.log('response', response2.data);
+                    logger.log('response', response2.data);
                     let newContent = [...content];
                     let parent_page_index = content.findIndex((page) => page.id == parent_id);
                     newContent[parent_page_index] = response2.data;
@@ -103,18 +102,19 @@ const EditorSidebarComponent = (props) => {
                     toast.dismiss(toastId);
                     toast.success('Parent Page updated & saved');
                 }).catch(error => {
-                    console.log('error', error);
+                    logger.log('error', error);
                     toast.dismiss(toastId);
                 });
 
             } else {
+                toast.success('Child Page created & saved');
                 let anew = [...content, response.data];
                 setContent(anew);
                 toast.dismiss(toastId);
             }
 
         }).catch(error => {
-            console.log('error', error);
+            logger.log('error', error);
             toast.dismiss(toastId);
             toast.error('Got an error saving this page!');
         })
@@ -131,25 +131,25 @@ const EditorSidebarComponent = (props) => {
             toast.dismiss(toastId);
             toast.success('Page deleted');
         }).catch(error => {
-            console.log('error', error);
+            logger.log('error', error);
             toast.error('Got an error deleting this page!');
         });
     }
 
     function HandleOnDragEnd(result) {
-        console.log("sorting.result.data", { result, content: content });
+        logger.log("sorting.result.data", { result, content: content });
         // dropped outside the list
         if (!result.destination) {
             return;
         }
         let startIndex = result.source.index;
         let endIndex = result.destination.index;
-        console.log("sorting.operational.data", { startIndex, endIndex });
+        logger.log("sorting.operational.data", { startIndex, endIndex });
 
         // let result = Array.from(content);
         // let removed = result.splice(startIndex, 1);
         // result.splice(endIndex, 0, removed);
-        // console.log("Sorted.list", result);
+        // logger.log("Sorted.list", result);
 
         // FIND THE PARENT
         // MOVE THE ID AT THE END TO THE DROPED INDEX
@@ -160,7 +160,7 @@ const EditorSidebarComponent = (props) => {
         let dragged_page = content.find(page => page.id == result.draggableId);
         let dropped_on_page = content.find((page) => page.id == active_pages[endIndex]);
 
-        console.warn("side.item.drag.end", { parent_page, parent_page_index, dragged_page, dropped_on_page });
+        logger.warn("side.item.drag.end", { parent_page, parent_page_index, dragged_page, dropped_on_page });
         if (dropped_on_page) {
             parent_page.children = active_pages;
             parent_page.children[endIndex] = dragged_page.id;
@@ -169,7 +169,7 @@ const EditorSidebarComponent = (props) => {
             let newContent = [...content];
             newContent[parent_page_index] = parent_page;
             setContent(newContent);
-            console.warn("side.content.changed", { parent_page, parent_page_index, newContent });
+            logger.warn("side.content.changed", { parent_page, parent_page_index, newContent });
         }
     }
 
@@ -190,41 +190,56 @@ const EditorSidebarComponent = (props) => {
     }
 
 
-    const HandleMoveToAPage = async (page) => {
+    const HandleMoveToAPage = async (newPage) => {
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
         let edited = await StorageHandler.get(`edited`);
-        console.log("move.to.page.edited", { edited, page, content })
-        if (page.type !== 'book') {
-            const newUrl = `/editor/${navigation}?page=${page.id}`
+        logger.log("move.to.page.edited", { edited, newPage, content })
+
+        // ONLY HANDLE THIS ACTION IF WE ARE AT AN ACTUAL PAGE
+        let not_a_book_page = newPage?.type !== 'book' || newPage?.id !== "book";
+        if (not_a_book_page) {
+            const newUrl = `/editor/${navigation}?page=${newPage.id}`
+
+            // HANDLE IF PAGE STATE IS IN EDITING OR NOT
             if (edited == true) {
                 let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
-                console.log("permission.to.move", permission);
+                // logger.log("permission.to.move", permission);
                 switch (permission) {
                     case true:
+
                         // SET PAGE CONTENT
-                        let found = content.find(item => item.id == page.id);
-                        console.log("page.to.replace.on.move", found);
-                        setBuilder({});
-                        setPage(found);
-                        setPageId(page.id)
-                        setEdited(false);
-                        StorageHandler.set(`edited`, false);
-                        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
-                        ActivePageItemIndicator(page);
+                        let found = content.find(item => item.id == newPage.id);
+                        logger.log("page.to.replace.on.move", found);
+                        if (found) {
+                            setBuilder({});
+                            setPage(found);
+                            setPageId(newPage.id)
+                            setEdited(false);
+                            StorageHandler.set(`edited`, false);
+                            window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+                            ActivePageItemIndicator(newPage);
+                        } else {
+                            toast.error("The page you clicked is not found in the current content state data");
+                        }
+
                         break;
                     case false:
                         break;
                 }
             } else {
                 window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
-                let found = content.find(pa => pa.id == page.id);
-                setBuilder({});
-                setPage(found);
-                setPageId(found.id)
-                ActivePageItemIndicator(page);
+                let found = content.find(pa => pa.id == newPage.id);
+                if (found) {
+                    setBuilder({});
+                    setPage(found);
+                    setPageId(found.id)
+                    ActivePageItemIndicator(newPage);
+                } else {
+                    toast.error("The page you clicked is not found in the current content state data");
+                }
             }
         }
     }
@@ -235,11 +250,11 @@ const EditorSidebarComponent = (props) => {
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
         // - BASED ON THE RESPONSE HANDLE THE NEXT STEP BY THE STATE OF
         let edited = await StorageHandler.get(`edited`);
-        console.log("back.to.page.main", { edited })
+        logger.log("back.to.page.main", { edited })
 
         if (edited == true) {
             let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
-            console.log("permission.after.clicking.div", permission);
+            logger.log("permission.after.clicking.div", permission);
             if (permission) {
                 setPage();
                 setEdited(false);
@@ -305,7 +320,7 @@ const EditorSidebarComponent = (props) => {
                                                         onClick={() => {
                                                             let change = !isExpanded;
                                                             toggleExpanded(change);
-                                                            console.log("clicked.on.for.moving.id", directoryPage.id);
+                                                            logger.log("clicked.on.for.moving.id", directoryPage.id);
 
                                                             // cold store
                                                             let toStore = { ...JSON.parse(typeof window !== 'undefined' && localStorage.getItem('pagination')) };
@@ -334,7 +349,7 @@ const EditorSidebarComponent = (props) => {
                                                 <div className='flex flex-row w-100 items-center'>
                                                     <Dropdown
                                                         label={<div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                                            onClick={() => { console.log("open more options") }}>
+                                                            onClick={() => { logger.log("open more options") }}>
                                                             <span className='leading-none' id="dropdownOffsetButton" data-dropdown-toggle="dropdownOffset" data-dropdown-offset-distance="10" data-dropdown-offset-skidding="100" data-dropdown-placement="right">
                                                                 <More size={'12px'} />
                                                             </span>
@@ -434,7 +449,7 @@ const EditorSidebarComponent = (props) => {
                                         } else {
                                             // The element is not in view
                                             // & this is our initial page load
-                                            console.log("loads", loads)
+                                            logger.log("loads", loads)
                                             if (loads == 0) {
                                                 el.scrollIntoView();
                                                 // let loadsAnew = loads + 1;
@@ -490,7 +505,7 @@ const EditorSidebarComponent = (props) => {
                             <div className='flex flex-row w-100 items-center'>
                                 <Dropdown
                                     label={<div className={`${isShown ? 'text-black border h-[20px] w-[20px] grid place-items-center' : 'text-transparent h-[20px] w-[20px]'} font-normal text-lg mr-1`}
-                                        onClick={() => { console.log("open more options") }}>
+                                        onClick={() => { logger.log("open more options") }}>
                                         <span className='leading-none' id="dropdownOffsetButton" data-dropdown-toggle="dropdownOffset" data-dropdown-offset-distance="10" data-dropdown-offset-skidding="100" data-dropdown-placement="right">
                                             <More size={'12px'} />
                                         </span>
@@ -558,12 +573,16 @@ const EditorSidebarComponent = (props) => {
     // COMPLETED: MADE ALOT CHANGES DOWN THIS TREEE OF COMPONENTS
     function SubPageNavigation() {
 
+        // NAVIGATION CORRESPONDING TITLES
+        let titles = { product: "Product Documentation", api: "API Documentation", walkthroughs: "Product Walkthroughs" };
+
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
         let productChapters = content.filter(child => child?.type === navigation && child?.position === 'chapter')
         let book = {
+            type: "book",
             id: "book",
             position: 'book',
-            title: navigation == "product" ? "Product Documentation" : "API Documentation",
+            title: titles[navigation],
             description: "The book itself (The page for it)",
             content: { editor: "", mdx: "" },
             children: productChapters.map(main => main.id) ? productChapters.map(main => main.id) : [],
@@ -583,10 +602,10 @@ const EditorSidebarComponent = (props) => {
                 typeof window !== 'undefined' && localStorage.setItem('pagination', JSON.stringify(toStore));
             }
         } catch (error) {
-            console.log("error", error);
+            logger.log("error", error);
         }
 
-        // console.log("sidebar.book.menu.refreshed", book);
+        // logger.log("sidebar.book.menu.refreshed", book);
         return (
             <div className="h-full px-3 py-4 overflow-x-hidden bg-gray-50 dark:bg-gray-800 justify-between">
 
@@ -597,19 +616,17 @@ const EditorSidebarComponent = (props) => {
                             <span className="ml-3"> Back</span>
                         </p>
                     </li>
-                    {
-                        navigation == 'api' &&
+                    {navigation == 'api' &&
                         <li>
                             < p onClick={() => setDefinitions(true)} className="border cursor-pointer mt-3 flex justify-between items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span className="ml-2 text-gray-700"> Specification File</span>
                                 <Code1 size="16" color="#111827" />
                             </p>
-                        </li>
-                    }
+                        </li>}
                 </ul>
 
                 <div className="mt-4 mb-4" id="directory-list">
-                    <Directory page={book} directoryPage={book} />
+                    <Directory directoryPage={book} />
                 </div>
             </div>
         )

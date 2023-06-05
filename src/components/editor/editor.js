@@ -27,7 +27,7 @@ import Components from './tools/components'
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
   editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+  DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, logger
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -52,7 +52,7 @@ export default function PageEditor(props) {
 
 
   const initEditor = () => {
-    console.log("initEditor.called");
+    logger.log("initEditor.called");
     const editor = new EditorJS({
       holder: 'editorjs',
       onReady: () => {
@@ -82,7 +82,7 @@ export default function PageEditor(props) {
           config: {
             uploader: {
               async uploadByFile(fileData) {
-                console.log("supposed.to.upload.file", fileData);
+                logger.log("supposed.to.upload.file", fileData);
 
                 // fileData must be `Blob`, `File`, `Buffer`, UUID, CDN URL or Remote URL
                 const result = await uploadFile(fileData, {
@@ -93,7 +93,7 @@ export default function PageEditor(props) {
                     pet: 'cat'
                   }
                 })
-                console.log(`URL: ${result.cdnUrl}`)
+                logger.log(`URL: ${result.cdnUrl}`)
 
                 // Return the url to the uploaded file
                 return {
@@ -126,10 +126,10 @@ export default function PageEditor(props) {
   // This will run only once
   useEffect(() => {
     if (page != null) {
-      console.log("editorjs.page.refreshed", { ejInstance });
+      logger.log("editorjs.page.refreshed", { ejInstance });
 
       if (ejInstance.current == null) {
-        // console.log("editorjs.current.instance == null");
+        // logger.log("editorjs.current.instance == null");
         initEditor();
       }
 

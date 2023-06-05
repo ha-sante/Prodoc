@@ -13,7 +13,7 @@ import { Copy, DocumentCopy, Setting2 } from 'iconsax-react';
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, serverAtom
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, serverAtom, logger
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -109,29 +109,29 @@ export default function BuilderEditor() {
             request.data = builder.body;
         }
 
-        console.log("axios.final.object = ", { request, page });
+        logger.log("axios.final.object = ", { request, page });
 
         // SEND REQUEST TO THE BACKEND
         // STORE THE 
         axios(request).then(response => {
-            console.log("request.response", response);
-            // console.log(response.data);
-            // console.log(response.status);
-            // console.log(response.statusText);
-            // console.log(response.headers);
-            // console.log(response.config);
+            logger.log("request.response", response);
+            // logger.log(response.data);
+            // logger.log(response.status);
+            // logger.log(response.statusText);
+            // logger.log(response.headers);
+            // logger.log(response.config);
 
             setProcessing(false);
         }).catch(error => {
-            console.log("request.error", error);
+            logger.log("request.error", error);
 
 
             if (error.response) {
                 // The request was made and the server responded with a status code
                 // that falls out of the range of 2xx
-                console.log(error.response.data);
-                console.log(error.response.status);
-                console.log(error.response.headers);
+                logger.log(error.response.data);
+                logger.log(error.response.status);
+                logger.log(error.response.headers);
 
                 let message = "";
                 if (error.code) {
@@ -150,7 +150,7 @@ export default function BuilderEditor() {
                 // The request was made but no response was received
                 // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
                 // http.ClientRequest in node.js
-                console.log(error.request);
+                logger.log(error.request);
 
                 let message = "";
                 if (error.code) {
@@ -169,7 +169,7 @@ export default function BuilderEditor() {
 
             } else {
                 // Something happened in setting up the request that triggered an Error
-                console.log('Error', error.message);
+                logger.log('Error', error.message);
 
                 let message = "";
                 if (error.code) {
@@ -186,7 +186,7 @@ export default function BuilderEditor() {
                 setResponse(message);
                 toast.error("Something went wrong with the request.", { position: "bottom-right" })
             }
-            console.log(error.config);
+            logger.log(error.config);
 
             setProcessing(false);
         })
@@ -224,7 +224,7 @@ export default function BuilderEditor() {
                     }
                 });
             }
-            // //console.log({ har_format, endpoint })
+            // //logger.log({ har_format, endpoint })
 
             // HANDLE HEADER
             if (header) {
@@ -263,16 +263,16 @@ export default function BuilderEditor() {
             const snippet = new HTTPSnippet(har_format);
             const options = { indent: '\t' };
 
-            //console.log("render.requester.code.called.with", { environment, builder, har_format, snippet })
+            //logger.log("render.requester.code.called.with", { environment, builder, har_format, snippet })
 
             try {
                 const output = snippet.convert(environment.target.toLowerCase(), environment.client, options);
-                //console.log(output);
+                //logger.log(output);
                 if (output) {
                     setCode(output);
                 }
             } catch (error) {
-                //console.log("error.generating.code.example", { error });
+                //logger.log("error.generating.code.example", { error });
                 toast.error("Hit a severe error whiles turning this form content into a code example, from the api spec - debug or contact support");
             }
 
@@ -298,7 +298,7 @@ export default function BuilderEditor() {
         setBodyRefs(new Map());
         setParamRefs(new Map());
 
-        //console.log("api.form.refreshed", { bodyRefs, paramRefs });
+        //logger.log("api.form.refreshed", { bodyRefs, paramRefs });
         // TODO: CHOOSE SERVER BASE ENDPOINT
         // EMPTY ALL INPUTS AND PARAMETER FIELDS
         if (paramRefs.size > 0) {
@@ -306,7 +306,7 @@ export default function BuilderEditor() {
                 if (element) {
                     element.value = "";
                 }
-                // console.log(`Key: ${key}, element:`, { element });
+                // logger.log(`Key: ${key}, element:`, { element });
             });
         }
         if (bodyRefs.size > 0) {
@@ -314,7 +314,7 @@ export default function BuilderEditor() {
                 if (element) {
                     element.value = "";
                 }
-                // console.log(`Key: ${key}, element:`, { element });
+                // logger.log(`Key: ${key}, element:`, { element });
             });
         }
 
@@ -343,7 +343,7 @@ export default function BuilderEditor() {
                 data: page?.content?.api?.responses[key]
             })
         });
-        //console.log("response", responses);
+        //logger.log("response", responses);
 
         const random = {
             choice: (array) => {
@@ -363,7 +363,7 @@ export default function BuilderEditor() {
                 Object.keys(schema.properties).map((key, index) => {
                     let property = schema.properties[key];
                     let type = property.type;
-                    // //console.log("schema.loop", { property, type });
+                    // //logger.log("schema.loop", { property, type });
                     if (type === 'string') {
                         data[key] = random.choice(['foo', 'bar', 'baz']);
                     } else if (type === 'integer') {
@@ -374,14 +374,14 @@ export default function BuilderEditor() {
                         data[key] = random.choice([true, false]);
                     } else if (type === 'array') {
                         let fake_array_data = generateFakeData(schema.properties[key].items);
-                        // //console.log("fake_array_data", fake_array_data);
+                        // //logger.log("fake_array_data", fake_array_data);
                         data[key] = [fake_array_data];
                     } else if (type === 'object') {
                         let results = generateFakeData(property);
-                        // //console.log("fake_object_data.results", results);
+                        // //logger.log("fake_object_data.results", results);
                         data[key] = { ...results };
                     } else {
-                        // //console.log("property.type.not.mapped", { schema, type, property });
+                        // //logger.log("property.type.not.mapped", { schema, type, property });
                         // throw new Error(`Unknown type: ${type}`);
                     }
                 })
@@ -423,7 +423,7 @@ export default function BuilderEditor() {
     const BodySection = () => {
         const Formations = ({ fields, paths }) => {
             let input_mappings = { string: "text", integer: "number", object: "text" };
-            // //console.log("Formations", { paths, fields });
+            // //logger.log("Formations", { paths, fields });
 
             // SET THE STATE FOR ALL THE OBJECT PROPERTIES NAMES AT THE PATH
             if (_.isPlainObject(fields)) {
@@ -435,12 +435,12 @@ export default function BuilderEditor() {
                         {Object.keys(Object.fromEntries(Object.entries(fields).sort())).map((key, index) => {
                             let block = fields[key];
                             block.name = key; // set fields name to its's key
-                            ////console.warn("block", block);
+                            ////logger.warn("block", block);
 
                             // IF TREE, HAS AN OBJECT AGAIN, LOOP THROUGH THAT
                             if (_.isPlainObject(block?.properties)) {
                                 let new_paths = paths + `/${block.name}`;
-                                ////console.log("block.is.of.type.object", { new_paths, block })
+                                ////logger.log("block.is.of.type.object", { new_paths, block })
                                 return (
                                     <div className='mb-2' key={key}>
                                         <p className='text-black flex flex-row items-center'>{block.name}
@@ -463,7 +463,7 @@ export default function BuilderEditor() {
                             let required = block?.nullable ? block?.nullable : false; // GET IF ITS REQUIRED OR NOT
                             let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE                        
                             let pathName = [...current_path, builder_path_label].join("'")
-                            // //console.log("rendering.input.content", { block, current_path, value_exists, current_value, input_type, required, inputValue });
+                            // //logger.log("rendering.input.content", { block, current_path, value_exists, current_value, input_type, required, inputValue });
 
                             return (
                                 <div key={key} className='flex flex-row gap-2 mb-2 justify-between items-center'>
@@ -480,17 +480,17 @@ export default function BuilderEditor() {
                                         required={required}
                                         defaultValue={inputValue}
                                         ref={el => {
-                                            // console.log("body.input.element", { el });
+                                            // logger.log("body.input.element", { el });
                                             if (el) {
                                                 el.addEventListener('keyup', (e) => {
                                                     let path = e.target.id.split("'");
                                                     let value = e.target.value;
 
-                                                    // console.log("input.value.changed.before.builder", builder);
+                                                    // logger.log("input.value.changed.before.builder", builder);
                                                     let local = builder;
                                                     let update = _.set(local, path, value);
                                                     setBuilder({ ...update });
-                                                    // console.log("input.value.changed.after.builder", builder);
+                                                    // logger.log("input.value.changed.after.builder", builder);
 
                                                     // TODO: Handle input values of a different type from text
                                                     e.target.focus();
@@ -521,8 +521,8 @@ export default function BuilderEditor() {
                 let body = page?.content?.api?.requestBody?.content[body_schema_selected]; // GETS THE FIRST BODY SCHEMA TYPE (TODO: ALLOW EDITING/SELECTION)
                 let fields = body?.schema.properties;
 
-                //console.log("body", { has_body, body, fields, builder })
-                // //console.log("rendering.body.section")
+                //logger.log("body", { has_body, body, fields, builder })
+                // //logger.log("rendering.body.section")
 
                 return (<div>
                     <h2 className='text-lg font-medium mt-5'>
@@ -544,7 +544,7 @@ export default function BuilderEditor() {
         if (page) {
             let parameters = page?.content?.api?.parameters; // USES PARAMS DATA PER OPEN-API-SPEC FORMAT https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=programming%20naming%20conventions.-,parameters,-%5BParameter%20Object
             let input_mappings = { string: "text", integer: "number" };
-            //console.log("parameters", { parameters, builder })
+            //logger.log("parameters", { parameters, builder })
             if (parameters) {
                 let header_params = parameters.filter(param => param["in"] == "header");
                 let query_params = parameters.filter(param => param["in"] == "query");
@@ -575,7 +575,7 @@ export default function BuilderEditor() {
                                         let required = param?.required ? param?.required : false;
                                         let pathName = ["parameters", builder_path_label, `${param.name}`].join("'")
                                         let inputValue = current_value ? current_value : ""; // SAFELY GET THE INPUT VALUE                        
-                                        // //console.log("parameters.group.child.loop", { current_value, inputValue, pathName });
+                                        // //logger.log("parameters.group.child.loop", { current_value, inputValue, pathName });
 
                                         return (
                                             <div key={pathName} className='flex flex-row gap-2 mb-2 justify-between items-center'>
@@ -597,11 +597,11 @@ export default function BuilderEditor() {
                                                                 let path = e.target.id.split("'");
                                                                 let value = e.target.value;
 
-                                                                // console.log("input.value.changed.before.builder", builder);
+                                                                // logger.log("input.value.changed.before.builder", builder);
                                                                 let local = builder;
                                                                 let update = _.set(local, path, value);
                                                                 setBuilder({ ...update });
-                                                                // console.log("input.value.changed.after.builder", builder);
+                                                                // logger.log("input.value.changed.after.builder", builder);
 
                                                                 e.target.focus();
                                                             });
@@ -675,7 +675,7 @@ export default function BuilderEditor() {
 
     // READS - https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=is%20false.-,security,-%5BSecurity%20Requirement
     const APIRequestRequester = () => {
-        //console.log("api.requestor.view.refreshed", { builder, code })
+        //logger.log("api.requestor.view.refreshed", { builder, code })
 
         const RequestAuthSection = () => {
             // GET THE SECURITY SCHEMES ON THIS PAGE ONLY
@@ -709,7 +709,7 @@ export default function BuilderEditor() {
             // TODO: Add more authorization methods
             let supported = ["apiKey", "http", "oauth2"];
 
-            console.log("api.authorization.section", { page_api_security_requirements, page_api_security_scheme_objects })
+            logger.log("api.authorization.section", { page_api_security_requirements, page_api_security_scheme_objects })
             return (
                 <div>
                     {page_api_security_scheme_objects.map((scheme, index) => {
@@ -721,7 +721,7 @@ export default function BuilderEditor() {
 
                         // IMPORTANT YET POTENTIALLY OPTIONAL KEYS = type, description, name, in, scheme, bearerFormat, flows, openIdConnectUrl
 
-                        console.log("scheme.item", scheme);
+                        logger.log("scheme.item", scheme);
                         return (
                             <div key={index} className='mt-3 mb-3'>
 
@@ -753,17 +753,17 @@ export default function BuilderEditor() {
                                     required={required}
                                     defaultValue={inputValue}
                                     ref={el => {
-                                        // console.log("body.input.element", { el });
+                                        // logger.log("body.input.element", { el });
                                         if (el) {
                                             el.addEventListener('keyup', (e) => {
                                                 let path = e.target.id.split("'");
                                                 let value = e.target.value;
 
-                                                // console.log("input.value.changed.before.builder", builder);
+                                                // logger.log("input.value.changed.before.builder", builder);
                                                 // let local = builder;
                                                 // let update = _.set(local, path, value);
                                                 // setBuilder({ ...update });
-                                                // console.log("input.value.changed.after.builder", builder);
+                                                // logger.log("input.value.changed.after.builder", builder);
 
 
                                                 e.target.focus();

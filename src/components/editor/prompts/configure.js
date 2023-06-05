@@ -5,7 +5,7 @@ import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsa
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, StorageHandler, logger
 } from '../../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -29,14 +29,14 @@ export default function ConfigurePagePrompt() {
     const inputRef = useRef();
 
     useEffect(() => {
-        console.log("load.configuration.for.editing", { configuration: page?.configuration })
+        logger.log("load.configuration.for.editing", { configuration: page?.configuration })
 
         let testneg1 = content.find(item => item.id == page?.id)
-        console.log("set.configuration.submitted.test.-1", { content, testneg1 });
+        logger.log("set.configuration.submitted.test.-1", { content, testneg1 });
 
 
         if (inputRef.current && page) {
-            // console.log("set.page.configuration", { ref: inputRef.current, code, page })
+            // logger.log("set.page.configuration", { ref: inputRef.current, code, page })
             let found = content.find(item => item?.id == page?.id);
             let value = JSON.stringify(found?.configuration, undefined, 4);
             inputRef.current.value = JSON.stringify(found?.configuration, undefined, 4);
@@ -45,15 +45,15 @@ export default function ConfigurePagePrompt() {
     }, [configure]);
 
     const HandleSetConfiguration = () => {
-        console.log("handle.set.configuration.called", { code });
+        logger.log("handle.set.configuration.called", { code });
 
         let test1 = content.find(item => item.id == page?.id)
-        console.log("set.configuration.submitted.test.0", { content, test1 });
+        logger.log("set.configuration.submitted.test.0", { content, test1 });
 
         if (inputRef.current) {
             // GET THE UPDATED VALUE
             let update = inputRef.current.value;
-            // console.log("configuration.updated", update);
+            // logger.log("configuration.updated", update);
 
             // SET IT TO CONTENT LIST (PAGE)
             let new_configuration = eval('(' + update + ')');
@@ -62,13 +62,13 @@ export default function ConfigurePagePrompt() {
             let ready = { ...page };
             ready.configuration = new_configuration;
             let test2 = content.find(item => item.id == page?.id)
-            console.log("set.configuration.submitted.test.1", { ready, content, test2 });
+            logger.log("set.configuration.submitted.test.1", { ready, content, test2 });
             setPage(ready);
             setEdited(true);
             setConfigure(false);
             StorageHandler.set(`edited`, true);
             let test3 = content.find(item => item.id == page?.id)
-            console.log("set.configuration.submitted.test.2", { ready, content, test3 });
+            logger.log("set.configuration.submitted.test.2", { ready, content, test3 });
         } else {
             toast.error("Unable to save this data")
         }
@@ -113,7 +113,7 @@ export default function ConfigurePagePrompt() {
             <Modal.Footer className='border-t border pt-4 pb-4'>
                 <Button size={"sm"} onClick={() => {
                     let test0 = content.find(item => item.id == page?.id)
-                    console.log("set.configuration.submitted.test.0", { content, test0 });
+                    logger.log("set.configuration.submitted.test.0", { content, test0 });
                     HandleSetConfiguration();
                 }}>
                     Set

@@ -5,7 +5,7 @@ import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsa
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
     editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom,
-    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler
+    DEFAULT_INITIAL_PAGE_BLOCKS_DATA, DEFAULT_PAGE_DATA, ContentAPIHandler, logger
 } from '../../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -32,7 +32,7 @@ export default function APIDefinitionsPrompt(props) {
     const rootRef = useRef(null);
 
     const GetEveryPropertyInFull = (reference_path, referenced_object, components) => {
-        // console.log("called.GetEveryPropertyInFull", { reference_path, referenced_object, components })
+        // logger.log("called.GetEveryPropertyInFull", { reference_path, referenced_object, components })
         let local = {};
         Object.keys(referenced_object).map((key) => {
             let ref_value = referenced_object[key];
@@ -40,7 +40,7 @@ export default function APIDefinitionsPrompt(props) {
 
             if (key == "$ref") {
                 // GET THE REFRENCE DATA POINT
-                console.log("ref.value.is.$ref", ref_value);
+                logger.log("ref.value.is.$ref", ref_value);
                 let names = ref_value.split("/").splice(2); // - REMOVES #/
                 let new_referenced_object = _.get(components, names); // GET THE OBJECT FROM COMPONENTS
 
@@ -51,7 +51,7 @@ export default function APIDefinitionsPrompt(props) {
                 local = { ...local, ...results };
             }
 
-            // console.warn("local.variable.changed", { local });
+            // logger.warn("local.variable.changed", { local });
 
             if (_.isPlainObject(ref_value)) {
                 // CHECK IF ANY OF THE PROPERTY VALUES IS OF NAME "$REF"
@@ -59,7 +59,7 @@ export default function APIDefinitionsPrompt(props) {
                 local[key] = results;
             }
 
-            // console.log("local.variable.changed", { local });
+            // logger.log("local.variable.changed", { local });
         });
         return local;
     }
@@ -100,12 +100,12 @@ export default function APIDefinitionsPrompt(props) {
     const HandleGenerateAPIPages = async () => {
         setProcessing(true);
         let json = JSON5.parse(code);
-        console.log("code.data", { json });
+        logger.log("code.data", { json });
 
         try {
             let api = await SwaggerParser.dereference(json);
-            console.log("api = ", api)
-            // console.log("API name: %s, Version: %s", api.info.title, api.info.version);
+            logger.log("api = ", api)
+            // logger.log("API name: %s, Version: %s", api.info.title, api.info.version);
 
             // PREPARE PARENT AND CHILD PAGES FOR STORAGE
             let paths = api?.paths;
@@ -123,7 +123,7 @@ export default function APIDefinitionsPrompt(props) {
             Object.keys(paths).map((url, index) => {
                 childLoopRuns += 1;
                 let endpoint = paths[url];
-                // console.log("generated.api.endpoint", { childLoopRuns, endpoint });
+                // logger.log("generated.api.endpoint", { childLoopRuns, endpoint });
 
                 // EACH METHOD - GO OVER THE CHILD PATHS HTTP REQUEST METHODS LISTING
                 // - CHECK IF THE PATH HAS A CHILD OF THE TESTED METHOD
@@ -132,7 +132,7 @@ export default function APIDefinitionsPrompt(props) {
                     let data = endpoint[name];
                     if (data) {
                         let page = ReturnHandlingForAllMethods(data, url, components, paths, name);
-                        // console.log("generated.api.child.page", page);
+                        // logger.log("generated.api.child.page", page);
 
                         page.content.api["configuration"] = {};
                         page.content.api.configuration.servers = servers ? servers : [];
@@ -181,7 +181,7 @@ export default function APIDefinitionsPrompt(props) {
 
             let configuration = { openapi: [json], }
             let bulk = { pages, mappings, chapters, configuration };
-            console.log("generated.api.pages", bulk);
+            logger.log("generated.api.pages", bulk);
 
             // BULK CREATE THE CONTENT PAGES
             ContentAPIHandler('PATCH', bulk).then(response => {
@@ -194,13 +194,13 @@ export default function APIDefinitionsPrompt(props) {
                     toast.success("Creating/Recreating your api pages complete");
                     setDefinitions(false);
                 }).catch(error => {
-                    console.log('error', error);
+                    logger.log('error', error);
                     toast.error("Error getting all pages content - please try a refresh");
                     toast.dismiss(toastId);
                     setProcessing(false);
                 });
             }).catch(error => {
-                console.log('error', error);
+                logger.log('error', error);
                 toast.error("Bulk api pages persistence and creation failed, error is in logs");
                 toast.dismiss(toastId);
                 setProcessing(false);
@@ -208,8 +208,8 @@ export default function APIDefinitionsPrompt(props) {
 
         }
         catch (err) {
-            console.error(err);
-            toast.error("Something went wrong - Parsing your spec to pages failed. (Check your console for logs)", { position: "bottom-right" });
+            logger.error(err);
+            toast.error("Something went wrong - Parsing your spec to pages failed. (Check your logger for logs)", { position: "bottom-right" });
             setProcessing(false);
         }
     }
@@ -244,7 +244,7 @@ export default function APIDefinitionsPrompt(props) {
                             placeholder="Paste content of Spec File here"
                             onChange={e => {
                                 let value = e.target.value; 2
-                                console.log("textinput.value.changed", { value })
+                                logger.log("textinput.value.changed", { value })
                                 setCode(value);
                             }}
                             disabled={processing}
