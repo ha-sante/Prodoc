@@ -324,7 +324,7 @@ export default function BuilderEditor() {
         if (page?.content?.api?.servers) {
             collection = [...page?.content?.api?.servers, ...collection];
         }
-        if(page?.content?.api?.configuration?.servers){
+        if (page?.content?.api?.configuration?.servers) {
             collection = [...collection, ...page?.content?.api?.configuration?.servers];
         }
         if (collection) {
@@ -678,25 +678,50 @@ export default function BuilderEditor() {
         //console.log("api.requestor.view.refreshed", { builder, code })
 
         const RequestAuthSection = () => {
-            let api_security_schemes_needed = page?.content?.api?.security;
+            // GET THE SECURITY SCHEMES ON THIS PAGE ONLY
+            let page_api_security_requirements = [...page?.content?.api?.security];
 
-            // IF IT'S UNDEFINED, USE THE PARENT VERSIO
-            if (api_security_schemes_needed === undefined) {
-
+            // IF IT'S UNDEFINED, USE THE PARENT SECURITY VERSION
+            if (_.isEmpty(page_api_security_requirements)) {
+                page_api_security_requirements = page?.content?.api?.configuration?.security;
             }
 
+            // GET THE ACTUAL SCHEMES FROM THE API CONFIGURATION
+            let page_api_security_scheme_objects = [];
+            let security_optional_indicated = false;
+            page_api_security_requirements.map((item, index) => {
+                // ITEM = OBJECT OF SECURITY SCHEME
+                if (_.isEmpty(item) == true) {
+                    // - Per means, security is optional
+                    security_optional_indicated = true;
+                } else {
+                    // GET SCHEMES FOR USE IN CREATING THE FORM    
+                    _.keys(item).map((key) => {
+                        let scheme = page?.content?.api?.configuration?.components?.securitySchemes[key];
+                        let item_value = item[key];
+                        scheme["configuration"] = item_value;
+                        page_api_security_scheme_objects.push(scheme);
+                    })
+                }
+            })
+
+            // SUPPORT AUTH HEADER METHODS
+            // TODO: Add more authorization methods
+            let supported = ["apiKey", "http", "oauth2"];
+
+            console.log("api.authorization.section", { page_api_security_requirements, page_api_security_scheme_objects })
             return (
                 <div>
-                    {api_security_schemes_needed.map((security, index) => {
-
-                        let security_type = _.keys(security)[0];
-                        let security_scheme = _.keys(security)[0];
+                    {page_api_security_scheme_objects.map((scheme, index) => {
 
                         // PAGE CHILD SECURITY https://spec.openapis.org/oas/v3.1.0#operationObject:~:text=is%20false.-,security,-%5BSecurity%20Requirement
                         // - if it's not present, use the parent security.
                         // - if it's [{}] : Security is optional
                         // - if it's [] : Scurity is not needed
 
+                        // IMPORTANT YET POTENTIALLY OPTIONAL KEYS = type, description, name, in, scheme, bearerFormat, flows, openIdConnectUrl
+
+                        console.log("scheme.item", scheme);
                         return (
                             <div key={index} className='mt-3 mb-3'>
 
@@ -705,10 +730,20 @@ export default function BuilderEditor() {
                                         Authorization
                                     </p>
                                     <p className='font-medium text-xs text-gray-900'>
-                                        {security_type.toUpperCase()}
+                                        {scheme?.type.toUpperCase()}
                                     </p>
                                 </div>
 
+
+                                {supported.includes(scheme?.type) ?
+                                    <div>
+                                        <p className='text-xs'>{scheme?.type} is supported</p>
+                                    </div>
+                                    :
+                                    <div>
+                                        <p className='text-xs font-bold text-red-500'>{scheme?.type} authorization methods is not currently built into this UI. Please resort to using your local dev environment to try this api out.</p>
+                                    </div>
+                                }
 
                                 {/* <TextInput
                                     id={pathName}
@@ -740,6 +775,7 @@ export default function BuilderEditor() {
                                         return null
                                     }}
                                 /> */}
+
                             </div>
                         )
                     })}

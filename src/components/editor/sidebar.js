@@ -566,7 +566,7 @@ const EditorSidebarComponent = (props) => {
             title: navigation == "product" ? "Product Documentation" : "API Documentation",
             description: "The book itself (The page for it)",
             content: { editor: "", mdx: "" },
-            children: productChapters.map(main => main.id),
+            children: productChapters.map(main => main.id) ? productChapters.map(main => main.id) : [],
             configuration: {}
         };
 

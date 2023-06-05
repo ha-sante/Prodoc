@@ -139,6 +139,8 @@ export default function APIDefinitionsPrompt(props) {
                         page.content.api.configuration.openapi = openapi ? openapi : "";
                         page.content.api.configuration.info = info ? info : {};
                         page.content.api.configuration.security = security ? security : [];
+                        page.content.api.configuration.components = {};
+                        page.content.api.configuration.components.securitySchemes = components?.securitySchemes ? components?.securitySchemes : {}; // PICKS AND STORES securitySchemes for closer access
                         pages.push(page);
 
                         // PAGE TO THEIR PARENT MAPPINGS
@@ -150,7 +152,7 @@ export default function APIDefinitionsPrompt(props) {
                 })
             });
 
-            // CREATE PARENT PAGES
+            // CREATE PARENT PAGES - NOT REALLY API PAGES
             Object.keys(mappings).map((label) => {
                 let page = {
                     ...DEFAULT_PAGE_DATA,
@@ -174,8 +176,8 @@ export default function APIDefinitionsPrompt(props) {
                 chapters.push(page);
             })
 
-            toast.success("Converted spec JSON to pages content type.");
-            let toastId = toast.loading("Persisting content & creating pages for it.");
+            toast.success("Converted spec JSON to pages content type.", { position: "bottom-right" });
+            let toastId = toast.loading("Persisting content & creating pages for it.", { position: "bottom-right" });
 
             let configuration = { openapi: [json], }
             let bulk = { pages, mappings, chapters, configuration };
@@ -193,17 +195,22 @@ export default function APIDefinitionsPrompt(props) {
                     setDefinitions(false);
                 }).catch(error => {
                     console.log('error', error);
+                    toast.error("Error getting all pages content - please try a refresh");
+                    toast.dismiss(toastId);
                     setProcessing(false);
                 });
             }).catch(error => {
                 console.log('error', error);
+                toast.error("Bulk api pages persistence and creation failed, error is in logs");
+                toast.dismiss(toastId);
                 setProcessing(false);
             });
 
         }
         catch (err) {
             console.error(err);
-            toast.error("Something went wrong - Parsing your spec to pages failed. (Check your console for logs)");
+            toast.error("Something went wrong - Parsing your spec to pages failed. (Check your console for logs)", { position: "bottom-right" });
+            setProcessing(false);
         }
     }
 
@@ -241,8 +248,8 @@ export default function APIDefinitionsPrompt(props) {
                                 setCode(value);
                             }}
                             disabled={processing}
-                            className='text-sm'
-                        />
+                            className='text-sm min-h-[400px]'
+                            />
 
                     </div>
                 </Modal.Body>

@@ -1,5 +1,6 @@
 const fauna = require('../../integrations/fauna.js');
 const q = fauna.q;
+import { kv } from "@vercel/kv";
 
 function FaunaDatabaseInitiations() {
     // CREACTE COLLECTIONS - ACCOUNTS, CONTENT, CONFIGURATION
@@ -40,9 +41,15 @@ function FaunaDatabaseInitiations() {
             create: q.Create(q.Ref(q.Collection('Configuration'), 1), { data: {} }),
         }, q.Var("create"))
     ).then((result) => { console.log(result.data) }).catch(error => { console.error(error) });
+
 }
 
-export default function handler(req, res) {
+async function VercelKVDatabaseInitiations() {
+    await kv.set('content', "[]");
+    await kv.set("configuration", "{}");
+}
+
+export default async function handler(req, res) {
     const method = req.method;
     const body = req.body;
 
@@ -50,6 +57,7 @@ export default function handler(req, res) {
         case "POST":
             // Process a POST request
             FaunaDatabaseInitiations();
+            VercelKVDatabaseInitiations();
             res.status(200).json({ name: 'Initiations Complete' })
             break;
         case "GET":
