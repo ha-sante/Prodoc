@@ -91,5 +91,6 @@ body {
   --borders: 1;
   --border-radius-element: 3px;
   --border-radius-frame: 3px;
+  --cfg-remove-copyright: 1;
   /* --ui-size: 50px */
 }

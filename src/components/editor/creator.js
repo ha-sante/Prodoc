@@ -8,8 +8,8 @@ import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
-import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner, Tooltip } from "flowbite-react";
-import { Copy, DocumentCopy, Setting2 } from 'iconsax-react';
+import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner, Tooltip, Timeline } from "flowbite-react";
+import { Copy, DocumentCopy, ArrowRight2 } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -32,6 +32,7 @@ import HTTPSnippet from 'httpsnippet';
 import copyToClipboard from 'copy-to-clipboard';
 import json5 from 'json5';
 import axios from 'axios';
+import { diff } from 'deep-object-diff';
 
 import * as LR from "@uploadcare/blocks";
 LR.registerBlocks(LR);
@@ -39,11 +40,30 @@ LR.registerBlocks(LR);
 const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
 
 export default function WalkthroughCreator() {
+    const router = useRouter();
+
+    const [content, setContent] = useAtom(contentAtom);
     const [page, setPage] = useAtom(pageAtom);
     const [builder, setBuilder] = useAtom(builderAtom);
     const [edited, setEdited] = useAtom(editedAtom);
+    const [stepper, setStepper] = useState({});
 
-    const router = useRouter();
+    // EXECUTIONS
+    useEffect(() => {
+        // SET THE STEPS
+        setStepper(page);
+
+        // HANDLE if the page has already gone ahead with the guide option
+        let guide = false;
+        // - IF THE PAGE.CONTENT.API.
+        let has_no_editor_content = _.isEmpty(page?.content?.editor)
+        if (has_no_editor_content == false) {
+            guide = true;
+            setStepper(page);
+
+        }
+
+    }, []);
 
 
     const EditorOutputHandler = (output) => {
@@ -85,7 +105,7 @@ export default function WalkthroughCreator() {
                         </lr-file-uploader-minimal>
                     </div>
                     <div className="p-4 rounded-lg dark:border-gray-700 w-[90%] mx-auto">
-                        <p className='mb-2'>Title -  <span className='text-normal text-xs'>A click inviting title e.g (Select the platform you want to monitor)</span> </p>
+                        <p className='mb-2'>Title -  <span className='text-normal text-xs'>A click inviting title e.g (Select the platform you host on) or simply (JavaScript)</span> </p>
                         <TextInput
                             id={"title"}
                             type={"text"}
@@ -162,10 +182,15 @@ export default function WalkthroughCreator() {
             <div>
 
                 {builder?.guide == true ?
-                    <div className='border shadow-sm rounded-lg pt-3 pb-3 mt-3'>
-                        <div className="pl-5 pr-5">
-                            <div className="flex mt-3 border-b">
-                                <h2 className='mb-3 font-bold'>Step/Selectable Guide Editor</h2>
+                    <div className='border shadow-sm rounded-lg pb-3 mt-3'>
+                        <div className="p-5">
+                            <div className="flex border-b justify-between pb-3">
+                                <h2 className='font-bold'>Step/Selectable Guide Editor</h2>
+                                <Button color="gray" pill size={'xs'} onClick={() => {
+                                    setBuilder({ ...builder, guide: false })
+                                }}>
+                                    Cancel
+                                </Button>
                             </div>
                         </div>
 
@@ -186,13 +211,50 @@ export default function WalkthroughCreator() {
         )
     }
 
+    const OptionsStepper = () => {
+
+        let children = content.filter((item) => page.children.includes(item?.id));
+
+        console.log("options.stepper.children", children)
+        return (
+            <div>
+                <Timeline>
+
+                    {children.map((child, index) => {
+                        return (
+                            <Timeline.Item className='mb-2'>
+                                <Timeline.Point />
+                                <Timeline.Content>
+                                    <Timeline.Time className='flex items-center justify-between'>
+                                        {child?.title}    <Button color="gray" pill size={'xs'} onClick={() => {
+                                            // setBuilder({ ...builder, guide: true })
+                                        }}>
+                                            <ArrowRight2 size="12" color="#ddd" />
+                                        </Button>
+                                    </Timeline.Time>
+                                </Timeline.Content>
+                            </Timeline.Item>
+                        )
+                    })}
+
+                </Timeline>
+
+                <Button color="gray" pill size={'xs'} onClick={() => {
+                    // setBuilder({ ...builder, guide: true })
+                }}>
+                    Add Option +
+                </Button>
+            </div>
+        )
+    }
 
     return (
         <div className="flex">
 
             <div className="p-4 rounded-lg dark:border-gray-700 w-[25%] mx-auto">
                 <div className='border shadow-sm rounded-lg p-5'>
-                    <h2 className='mb-3 font-bold'>Stepper</h2>
+                    <h2 className='mb-3 font-bold text-sm'> {page.title} Options Stepper</h2>
+                    <OptionsStepper />
                 </div>
             </div>
 
