@@ -9,7 +9,7 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner, Tooltip, Timeline } from "flowbite-react";
-import { Copy, DocumentCopy, ArrowRight2 } from 'iconsax-react';
+import { Copy, ArrowLeft2, ArrowRight2 } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -217,7 +217,7 @@ export default function WalkthroughCreator() {
 
         console.log("options.stepper.children", children)
         return (
-            <div>
+            <div className='mt-3'>
                 <Timeline>
 
                     {children.map((child, index) => {
@@ -226,7 +226,8 @@ export default function WalkthroughCreator() {
                                 <Timeline.Point />
                                 <Timeline.Content>
                                     <Timeline.Time className='flex items-center justify-between'>
-                                        {child?.title}    <Button color="gray" pill size={'xs'} onClick={() => {
+                                        {child?.title}
+                                        <Button color="gray" pill size={'xs'} onClick={() => {
                                             // setBuilder({ ...builder, guide: true })
                                         }}>
                                             <ArrowRight2 size="12" color="#ddd" />
@@ -253,7 +254,19 @@ export default function WalkthroughCreator() {
 
             <div className="p-4 rounded-lg dark:border-gray-700 w-[25%] mx-auto">
                 <div className='border shadow-sm rounded-lg p-5'>
-                    <h2 className='mb-3 font-bold text-sm'> {page.title} Options Stepper</h2>
+
+                    <div className=''>
+                        <h2 className='mb-1 font-bold text-sm'>
+                            <Button color="gray" className='items-center' pill size={'xs'} onClick={() => {
+                                // setBuilder({ ...builder, guide: true })
+                            }}>
+                                <ArrowLeft2 size="12" color="#000" /> Go Back
+                            </Button>
+                            {/* Options Stepper */}
+                        </h2>
+                        <p className='mb-3 font-medium text-xs'> {page.title} Options</p>
+                    </div>
+
                     <OptionsStepper />
                 </div>
             </div>
