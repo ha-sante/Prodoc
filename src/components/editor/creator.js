@@ -155,24 +155,32 @@ export default function WalkthroughCreator() {
             </div>
         )
     }
-{/* <span className='font-medium italic'> Set up a separate project for each part of your application (for example, your API server and frontend client),
+    {/* <span className='font-medium italic'> Set up a separate project for each part of your application (for example, your API server and frontend client),
                             to quickly pinpoint which part of your application errors are coming from.</span> */}
     const StepEditorOption = () => {
         return (
             <div>
 
-                <div className='p-5 flex justify-between items-center'>
-                    <Button color="gray" pill size={'xs'} onClick={() => {
-                        setBuilder({ ...builder, guide: true })
-                    }}>
-                        Add guide +
-                    </Button>
-                    <p className='text-xs'>This will disable options for this page and render the guide, when it's clicked on as a option.</p>
-                </div>
-                
-                <div className='border shadow-sm rounded-lg pt-3 pb-3'>
-                    <BlocksEditor EditorOutputHandler={(output) => EditorOutputHandler(output)} />
-                </div>
+                {builder?.guide == true ?
+                    <div className='border shadow-sm rounded-lg pt-3 pb-3 mt-3'>
+                        <div className="pl-5 pr-5">
+                            <div className="flex mt-3 border-b">
+                                <h2 className='mb-3 font-bold'>Step/Selectable Guide Editor</h2>
+                            </div>
+                        </div>
+
+                        <BlocksEditor EditorOutputHandler={(output) => EditorOutputHandler(output)} />
+                    </div>
+                    :
+                    <div className='p-5 flex justify-between items-center'>
+                        <Button color="gray" pill size={'xs'} onClick={() => {
+                            setBuilder({ ...builder, guide: true })
+                        }}>
+                            Add guide +
+                        </Button>
+                        <p className='text-xs'>This will disable options for this page and render the guide, when it's clicked on as a option.</p>
+                    </div>
+                }
 
             </div>
         )
