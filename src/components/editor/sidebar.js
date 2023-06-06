@@ -54,7 +54,7 @@ const EditorSidebarComponent = (props) => {
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
         { icon: <Code1 size="16" color="#111827" />, title: "API Reference", id: 'api' },
         { icon: <MapIcon size="16" color="#111827" />, title: "Walkthroughs", id: 'walkthroughs' },
-        { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
+        // { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
 
     function HandleAddPage(position, parent_id) {

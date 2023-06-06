@@ -13,6 +13,7 @@ import APIBuilder from '@/components/editor/builder';
 import ConfigurePrompt from '@/components/editor/prompts/configure';
 import DefinitionsPrompt from '@/components/editor/prompts/definitions';
 const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
+import WalkthroughCreator from '@/components/editor/creator';
 
 
 import { Inter } from 'next/font/google'
@@ -400,14 +401,13 @@ export default function Editor() {
     )
   }
 
-
   function WalkthroughsPage() {
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {page?.id !== undefined && page?.type == "api" ?
+        {page?.id !== undefined && page?.type == "walkthroughs" ?
           <div className="p-4 w-[100%] mx-auto">
-            <h1>WELCOME TO THE WALKTHROUGHS API</h1>
+            <WalkthroughCreator/>
           </div>
           :
           <div className="p-4 w-[80%] mx-auto">

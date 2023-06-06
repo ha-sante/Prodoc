@@ -16,6 +16,7 @@
     "@editorjs/editorjs": "^2.26.5",
     "@uiw/react-md-editor": "^3.20.8",
     "@uiw/react-textarea-code-editor": "^2.1.1",
+    "@uploadcare/blocks": "0.22.3",
     "@uploadcare/rest-client": "^6.5.1",
     "@uploadcare/signed-uploads": "^6.5.1",
     "@uploadcare/upload-client": "^6.5.1",

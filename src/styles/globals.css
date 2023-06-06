@@ -77,3 +77,19 @@ body {
 .codex-editor__redactor {
   padding-bottom: 50px !important;
 }
+
+.my-config {
+  --cfg-pubkey: "2123fd9247f051556277";
+  --cfg-img-only: 1;
+  --cfg-multiple: 0;
+  --cfg-max-local-file-size-bytes: 5242880;
+  --darkmode: 0;
+  --h-accent: 223;
+  --s-accent: 100%;
+  --l-accent: 61%;
+  /* --cfg-thumb-size:	400; */
+  --borders: 1;
+  --border-radius-element: 3px;
+  --border-radius-frame: 3px;
+  /* --ui-size: 50px */
+}
