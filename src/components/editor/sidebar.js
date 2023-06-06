@@ -219,7 +219,7 @@ const EditorSidebarComponent = (props) => {
                         if (found) {
                             setBuilder({});
                             setPage(found);
-                            setPageId(newPage.id)
+                            setPageId(found.id)
                             setEdited(false);
                             StorageHandler.set(`edited`, false);
                             window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
@@ -260,12 +260,14 @@ const EditorSidebarComponent = (props) => {
             logger.log("permission.after.clicking.div", permission);
             if (permission) {
                 setPage();
+                setPageId("")
                 setEdited(false);
                 StorageHandler.set(`edited`, false);
                 router.push(`/editor`);
             }
         } else {
             setPage();
+            setPageId("")
             router.push(`/editor`);
         }
     }

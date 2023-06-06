@@ -12,6 +12,8 @@ import EditorSidebar from '@/components/editor/sidebar';
 import APIBuilder from '@/components/editor/builder';
 import ConfigurePrompt from '@/components/editor/prompts/configure';
 import DefinitionsPrompt from '@/components/editor/prompts/definitions';
+const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
+
 
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
@@ -20,12 +22,11 @@ import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
   editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger
 } from '../../context/state';
-import { useStore, useAtom } from "jotai";
+import { useStore, useAtom, useSetAtom } from "jotai";
 
 import { serialize } from 'next-mdx-remote/serialize'
 import { MDXRemote } from 'next-mdx-remote'
 
-const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
 
 import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2, CloudChange } from 'iconsax-react';
 import ReactPlayer from 'react-player'
@@ -40,6 +41,9 @@ export default function Editor() {
 
   const [pagination, setPagination] = useAtom(paginationAtom);
   const [page, setPage] = useAtom(pageAtom);
+  // const setPageId = useSetAtom(pageIdAtom);
+  const [pageId, setPageId] = useAtom(pageIdAtom);
+
   const [builder, setBuilder] = useAtom(builderAtom);
 
   const [configure, setConfigure] = useAtom(configureAtom);
@@ -51,7 +55,6 @@ export default function Editor() {
   const [code, setCode] = useAtom(codeAtom);
   const [navigation, setNavigation] = useAtom(navigationAtom);
 
-  // const [pageId, setPageId] = useAtom(pageIdAtom);
 
   const router = useRouter();
   const { slug } = router.query;
@@ -77,23 +80,49 @@ export default function Editor() {
     });
   };
 
-  const editorOnSaveHandler = (editor, title, description) => {
-    logger.log("Editor Data to Save::", { editor, title, description });
 
-    let index = content.findIndex(item => item.id == page?.id);
-    let anew = content;
+  function ElementText(element) {
+    // HANDLE THE SECOND BLOCK
+    var html = element;
+    var div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  }
 
-    let details = Object.keys(diff(editor, anew[index]?.content?.editor));
-    let undifferent = details.length == 1 && details[0] == 'time';
-    logger.log("editor.new.content.difference", { undifferent, details });
+  function PageSearchEngineOptimization() {
 
-    if (undifferent == false) {
-      // UPDATE THE ACTUAL CONTENT STATE WITH THE NEW DATA WE ARE GETTING + THE PAGE BLOCK CURRENTLY SET
-      anew[index] = { ...anew[index], title, description, content: { editor, mdx: '' } };
-      setContent(anew);
-      setEdited(true);
-      StorageHandler.set(`edited`, true);
+  }
+
+  const EditorOutputHandler = (output) => {
+    console.log("Editor Data to Save::", { output });
+
+    // FIND IF IT'S DIFFERENT FROM WHAT IS STORED IN CONTENT PAGE
+    let difference = Object.keys(diff(output, page?.content?.editor));
+    let edited = false;
+    console.log("editor.output.difference", difference);
+    if (difference.length == 1 && difference[0] == "time") {
+      edited = false;
+    } else {
+      edited = true;
     }
+
+    // UPDATE THE PAGE WITH THIS NEW DATA
+    let local = page;
+    let update = _.set(local, ["content", "editor"], output);
+
+
+    // HANDLE TITLE & DESCRIPTION BLOCKS
+    let first_block_text = ElementText(output.blocks[0]?.data?.text);
+    let second_block_text = ElementText(output.blocks[1]?.data?.text);
+
+    // HANDLE THEIR FINAL DATAS
+    let title = first_block_text ? first_block_text : "Documentation Page";
+    let description = second_block_text ? second_block_text : "Page Description here";
+
+    setPage({ ...update, title, description });
+
+    // HANDLE EDITED STATE
+    setEdited(edited);
   }
 
 
@@ -104,7 +133,6 @@ export default function Editor() {
       setProcessing(true);
       let toastId = toast.loading('Saving this Page...');
       ContentAPIHandler('PUT', page).then(response => {
-
 
         // SET IT IN CONTENT LOADING
         let contentAnew = [...content]
@@ -224,8 +252,9 @@ export default function Editor() {
           // SET THE CURRENT PAGE WE ARE ON
           if (nav.page != undefined) {
             let found = response.data.find(page => page.id == nav.page);
-            logger.log("slug.page.matched.content.new.load", { found });
+            console.log("slug.page.matched.content.new.load", { found });
             setPage(found);
+            setPageId(found.id);
             setEdited(false);
             StorageHandler.set(`edited`, false);
           }
@@ -254,8 +283,9 @@ export default function Editor() {
             // SET THE CURRENT PAGE WE ARE ON
             if (nav.page != undefined) {
               let found = response.data.find(page => page.id == nav.page);
-              logger.log("slug.change.new.page", { page });
+              console.log("slug.change.new.page", { page });
               setPage(found);
+              setPageId(found.id);
               setEdited(false);
               StorageHandler.set(`edited`, false);
             }
@@ -269,8 +299,9 @@ export default function Editor() {
         // IF CONTENT EXISTS
         if (content.length > 0) {
           let found = content.find(page => page.id == nav.page);
-          logger.log("page.loaded.from.current.content", { found });
+          console.log("page.loaded.from.current.content", { found });
           setPage(found);
+          setPageId(found.id);
           setEdited(false);
           StorageHandler.set(`edited`, false);
         }
@@ -310,33 +341,30 @@ export default function Editor() {
   }
 
   function EditorPage() {
-    // logger.log("editor.page.reload.called")
+    let render_editor = page != undefined && pageId != undefined && content.length > 0;
+
+    console.log("editor.page.reload.called", { page, authenticated, render_editor })
+
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {page?.id !== undefined && page?.type == "product" ?
+        {render_editor ?
           <div className="p-4 w-[80%] mx-auto">
             <div className="p-4 rounded-lg dark:border-gray-700">
               <div className='border shadow-sm rounded-lg pt-3 pb-3'>
-                <BlocksEditor
-                  onSave={(editorData, title, description) =>
-                    editorOnSaveHandler(editorData, title, description)
-                  }
-                />
+                <BlocksEditor EditorOutputHandler={(output) => EditorOutputHandler(output)} />
               </div>
             </div>
           </div>
           :
           <div className="p-4 w-[80%] mx-auto">
             <div className="p-4 rounded-lg dark:border-gray-700">
-
               <div className='flex flex-row items-center justify-between mb-3 mt-6 text-center'>
                 <p className="text-sm font-normal text-gray-900 dark:text-white flex flex-row items-center">
                   <ArrowLeft2 size="16" className="mr-2" />
                   Click/Create a new page to start editing
                 </p>
               </div>
-
             </div>
           </div>
         }

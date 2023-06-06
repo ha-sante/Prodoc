@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useContext } from "react";
+import React, { useEffect, useRef, useContext, useState } from "react";
 import dynamic from 'next/dynamic';
 
 import EditorJS from "@editorjs/editorjs";
@@ -25,30 +25,18 @@ import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 import Components from './tools/components'
 
 import {
-  store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, ContentAPIHandler, logger, EditorPageBlocksHandler
+  store, contentAtom, pageAtom, pageIdAtom, logger, EditorPageBlocksHandler
 } from '../../context/state';
-import { useStore, useAtom } from "jotai";
+import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
 
 export default function PageEditor(props) {
   const ejInstance = useRef();
+  const isReady = useRef(false);
 
-  const [content, setContent] = useAtom(contentAtom);
-
-  const [pagination, setPagination] = useAtom(paginationAtom);
   const [page, setPage] = useAtom(pageAtom);
-  const [builder, setBuilder] = useAtom(builderAtom);
-
-  const [configure, setConfigure] = useAtom(configureAtom);
-  const [edited, setEdited] = useAtom(editedAtom);
-  // const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
-  const [permission, setPermission] = useAtom(permissionAtom);
-  const [definitions, setDefinitions] = useAtom(definitionsAtom);
-
-  const [code, setCode] = useAtom(codeAtom);
-  const [navigation, setNavigation] = useAtom(navigationAtom);
-
+  const paidId = useAtomValue(pageIdAtom);
+  const [editor, setEditor] = useState("")
 
   const initEditor = () => {
     logger.log("initEditor.called");
@@ -61,7 +49,8 @@ export default function PageEditor(props) {
       data: page !== undefined ? page?.content?.editor : EditorPageBlocksHandler("This is the title of your page", "This is the description of your page"),
       onChange: async () => {
         let output = await editor.saver.save();
-        props.onSave(output, output.blocks[0]?.data?.text, output.blocks[1]?.data?.text);
+        console.log("editor.save.output", output);
+        props.EditorOutputHandler(output);
       },
       tools: {
         header: {
@@ -137,7 +126,9 @@ export default function PageEditor(props) {
         ejInstance.current = null;
       };
     }
-  }, [page]);
+  }, [paidId]);
+
+
 
   return <><div id='editorjs'></div></>;
 }
