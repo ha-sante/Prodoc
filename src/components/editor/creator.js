@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic';
 
 import { useState, useEffect, useContext, useRef, useMemo } from "react";
 import { useRouter } from 'next/router'
@@ -35,19 +36,43 @@ import axios from 'axios';
 import * as LR from "@uploadcare/blocks";
 LR.registerBlocks(LR);
 
+const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
 
 export default function WalkthroughCreator() {
     const [page, setPage] = useAtom(pageAtom);
     const [builder, setBuilder] = useAtom(builderAtom);
+    const [edited, setEdited] = useAtom(editedAtom);
+
     const router = useRouter();
 
 
+    const EditorOutputHandler = (output) => {
+        console.log("Editor Data to Save::", { output });
+
+        // FIND IF IT'S DIFFERENT FROM WHAT IS STORED IN CONTENT PAGE
+        let difference = Object.keys(diff(output, page?.content?.editor));
+        let edited = false;
+        console.log("editor.output.difference", difference);
+        if (difference.length == 1 && difference[0] == "time") {
+            edited = false;
+        } else {
+            edited = true;
+        }
+
+        // UPDATE THE PAGE WITH THIS NEW DATA
+        let local = page;
+        let update = _.set(local, ["content", "editor"], output);
+        setPage({ ...update });
+
+        // HANDLE EDITED STATE
+        setEdited(edited);
+    }
+
     // VIEWS
     const StepIntroduction = () => {
-
         return (
             <div className='border shadow-sm rounded-lg p-5'>
-                <h2 className='mb-3 font-bold'>You are currently editing an option of the page Named One</h2>
+                <h2 className='mb-3 font-bold'>Step/Selectable Option Editor</h2>
 
                 <div className="flex mt-3 border-t">
                     <div className="p-4 rounded-lg dark:border-gray-700 w-[30%] mx-auto">
@@ -60,7 +85,7 @@ export default function WalkthroughCreator() {
                         </lr-file-uploader-minimal>
                     </div>
                     <div className="p-4 rounded-lg dark:border-gray-700 w-[90%] mx-auto">
-                        <p className='mb-2'>A click inviting title - (e.g Select the platform you want to monitor)</p>
+                        <p className='mb-2'>Title -  <span className='text-normal text-xs'>A click inviting title e.g (Select the platform you want to monitor)</span> </p>
                         <TextInput
                             id={"title"}
                             type={"text"}
@@ -93,13 +118,12 @@ export default function WalkthroughCreator() {
                             }
                         />
 
-                        <p className='mb-2 mt-4'>Description - <span className='text-normal text-xs'>Explain what this step is about e.g <span className='font-medium italic'> Set up a separate project for each part of your application (for example, your API server and frontend client),
-                                to quickly pinpoint which part of your application errors are coming from.</span></span></p>
+                        <p className='mb-2 mt-4'>Description - <span className='text-normal text-xs'>Explain what this step is about e.g (You will be given a code guide per the platform...) </span></p>
                         <TextInput
                             id={"title"}
                             type={"text"}
                             className='w-[100%]'
-                            placeholder={`Title`}
+                            placeholder={`Description`}
                             required={true}
                             defaultValue={""}
                             ref={el => {
@@ -131,16 +155,49 @@ export default function WalkthroughCreator() {
             </div>
         )
     }
+{/* <span className='font-medium italic'> Set up a separate project for each part of your application (for example, your API server and frontend client),
+                            to quickly pinpoint which part of your application errors are coming from.</span> */}
+    const StepEditorOption = () => {
+        return (
+            <div>
+
+                <div className='p-5 flex justify-between items-center'>
+                    <Button color="gray" pill size={'xs'} onClick={() => {
+                        setBuilder({ ...builder, guide: true })
+                    }}>
+                        Add guide +
+                    </Button>
+                    <p className='text-xs'>This will disable options for this page and render the guide, when it's clicked on as a option.</p>
+                </div>
+                
+                <div className='border shadow-sm rounded-lg pt-3 pb-3'>
+                    <BlocksEditor EditorOutputHandler={(output) => EditorOutputHandler(output)} />
+                </div>
+
+            </div>
+        )
+    }
+
 
     return (
-        <div className="flex-column">
+        <div className="flex">
 
-            <div className="p-4 rounded-lg dark:border-gray-700 w-[80%] mx-auto">
-                <StepIntroduction />
+            <div className="p-4 rounded-lg dark:border-gray-700 w-[25%] mx-auto">
+                <div className='border shadow-sm rounded-lg p-5'>
+                    <h2 className='mb-3 font-bold'>Stepper</h2>
+                </div>
             </div>
 
-            <div className="p-4 rounded-lg dark:border-gray-700 w-[80%] mx-auto">
+            <div className="p-4 rounded-lg border-gray-700 w-[75%] mx-auto">
+                <div className="flex-column rounded-lg dark:border-gray-700 w-[100%]">
+                    <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
+                        <StepIntroduction />
+                        <StepEditorOption />
+                    </div>
+                    <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
 
+                    </div>
+                </div>
             </div>
 
         </div>

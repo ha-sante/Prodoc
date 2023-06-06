@@ -28,7 +28,6 @@ import { useStore, useAtom, useSetAtom } from "jotai";
 import { serialize } from 'next-mdx-remote/serialize'
 import { MDXRemote } from 'next-mdx-remote'
 
-
 import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2, CloudChange } from 'iconsax-react';
 import ReactPlayer from 'react-player'
 import toast, { Toaster } from 'react-hot-toast';
