@@ -2,6 +2,35 @@ const fauna = require('../../integrations/fauna.js');
 let q = fauna.q;
 import { kv } from "@vercel/kv"; // CACHING LAYER
 
+
+function msConversion(millis) {
+    const d = new Date(Date.UTC(0,0,0,0,0,0,millis)),
+    // Pull out parts of interest
+    parts = [
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds()
+    ];
+
+    // Zero-pad
+    let output = "";
+
+    if(parts[0]){
+        output += parts[0] + " hours ";
+    }
+    
+
+    if(parts[1]){
+        output += parts[1] + " minutes ";
+    }
+
+    if(parts[2]){
+        output += parts[2] + " seconds ";
+    }
+
+    return output
+  }
+
 export default async function handler(req, res) {
     const method = req.method;
     const body = req.body;
@@ -104,159 +133,99 @@ export default async function handler(req, res) {
             // Process a PATCH request
             // BULK UPLOADING OF CHAPTER & PAGES 
             // !FOR PROCESSING BULK API CONTENT ONLY
+            let start = performance.now();
+            try {
 
-            // BULK DELETE ALL API PAGES
-            let deleted = await fauna.client.query(q.Map(
-                q.Paginate(
-                    q.Match(q.Index("find_content_by_type"), "api"),
-                    { size: 99999 }
-                ),
-                q.Lambda("ref", q.Delete(q.Var("ref")))
-            ));
-            console.log("api.patch.deleted", true);
+                // BULK DELETE ALL API PAGES
+                let deleted = await fauna.client.query(q.Map(
+                    q.Paginate(
+                        q.Match(q.Index("find_content_by_type"), "api"),
+                        { size: 99999 }
+                    ),
+                    q.Lambda("ref", q.Delete(q.Var("ref")))
+                ));
+                console.log("api.patch.deleted", true);
 
-            let configured = await fauna.client.query(q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }));
-            console.log("api.patch.configured", true);
+                start = performance.now();
+                console.log("api.patch.configured.call.start", `${start} ms`);
 
-            let chapters = await fauna.client.query(q.Map(body.chapters,
-                q.Lambda(
-                    'page',
-                    q.Let({
-                        chapter_id: q.NewId(),
-                        data: q.Create(
-                            q.Ref(q.Collection('Content'), q.Var('chapter_id')),
-                            { data: q.Merge(q.Var('page'), { id: q.Var("chapter_id") }) },
-                        )
-                    }, q.Select(['data'], q.Var("data")))
-                )));
-            console.log("api.patch.chapters", true);
+                let configured = await fauna.client.query(q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }));
+                console.log("api.patch.configured", configured);
 
-
-            let pages = await fauna.client.query(q.Map(body.pages,
-                q.Lambda(
-                    'page',
-                    q.Let({
-                        page_id: q.NewId(),
-                        data: q.Create(
-                            q.Ref(q.Collection('Content'), q.Var('page_id')),
-                            { data: q.Merge(q.Var('page'), { id: q.Var("page_id") }) },
-                        )
-                    }, q.Select(['data'], q.Var("data")))
-                )));
-            console.log("api.patch.pages", true);
+                let chapters = await fauna.client.query(q.Map(body.chapters,
+                    q.Lambda(
+                        'page',
+                        q.Let({
+                            chapter_id: q.NewId(),
+                            data: q.Create(
+                                q.Ref(q.Collection('Content'), q.Var('chapter_id')),
+                                { data: q.Merge(q.Var('page'), { id: q.Var("chapter_id") }) },
+                            )
+                        }, q.Select(['data'], q.Var("data")))
+                    )));
+                console.log("api.patch.chapters", true);
 
 
-            let updated_chapters = await fauna.client.query(q.Map(chapters,
-                q.Lambda(
-                    'chapter',
-                    q.Let({
-                        title: q.Select(["title"], q.Var("chapter")),
-                        chapter_id: q.Select(["id"], q.Var("chapter")),
-                        matches: q.Filter(pages,
-                            q.Lambda(
-                                'page',
-                                q.Let({
-                                    // CHECK IF CHAPTER IS FOUND IN PAGE'S TAGS
-                                    // IF TRUE, PAGE IS A CHILD OF CHAPTER
-                                    tags: q.Select(["content", "api", "tags"], q.Var("page")),
-                                    page_id: q.Select(["id"], q.Var("page")),
-                                    valid: q.ContainsValue(q.Var("title"), q.Var("tags")),
-                                }, q.Var("valid"))
+                let pages = await fauna.client.query(q.Map(body.pages,
+                    q.Lambda(
+                        'page',
+                        q.Let({
+                            page_id: q.NewId(),
+                            data: q.Create(
+                                q.Ref(q.Collection('Content'), q.Var('page_id')),
+                                { data: q.Merge(q.Var('page'), { id: q.Var("page_id") }) },
+                            )
+                        }, q.Select(['data'], q.Var("data")))
+                    )));
+                console.log("api.patch.pages", true);
+
+
+                let updated_chapters = await fauna.client.query(q.Map(chapters,
+                    q.Lambda(
+                        'chapter',
+                        q.Let({
+                            title: q.Select(["title"], q.Var("chapter")),
+                            chapter_id: q.Select(["id"], q.Var("chapter")),
+                            matches: q.Filter(pages,
+                                q.Lambda(
+                                    'page',
+                                    q.Let({
+                                        // CHECK IF CHAPTER IS FOUND IN PAGE'S TAGS
+                                        // IF TRUE, PAGE IS A CHILD OF CHAPTER
+                                        tags: q.Select(["content", "api", "tags"], q.Var("page")),
+                                        page_id: q.Select(["id"], q.Var("page")),
+                                        valid: q.ContainsValue(q.Var("title"), q.Var("tags")),
+                                    }, q.Var("valid"))
+                                )),
+                            children: q.Map(q.Var("matches"), q.Lambda(
+                                'child',
+                                q.Select(["id"], q.Var("child"))
                             )),
-                        children: q.Map(q.Var("matches"), q.Lambda(
-                            'child',
-                            q.Select(["id"], q.Var("child"))
-                        )),
-                        updated: q.Merge(q.Var("chapter"), { children: q.Var("children") }),
-                        update: q.Update(q.Ref(q.Collection('Content'), q.Var("chapter_id")), { data: q.Var("updated") }),
-                    }, q.Select(["data"], q.Var("update")))
-                )));
-            console.log("api.patch.updated_chapters", true);
+                            updated: q.Merge(q.Var("chapter"), { children: q.Var("children") }),
+                            update: q.Update(q.Ref(q.Collection('Content'), q.Var("chapter_id")), { data: q.Var("updated") }),
+                        }, q.Select(["data"], q.Var("update")))
+                    )));
+                console.log("api.patch.updated_chapters", true);
 
 
 
-            // HANDLE CACHING
-            await kv.set("content_cache_valid", false);
+                // HANDLE CACHING
+                await kv.set("content_cache_valid", false);
 
-            // SEND REPLY
-            let data = [...updated_chapters, ...pages];
-            res.status(200).send(data);
+                // SEND REPLY
+                let data = [...updated_chapters, ...pages];
+                res.status(200).send(data);
 
+            } catch (error) {
+                const end = performance.now();
+                const executionTime = end - start;
+                console.log("api.patch.error.call.end", `${end} ms`);
+                console.log("api.patch.error.call.executionTime", msConversion(executionTime));
 
-            // RECREATE ALL CHAPTER AND CHILDREN PAGES
-            // return fauna.client.query(
-            //     q.Let(
-            //         {
-
-            //             // UPDATE CONFIGURATIONS WITH THE NEWLY RECIEVED DATA
-            //             // configured: q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }),
-
-            //             // CREATE THE API PAGES ANEW
-            //             // chapters: q.Map(body.chapters,
-            //             //     q.Lambda(
-            //             //         'page',
-            //             //         q.Let({
-            //             //             chapter_id: q.NewId(),
-            //             //             data: q.Create(
-            //             //                 q.Ref(q.Collection('Content'), q.Var('chapter_id')),
-            //             //                 { data: q.Merge(q.Var('page'), { id: q.Var("chapter_id") }) },
-            //             //             )
-            //             //         }, q.Select(['data'], q.Var("data")))
-            //             //     )),
-            //             // pages: q.Map(body.pages,
-            //             //     q.Lambda(
-            //             //         'page',
-            //             //         q.Let({
-            //             //             page_id: q.NewId(),
-            //             //             data: q.Create(
-            //             //                 q.Ref(q.Collection('Content'), q.Var('page_id')),
-            //             //                 { data: q.Merge(q.Var('page'), { id: q.Var("page_id") }) },
-            //             //             )
-            //             //         }, q.Select(['data'], q.Var("data")))
-            //             //     )),
-            //             // - for each chapter
-            //             // - find every page that has the same child tag as it
-            //             // - add the page_id to the chapters children[]
-            //             // update_chapters: q.Map(q.Var("chapters"),
-            //             //     q.Lambda(
-            //             //         'chapter',
-            //             //         q.Let({
-            //             //             title: q.Select(["title"], q.Var("chapter")),
-            //             //             chapter_id: q.Select(["id"], q.Var("chapter")),
-            //             //             matches: q.Filter(q.Var("pages"),
-            //             //                 q.Lambda(
-            //             //                     'page',
-            //             //                     q.Let({
-            //             //                         // CHECK IF CHAPTER IS FOUND IN PAGE'S TAGS
-            //             //                         // IF TRUE, PAGE IS A CHILD OF CHAPTER
-            //             //                         tags: q.Select(["content", "api", "tags"], q.Var("page")),
-            //             //                         page_id: q.Select(["id"], q.Var("page")),
-            //             //                         valid: q.ContainsValue(q.Var("title"), q.Var("tags")),
-            //             //                     }, q.Var("valid"))
-            //             //                 )),
-            //             //             children: q.Map(q.Var("matches"), q.Lambda(
-            //             //                 'child',
-            //             //                 q.Select(["id"], q.Var("child"))
-            //             //             )),
-            //             //             updated: q.Merge(q.Var("chapter"), { children: q.Var("children") }),
-            //             //             update: q.Update(q.Ref(q.Collection('Content'), q.Var("chapter_id")), { data: q.Var("updated") }),
-            //             //         }, q.Select(["data"], q.Var("update")))
-            //             //     )),
-            //         },
-            //         { chapters: q.Var("update_chapters"), pages: q.Var("pages") }
-            //     )
-            // ).then(async (result) => {
-            //     // HANDLE CACHING
-            //     await kv.set("content_cache_valid", false);
-
-            //     // SEND REPLY
-            //     let data = [...result.chapters, ...result.pages];
-            //     res.status(200).send(data);
-            // }).catch(error => {
-            //     console.log("request.error", error);
-            //     res.status(404).send(error)
-            // });
-
+        
+                console.log("api.content.patch.error", error);
+                res.status(404).send(error);
+            }
 
             break;
         default:

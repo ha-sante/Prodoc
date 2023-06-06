@@ -9,7 +9,7 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner, Tooltip, Timeline } from "flowbite-react";
-import { Copy, ArrowLeft2, ArrowRight2 } from 'iconsax-react';
+import { Copy, ArrowLeft2, ArrowRight2, Edit } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -227,11 +227,20 @@ export default function WalkthroughCreator() {
                                 <Timeline.Content>
                                     <Timeline.Time className='flex items-center justify-between'>
                                         {child?.title}
-                                        <Button color="gray" pill size={'xs'} onClick={() => {
-                                            // setBuilder({ ...builder, guide: true })
-                                        }}>
-                                            <ArrowRight2 size="12" color="#ddd" />
-                                        </Button>
+
+
+                                        <div className='flex gap-1'>
+                                            <Button color="gray" pill size={'xs'} onClick={() => {
+                                                // setBuilder({ ...builder, guide: true })
+                                            }}>
+                                                <Edit size="12" color="#ddd" />
+                                            </Button>
+                                            <Button color="gray" pill size={'xs'} onClick={() => {
+                                                // setBuilder({ ...builder, guide: true })
+                                            }}>
+                                                <ArrowRight2 size="12" color="#ddd" />
+                                            </Button>
+                                        </div>
                                     </Timeline.Time>
                                 </Timeline.Content>
                             </Timeline.Item>
@@ -260,7 +269,7 @@ export default function WalkthroughCreator() {
                             <Button color="gray" className='items-center' pill size={'xs'} onClick={() => {
                                 // setBuilder({ ...builder, guide: true })
                             }}>
-                                <ArrowLeft2 size="12" color="#000" /> Go Back
+                                <ArrowLeft2 size="12" color="#000" /> Back
                             </Button>
                             {/* Options Stepper */}
                         </h2>
