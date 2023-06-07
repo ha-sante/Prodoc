@@ -3,6 +3,15 @@ let q = fauna.q;
 import { kv } from "@vercel/kv"; // CACHING LAYER
 
 
+export const config = {
+    api: {
+        responseLimit: '4mb',
+        bodyParser: {
+            sizeLimit: '4mb',
+        },
+    },
+};
+
 function msConversion(millis) {
     const d = new Date(Date.UTC(0,0,0,0,0,0,millis)),
     // Pull out parts of interest
@@ -234,11 +243,3 @@ export default async function handler(req, res) {
     }
 
 }
-export const config = {
-    api: {
-        responseLimit: '20mb',
-        bodyParser: {
-            sizeLimit: '20mb',
-        },
-    },
-};

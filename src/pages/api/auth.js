@@ -1,5 +1,14 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
+export const config = {
+  api: {
+      responseLimit: '4mb',
+      bodyParser: {
+          sizeLimit: '4mb',
+      },
+  },
+};
+
 export default function handler(req, res) {
   const method = req.method;
   const body = req.body;
@@ -18,3 +27,5 @@ export default function handler(req, res) {
       break;
   }
 }
+
+
