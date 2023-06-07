@@ -5,9 +5,9 @@ import { kv } from "@vercel/kv"; // CACHING LAYER
 
 export const config = {
     api: {
-        responseLimit: '4mb',
+        responseLimit: '50mb',
         bodyParser: {
-            sizeLimit: '4mb',
+            sizeLimit: '100mb',
         },
     },
 };
@@ -39,6 +39,49 @@ function msConversion(millis) {
 
     return output
   }
+
+
+  const units = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+   
+  function niceBytes(x){
+  
+    let l = 0, n = parseInt(x, 10) || 0;
+  
+    while(n >= 1024 && ++l){
+        n = n/1024;
+    }
+    
+    return(n.toFixed(n < 10 && l > 0 ? 1 : 0) + ' ' + units[l]);
+  }
+
+  export function roughSizeOfObject(object) {
+    const objectList = [];
+    const stack = [object];
+    const bytes = [0];
+    while (stack.length) {
+      const value = stack.pop();
+      if (value == null) bytes[0] += 4;
+      else if (typeof value === 'boolean') bytes[0] += 4;
+      else if (typeof value === 'string') bytes[0] += value.length * 2;
+      else if (typeof value === 'number') bytes[0] += 8;
+      else if (typeof value === 'object' && objectList.indexOf(value) === -1) {
+        objectList.push(value);
+        if (typeof value.byteLength === 'number') bytes[0] += value.byteLength;
+        else if (value[Symbol.iterator]) {
+          // eslint-disable-next-line no-restricted-syntax
+          for (const v of value) stack.push(v);
+        } else {
+          Object.keys(value).forEach(k => { 
+             bytes[0] += k.length * 2; stack.push(value[k]);
+          });
+        }
+      }
+    }
+    return niceBytes(bytes[0]);
+  }
+
+
+
 
 export default async function handler(req, res) {
     const method = req.method;
@@ -138,7 +181,12 @@ export default async function handler(req, res) {
             });
             break;
         case "PATCH":
-
+            console.clear();
+            let body_size = roughSizeOfObject(body);
+            let configuration_object = roughSizeOfObject(body?.configuration);
+            console.log("api.content.patch.called.diagnostics.body_size", body_size);
+            console.log("api.content.patch.called.diagnostics.configuration_object", configuration_object);
+            
             // Process a PATCH request
             // BULK UPLOADING OF CHAPTER & PAGES 
             // !FOR PROCESSING BULK API CONTENT ONLY
@@ -159,7 +207,12 @@ export default async function handler(req, res) {
                 console.log("api.patch.configured.call.start", `${start} ms`);
 
                 let configured = await fauna.client.query(q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }));
-                console.log("api.patch.configured", configured);
+                console.log("api.patch.configured", true);
+                const end = performance.now();
+                const executionTime = end - start;
+                console.log("api.patch.error.call.end", `${end} ms`);
+                console.log("api.patch.error.call.executionTime", msConversion(executionTime));
+
 
                 let chapters = await fauna.client.query(q.Map(body.chapters,
                     q.Lambda(
