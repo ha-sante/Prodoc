@@ -9,6 +9,7 @@ let client = new faunadb.Client({
     secret: process.env.EDITOR_FAUNA_DATABASE_SERVER_KEY,
     // NOTE: Use the correct endpoint for your database's Region Group.
     endpoint: 'https://db.fauna.com/',
+    timeout: 180 // increase to 3 minutes
 })
 
 module.exports = { q, client }
