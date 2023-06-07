@@ -37,15 +37,16 @@ import { diff } from 'deep-object-diff';
 
 export default function Editor() {
 
-  const [content, setContent] = useAtom(contentAtom);
+  const router = useRouter();
+  const { slug } = router.query;
 
+  const [content, setContent] = useAtom(contentAtom);
   const [pagination, setPagination] = useAtom(paginationAtom);
   const [page, setPage] = useAtom(pageAtom);
   // const setPageId = useSetAtom(pageIdAtom);
   const [pageId, setPageId] = useAtom(pageIdAtom);
 
   const [builder, setBuilder] = useAtom(builderAtom);
-
   const [configure, setConfigure] = useAtom(configureAtom);
   const [edited, setEdited] = useAtom(editedAtom);
   const [authenticated, setAuthenticated] = useAtom(authenticatedAtom);
@@ -55,9 +56,6 @@ export default function Editor() {
   const [code, setCode] = useAtom(codeAtom);
   const [navigation, setNavigation] = useAtom(navigationAtom);
 
-
-  const router = useRouter();
-  const { slug } = router.query;
   const [password, setPassword] = useState('');
   const [mdxSource, setMdxSource] = useState();
   const [example, setExample] = useState('');
@@ -401,12 +399,15 @@ export default function Editor() {
   }
 
   function WalkthroughsPage() {
+    let render_editor = page != undefined && page.type === "walkthroughs";
+
+    console.log("walkthroughs_editor", { render_editor, page })
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {page?.id !== undefined && page?.type == "walkthroughs" ?
+        {render_editor ?
           <div className="p-4 w-[100%] mx-auto">
-            <WalkthroughCreator/>
+            <WalkthroughCreator />
           </div>
           :
           <div className="p-4 w-[80%] mx-auto">

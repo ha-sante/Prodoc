@@ -46,24 +46,33 @@ export default function WalkthroughCreator() {
     const [page, setPage] = useAtom(pageAtom);
     const [builder, setBuilder] = useAtom(builderAtom);
     const [edited, setEdited] = useAtom(editedAtom);
-    const [stepper, setStepper] = useState({});
+    const [steps, setSteps] = useState([]);
 
     // EXECUTIONS
     useEffect(() => {
-        // SET THE STEPS
-        setStepper(page);
+        console.log("page.changed", { page, steps })
 
-        // HANDLE if the page has already gone ahead with the guide option
-        let guide = false;
-        // - IF THE PAGE.CONTENT.API.
-        let has_no_editor_content = _.isEmpty(page?.content?.editor)
-        if (has_no_editor_content == false) {
-            guide = true;
-            setStepper(page);
+        if (page.position === "chapter") {
+            setSteps([page])
+        } 
 
-        }
 
-    }, []);
+        // // SET THE STEPS
+        // setStepper(page);
+        // // HANDLE if the page has already gone ahead with the guide option
+        // let guide = false;
+        // // - IF THE PAGE.CONTENT.API.
+        // let has_no_editor_content = _.isEmpty(page?.content?.editor)
+        // if (has_no_editor_content == false) {
+        //     guide = true;
+        //     setStepper(page);
+        // }
+    }, [page]);
+
+
+    useEffect(() => {
+        console.log("steps.changed", { page, steps })
+    }, [steps]);
 
 
     const EditorOutputHandler = (output) => {
@@ -86,6 +95,29 @@ export default function WalkthroughCreator() {
 
         // HANDLE EDITED STATE
         setEdited(edited);
+    }
+
+    const StepBack = () => {
+        // POP OFF THE LAST Step
+        let local = steps.filter( step => step.id != page?.id);
+        let value = _.last(local);
+
+        console.log("stepping.back", {local, value});
+        if (value) {
+            setPage(value);
+            setSteps(local);
+        }
+    }
+
+    const stepForward = (page) => {
+        let anew = [...steps, page];
+        setSteps(anew);
+        setPage(page);
+    }
+
+
+    const AddStepOption = () => {
+        console.log("clicked.on.back", { steps, page })
     }
 
     // VIEWS
@@ -112,75 +144,35 @@ export default function WalkthroughCreator() {
                             className='w-[100%]'
                             placeholder={`Title`}
                             required={true}
-                            defaultValue={""}
-                            ref={el => {
-                                // logger.log("body.input.element", { el });
-                                // if (el) {
-                                //     el.addEventListener('keyup', (e) => {
-                                //         let path = e.target.id.split("'");
-                                //         let value = e.target.value;
-
-                                //         // logger.log("input.value.changed.before.builder", builder);
-                                //         // let local = builder;
-                                //         // let update = _.set(local, path, value);
-                                //         // setBuilder({ ...update });
-                                //         // logger.log("input.value.changed.after.builder", builder);
-
-
-                                //         e.target.focus();
-                                //     });
-
-                                //     return setBodyRefs(bodyRefs.set(pathName, el))
-                                // }
-
-                                // return null
-                            }
-                            }
+                            value={page?.title}
+                            onChange={(e) => {
+                                let value = e.target.value;
+                                setPage({ ...page, title: value });
+                            }}
                         />
 
                         <p className='mb-2 mt-4'>Description - <span className='text-normal text-xs'>Explain what this step is about e.g (You will be given a code guide per the platform...) </span></p>
                         <TextInput
-                            id={"title"}
+                            id={"description"}
                             type={"text"}
                             className='w-[100%]'
                             placeholder={`Description`}
                             required={true}
-                            defaultValue={""}
-                            ref={el => {
-                                // logger.log("body.input.element", { el });
-                                // if (el) {
-                                //     el.addEventListener('keyup', (e) => {
-                                //         let path = e.target.id.split("'");
-                                //         let value = e.target.value;
-
-                                //         // logger.log("input.value.changed.before.builder", builder);
-                                //         // let local = builder;
-                                //         // let update = _.set(local, path, value);
-                                //         // setBuilder({ ...update });
-                                //         // logger.log("input.value.changed.after.builder", builder);
-
-
-                                //         e.target.focus();
-                                //     });
-
-                                //     return setBodyRefs(bodyRefs.set(pathName, el))
-                                // }
-
-                                // return null
-                            }
-                            }
+                            value={page?.description}
+                            onChange={(e) => {
+                                let value = e.target.value;
+                                setPage({ ...page, description: value });
+                            }}
                         />
                     </div>
                 </div>
             </div>
         )
     }
-    {/* <span className='font-medium italic'> Set up a separate project for each part of your application (for example, your API server and frontend client),
-                            to quickly pinpoint which part of your application errors are coming from.</span> */}
+
     const StepEditorOption = () => {
         return (
             <div>
-
                 {builder?.guide == true ?
                     <div className='border shadow-sm rounded-lg pb-3 mt-3'>
                         <div className="p-5">
@@ -206,41 +198,34 @@ export default function WalkthroughCreator() {
                         <p className='text-xs'>This will disable options for this page and render the guide, when it's clicked on as a option.</p>
                     </div>
                 }
-
             </div>
         )
     }
 
     const OptionsStepper = () => {
-
         let children = content.filter((item) => page.children.includes(item?.id));
-
-        console.log("options.stepper.children", children)
+        // console.log("options.stepper.children", children)
         return (
             <div className='mt-3'>
                 <Timeline>
 
                     {children.map((child, index) => {
                         return (
-                            <Timeline.Item className='mb-2'>
+                            <Timeline.Item key={child.id} className='mb-2'>
                                 <Timeline.Point />
                                 <Timeline.Content>
                                     <Timeline.Time className='flex items-center justify-between'>
                                         {child?.title}
 
-
                                         <div className='flex gap-1'>
-                                            <Button color="gray" pill size={'xs'} onClick={() => {
-                                                // setBuilder({ ...builder, guide: true })
-                                            }}>
+                                            {/* <Button color="gray" pill size={'xs'} onClick={() => { stepForward(child) }}>
                                                 <Edit size="12" color="#ddd" />
-                                            </Button>
-                                            <Button color="gray" pill size={'xs'} onClick={() => {
-                                                // setBuilder({ ...builder, guide: true })
-                                            }}>
+                                            </Button> */}
+                                            <Button color="gray" pill size={'xs'} onClick={() => { stepForward(child) }}>
                                                 <ArrowRight2 size="12" color="#ddd" />
                                             </Button>
                                         </div>
+
                                     </Timeline.Time>
                                 </Timeline.Content>
                             </Timeline.Item>
@@ -249,9 +234,7 @@ export default function WalkthroughCreator() {
 
                 </Timeline>
 
-                <Button color="gray" pill size={'xs'} onClick={() => {
-                    // setBuilder({ ...builder, guide: true })
-                }}>
+                <Button color="gray" pill size={'xs'} onClick={AddStepOption}>
                     Add Option +
                 </Button>
             </div>
@@ -266,12 +249,11 @@ export default function WalkthroughCreator() {
 
                     <div className=''>
                         <h2 className='mb-1 font-bold text-sm'>
-                            <Button color="gray" className='items-center' pill size={'xs'} onClick={() => {
-                                // setBuilder({ ...builder, guide: true })
-                            }}>
-                                <ArrowLeft2 size="12" color="#000" /> Back
-                            </Button>
-                            {/* Options Stepper */}
+                            {page?.position != 'chapter' &&
+                                <Button color="gray" className='items-center' pill size={'xs'} onClick={StepBack}>
+                                    <ArrowLeft2 size="12" color="#000" /> Back
+                                </Button>
+                            }
                         </h2>
                         <p className='mb-3 font-medium text-xs'> {page.title} Options</p>
                     </div>
@@ -285,9 +267,6 @@ export default function WalkthroughCreator() {
                     <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
                         <StepIntroduction />
                         <StepEditorOption />
-                    </div>
-                    <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
-
                     </div>
                 </div>
             </div>

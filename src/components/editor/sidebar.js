@@ -137,6 +137,7 @@ const EditorSidebarComponent = (props) => {
         }).catch(error => {
             logger.log('error', error);
             toast.error('Got an error deleting this page!');
+            toast.dismiss(toastId);
         });
     }
 
@@ -194,6 +195,7 @@ const EditorSidebarComponent = (props) => {
     }
 
     const HandleMoveToAPage = async (newPage) => {
+        
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
