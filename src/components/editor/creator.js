@@ -13,7 +13,7 @@ import { Copy, ArrowLeft2, ArrowRight2, Edit } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger
+    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger
 } from '../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -44,35 +44,58 @@ export default function WalkthroughCreator() {
 
     const [content, setContent] = useAtom(contentAtom);
     const [page, setPage] = useAtom(pageAtom);
+    const [pageId, setPageId] = useAtom(pageIdAtom);
+
+
     const [builder, setBuilder] = useAtom(builderAtom);
     const [edited, setEdited] = useAtom(editedAtom);
     const [steps, setSteps] = useState([]);
+    const [render, setRender] = useState(0);
+    const [refs, setRefs] = useState(new Map());
 
     // EXECUTIONS
     useEffect(() => {
         console.log("page.changed", { page, steps })
-
         if (page.position === "chapter") {
             setSteps([page])
-        } 
-
-
-        // // SET THE STEPS
-        // setStepper(page);
-        // // HANDLE if the page has already gone ahead with the guide option
-        // let guide = false;
-        // // - IF THE PAGE.CONTENT.API.
-        // let has_no_editor_content = _.isEmpty(page?.content?.editor)
-        // if (has_no_editor_content == false) {
-        //     guide = true;
-        //     setStepper(page);
-        // }
+        }
     }, [page]);
-
 
     useEffect(() => {
         console.log("steps.changed", { page, steps })
     }, [steps]);
+
+    useEffect(() => {
+        // 1. IF LOGO EXISTS, SET IT TO UPLOADER STATE
+        // 2. ADD AN EVENT LISTERNER TO SET THE STATE
+        // 3. ADD EVENT LISTERNER TO DELETE CURRENT STATE
+
+        typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
+            console.log("image.uploader.called", e);
+            let cdnURL = e.detail.data[0]?.cdnUrl
+            setPage({ ...page, logo: cdnURL ? cdnURL : "" })
+        });
+
+        if (page.logo) {
+            const api = document.querySelector("lr-upload-ctx-provider");
+            console.log("api.data", api.uploadCollection)
+            // IF THE COMPONENT DOSENT HAVE ANY IMAGES - SET THE IMAGES FOR IT
+            if (api.uploadCollection.size === 0) {
+                api.uploadCollection.add({ externalUrl: page.logo });
+
+
+                var min = render+1;
+                var max = 50000
+                var random = Math.random() * (max - min) + min;
+
+                setRender(random)
+            }
+        } else {
+            const api = document.querySelector("lr-upload-ctx-provider");
+            api.uploadCollection.clearAll();
+        }
+
+    }, [pageId]);
 
 
     const EditorOutputHandler = (output) => {
@@ -99,29 +122,49 @@ export default function WalkthroughCreator() {
 
     const StepBack = () => {
         // POP OFF THE LAST Step
-        let local = steps.filter( step => step.id != page?.id);
+        let local = steps.filter(step => step.id != page?.id);
         let value = _.last(local);
 
-        console.log("stepping.back", {local, value});
+        console.log("stepping.back", { local, value });
         if (value) {
             setPage(value);
+            setPageId(value.id)
             setSteps(local);
+            setBuilder({ guide: false })
         }
     }
 
     const stepForward = (page) => {
         let anew = [...steps, page];
-        setSteps(anew);
-        setPage(page);
-    }
 
+        if (edited == false) {
+            setSteps(anew);
+            setPage(page);
+            setPageId(page.id)
+        } else {
+            let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
+            if (permission) {
+                setSteps(anew);
+                setPage(page);
+                setPageId(page.id);
+                setEdited(false);
+            }
+        }
+
+    }
 
     const AddStepOption = () => {
         console.log("clicked.on.back", { steps, page })
     }
 
+    const HandlePageEdit = (page) => {
+        setEdited(true);
+    }
+
     // VIEWS
-    const StepIntroduction = () => {
+    const StepIntroduction = useMemo(() => {
+        let page = content.find(item => item.id == pageId);
+
         return (
             <div className='border shadow-sm rounded-lg p-5'>
                 <h2 className='mb-3 font-bold'>Step/Selectable Option Editor</h2>
@@ -133,9 +176,13 @@ export default function WalkthroughCreator() {
                             css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
                             ctx-name="my-uploader"
                             class="my-config"
+                            id="step-image-uploader"
                         >
+                            <lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>
+
                         </lr-file-uploader-minimal>
                     </div>
+
                     <div className="p-4 rounded-lg dark:border-gray-700 w-[90%] mx-auto">
                         <p className='mb-2'>Title -  <span className='text-normal text-xs'>A click inviting title e.g (Select the platform you host on) or simply (JavaScript)</span> </p>
                         <TextInput
@@ -144,11 +191,25 @@ export default function WalkthroughCreator() {
                             className='w-[100%]'
                             placeholder={`Title`}
                             required={true}
-                            value={page?.title}
-                            onChange={(e) => {
-                                let value = e.target.value;
-                                setPage({ ...page, title: value });
+                            key={`${Math.floor((Math.random() * 1000))}-min`}
+                            defaultValue={page.title}
+                            ref={el => {
+                                if (el) {
+                                    el.addEventListener('keyup', (e) => {
+                                        let value = e.target.value;
+                                        setPage({ ...page, title: value });
+                                        HandlePageEdit(page);
+
+                                        // TODO: Handle input values of a different type from text
+                                        e.target.focus();
+                                    });
+
+                                    return setRefs(refs.set("title", el))
+                                }
+
+                                return null
                             }}
+
                         />
 
                         <p className='mb-2 mt-4'>Description - <span className='text-normal text-xs'>Explain what this step is about e.g (You will be given a code guide per the platform...) </span></p>
@@ -158,17 +219,31 @@ export default function WalkthroughCreator() {
                             className='w-[100%]'
                             placeholder={`Description`}
                             required={true}
-                            value={page?.description}
-                            onChange={(e) => {
-                                let value = e.target.value;
-                                setPage({ ...page, description: value });
+                            defaultValue={page.description}
+                            ref={el => {
+                                if (el) {
+                                    el.addEventListener('keyup', (e) => {
+                                        let value = e.target.value;
+                                        setPage({ ...page, description: value });
+                                        HandlePageEdit(page);
+
+                                        // TODO: Handle input values of a different type from text
+                                        e.target.focus();
+                                    });
+
+                                    return setRefs(refs.set("description", el))
+                                }
+
+                                return null
                             }}
                         />
                     </div>
+
+
                 </div>
             </div>
         )
-    }
+    }, [pageId, render]);
 
     const StepEditorOption = () => {
         return (
@@ -265,7 +340,7 @@ export default function WalkthroughCreator() {
             <div className="p-4 rounded-lg border-gray-700 w-[75%] mx-auto">
                 <div className="flex-column rounded-lg dark:border-gray-700 w-[100%]">
                     <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
-                        <StepIntroduction />
+                        {StepIntroduction}
                         <StepEditorOption />
                     </div>
                 </div>

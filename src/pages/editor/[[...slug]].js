@@ -340,7 +340,6 @@ export default function Editor() {
 
   function EditorPage() {
     let render_editor = page != undefined && pageId != undefined && content.length > 0;
-
     console.log("editor.page.reload.called", { page, authenticated, render_editor })
 
     return (
@@ -400,6 +399,7 @@ export default function Editor() {
 
   function WalkthroughsPage() {
     let render_editor = page != undefined && page.type === "walkthroughs";
+    // let render_editor = true;
 
     console.log("walkthroughs_editor", { render_editor, page })
     return (
