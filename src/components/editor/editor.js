@@ -35,7 +35,7 @@ export default function PageEditor(props) {
   const isReady = useRef(false);
 
   const [page, setPage] = useAtom(pageAtom);
-  const paidId = useAtomValue(pageIdAtom);
+  const pageId = useAtomValue(pageIdAtom);
   const [editor, setEditor] = useState("")
 
   const initEditor = () => {
@@ -126,7 +126,7 @@ export default function PageEditor(props) {
         ejInstance.current = null;
       };
     }
-  }, [paidId]);
+  }, [pageId]);
 
 
 

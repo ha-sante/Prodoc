@@ -13,9 +13,9 @@ import { Copy, ArrowLeft2, ArrowRight2, Edit } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger
+    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger, NewPageHandler
 } from '../../context/state';
-import { useStore, useAtom } from "jotai";
+import { useStore, useAtom, useAtomValue } from "jotai";
 
 import toast, { Toaster } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -45,13 +45,16 @@ export default function WalkthroughCreator() {
     const [content, setContent] = useAtom(contentAtom);
     const [page, setPage] = useAtom(pageAtom);
     const [pageId, setPageId] = useAtom(pageIdAtom);
-
+    const navigation = useAtomValue(navigationAtom);
 
     const [builder, setBuilder] = useAtom(builderAtom);
     const [edited, setEdited] = useAtom(editedAtom);
     const [steps, setSteps] = useState([]);
     const [render, setRender] = useState(0);
     const [refs, setRefs] = useState(new Map());
+
+
+    const [processing, setProcessing] = useState(false);
 
     // EXECUTIONS
     useEffect(() => {
@@ -84,7 +87,7 @@ export default function WalkthroughCreator() {
                 api.uploadCollection.add({ externalUrl: page.logo });
 
 
-                var min = render+1;
+                var min = render + 1;
                 var max = 50000
                 var random = Math.random() * (max - min) + min;
 
@@ -114,7 +117,7 @@ export default function WalkthroughCreator() {
         // UPDATE THE PAGE WITH THIS NEW DATA
         let local = page;
         let update = _.set(local, ["content", "editor"], output);
-        setPage({ ...update });
+        setPage({ ...page, content: update.content });
 
         // HANDLE EDITED STATE
         setEdited(edited);
@@ -130,7 +133,9 @@ export default function WalkthroughCreator() {
             setPage(value);
             setPageId(value.id)
             setSteps(local);
-            setBuilder({ guide: false })
+            setBuilder({ guide: false });
+            const newUrl = `/editor/${navigation}?page=${value.id}`
+            window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
         }
     }
 
@@ -141,6 +146,8 @@ export default function WalkthroughCreator() {
             setSteps(anew);
             setPage(page);
             setPageId(page.id)
+            const newUrl = `/editor/${navigation}?page=${page.id}`
+            window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
         } else {
             let permission = confirm("You have unsaved work on this page, do you still want to move to a new page without saving it?");
             if (permission) {
@@ -148,13 +155,91 @@ export default function WalkthroughCreator() {
                 setPage(page);
                 setPageId(page.id);
                 setEdited(false);
+                const newUrl = `/editor/${navigation}?page=${page.id}`
+                window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
             }
         }
 
     }
 
+    function HandleAddPage(position, parent_id) {
+
+        // NAVIGATION CORRESPONDING CHILD TITLES
+        let titles = {
+            product: "Product",
+            product_chapter: "Documentation Section",
+            product_child: "Documentation Page",
+
+            api: "API",
+            api_chapter: "API Collection",
+            api_child: "API Request",
+
+            walkthroughs: "Product Walkthrough",
+            walkthroughs_chapter: "Product Walkthrough",
+            walkthroughs_child: "Walkthrough Step"
+        };
+
+        logger.info(navigation);
+        logger.info(position);
+
+        // PAGE IS SOMETHING
+        let title = titles[`${navigation}_${position}`];
+        let description = "Page Description here"
+        let page = NewPageHandler(navigation, position, title, description);
+        logger.debug({ page, parent_id, position, title });
+        let toastId = toast.loading('Adding the new Page...');
+
+        // GET ALL THE LATEST CONTENT
+        ContentAPIHandler('POST', page).then(response => {
+            logger.log('response', response.data);
+
+            if (parent_id) {
+                // AFTER CREATION, OF THE CHILD PAGE
+                // ADD IT TO THE PARENTS CHILDREN LIST
+                // & UPDATE THE PARENTS DATA
+                // OPEN THE PARENTS DROPDOWN
+                let parent_page = content.find((page) => page.id == parent_id);
+                parent_page.children.push(response.data.id);
+
+                ContentAPIHandler('PUT', parent_page).then(response2 => {
+                    logger.log('response', response2.data);
+                    let newContent = [...content];
+                    let parent_page_index = content.findIndex((page) => page.id == parent_id);
+                    newContent[parent_page_index] = response2.data;
+                    let anew = [...newContent, response.data];
+                    setContent(anew)
+                    toast.dismiss(toastId);
+                    toast.success('Parent Page updated & saved');
+                    setProcessing(false);
+                }).catch(error => {
+                    logger.log('error', error);
+                    toast.dismiss(toastId);
+                    setProcessing(false);
+                });
+
+            } else {
+                toast.success('Child Page created & saved');
+                let anew = [...content, response.data];
+                setContent(anew);
+                toast.dismiss(toastId);
+                setProcessing(false);
+            }
+
+        }).catch(error => {
+            logger.error('error', error);
+            toast.dismiss(toastId);
+            toast.error('Got an error saving this page!');
+            setProcessing(false);
+        })
+
+    }
+
     const AddStepOption = () => {
-        console.log("clicked.on.back", { steps, page })
+        console.log("clicked.on.back", { steps, page });
+        setProcessing(true);
+        let position = "child";
+        let parent_id = page.id;
+        HandleAddPage(position, parent_id);
     }
 
     const HandlePageEdit = (page) => {
@@ -219,6 +304,7 @@ export default function WalkthroughCreator() {
                             className='w-[100%]'
                             placeholder={`Description`}
                             required={true}
+                            key={`${Math.floor((Math.random() * 1000))}-min`}
                             defaultValue={page.description}
                             ref={el => {
                                 if (el) {
@@ -310,7 +396,7 @@ export default function WalkthroughCreator() {
                 </Timeline>
 
                 <Button color="gray" pill size={'xs'} onClick={AddStepOption}>
-                    Add Option +
+                    Add Option {processing ? <Spinner size='sm' className='ml-2' aria-label="Processing Indicator" /> : '+'}
                 </Button>
             </div>
         )
@@ -330,7 +416,8 @@ export default function WalkthroughCreator() {
                                 </Button>
                             }
                         </h2>
-                        <p className='mb-3 font-medium text-xs'> {page.title} Options</p>
+                        <p className='mb-3 font-medium text-sm'> {page.title}</p>
+                        {/* <p className='mb-3 font-normal text-xs'> {page.description}</p> */}
                     </div>
 
                     <OptionsStepper />
