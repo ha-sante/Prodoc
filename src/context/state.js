@@ -54,26 +54,30 @@ export const DEFAULT_PAGE_DATA = {
   configuration: PAGE_CONFIGURATION
 }
 
-export function EditorPageBlocksHandler(title, description) {
-  return ({
-    "time": new Date().getTime(),
-    "blocks": [
-      {
-        "type": "header",
-        "data": {
-          "text": title,
-          "level": 1
-        }
-      },
-      {
-        "type": "paragraph",
-        "data": {
-          "text": `<i>${description}</i>`,
-          "level": 1
-        }
-      },
-    ]
-  })
+export function EditorPageBlocksHandler(title, description, navigation) {
+  if (navigation != "walkthroughs") {
+    return ({
+      "time": new Date().getTime(),
+      "blocks": [
+        {
+          "type": "header",
+          "data": {
+            "text": title,
+            "level": 1
+          }
+        },
+        {
+          "type": "paragraph",
+          "data": {
+            "text": `<i>${description}</i>`,
+            "level": 1
+          }
+        },
+      ]
+    })
+  } else {
+    return ({});
+  }
 }
 
 export function NewPageHandler(navigation, position, title, description) {
@@ -83,7 +87,7 @@ export function NewPageHandler(navigation, position, title, description) {
     case "product":
       new_page = {
         type: "product", position, title, description,
-        content: { editor: EditorPageBlocksHandler(title, description), mdx: "", api: {} },
+        content: { editor: EditorPageBlocksHandler(title, description, navigation), mdx: "", api: {} },
         children: [],
         configuration: PAGE_CONFIGURATION
       };
@@ -92,7 +96,7 @@ export function NewPageHandler(navigation, position, title, description) {
     case "api":
       new_page = {
         type: "api", position, title, description,
-        content: { editor: EditorPageBlocksHandler(title, description), mdx: "", api: {} },
+        content: { editor: EditorPageBlocksHandler(title, description, navigation), mdx: "", api: {} },
         children: [],
         configuration: PAGE_CONFIGURATION
       };
@@ -101,7 +105,7 @@ export function NewPageHandler(navigation, position, title, description) {
     case "walkthroughs":
       new_page = {
         type: "walkthroughs", position, title, description,
-        content: { editor: EditorPageBlocksHandler(title, description), mdx: "", api: {} },
+        content: { editor: EditorPageBlocksHandler(title, description, navigation), mdx: "", api: {} },
         children: [],
         configuration: PAGE_CONFIGURATION,
         // WALKTHROUGH SPECIFIC
@@ -126,16 +130,16 @@ export const StorageHandler = {
 }
 
 const units = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-   
-function niceBytes(x){
+
+function niceBytes(x) {
 
   let l = 0, n = parseInt(x, 10) || 0;
 
-  while(n >= 1024 && ++l){
-      n = n/1024;
+  while (n >= 1024 && ++l) {
+    n = n / 1024;
   }
-  
-  return(n.toFixed(n < 10 && l > 0 ? 1 : 0) + ' ' + units[l]);
+
+  return (n.toFixed(n < 10 && l > 0 ? 1 : 0) + ' ' + units[l]);
 }
 
 export function roughSizeOfObject(object) {
@@ -155,8 +159,8 @@ export function roughSizeOfObject(object) {
         // eslint-disable-next-line no-restricted-syntax
         for (const v of value) stack.push(v);
       } else {
-        Object.keys(value).forEach(k => { 
-           bytes[0] += k.length * 2; stack.push(value[k]);
+        Object.keys(value).forEach(k => {
+          bytes[0] += k.length * 2; stack.push(value[k]);
         });
       }
     }
@@ -181,11 +185,11 @@ export function ContentAPIHandler(option, data) {
       break;
     case 'PATCH':
 
-    let body_size = roughSizeOfObject(data);
-    let configuration_object = roughSizeOfObject(data?.configuration);
-    console.log("api.content.patch.called.diagnostics.body_size",body_size);
-    console.log("api.content.patch.called.diagnostics.configuration_object", configuration_object);
-    
+      let body_size = roughSizeOfObject(data);
+      let configuration_object = roughSizeOfObject(data?.configuration);
+      console.log("api.content.patch.called.diagnostics.body_size", body_size);
+      console.log("api.content.patch.called.diagnostics.configuration_object", configuration_object);
+
       return axios({
         method: 'PATCH',
         url: '/api/content',

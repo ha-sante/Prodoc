@@ -13,7 +13,7 @@ import { Copy, ArrowLeft2, ArrowRight2, Edit } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger, NewPageHandler
+    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger, NewPageHandler, EditorPageBlocksHandler
 } from '../../context/state';
 import { useStore, useAtom, useAtomValue } from "jotai";
 
@@ -72,7 +72,6 @@ export default function WalkthroughCreator() {
         // 1. IF LOGO EXISTS, SET IT TO UPLOADER STATE
         // 2. ADD AN EVENT LISTERNER TO SET THE STATE
         // 3. ADD EVENT LISTERNER TO DELETE CURRENT STATE
-
         typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
             console.log("image.uploader.called", e);
             let cdnURL = e.detail.data[0]?.cdnUrl
@@ -97,19 +96,10 @@ export default function WalkthroughCreator() {
             const api = document.querySelector("lr-upload-ctx-provider");
             api.uploadCollection.clearAll();
         }
-
-
-
-        let show_guide = page?.content?.editor?.blocks.length > 0 && page?.content?.editor?.blocks[0]["id"] !== undefined;
-
-        console.log("show.guide", { show_guide, keys: page?.content?.editor?.blocks.length });
-
-        // HANDLE OPENING THE EDITOR OR CLOSING IT
-        setBuilder({ guide: show_guide })
-
     }, [pageId]);
 
 
+    // FUNCTIONS
     const EditorOutputHandler = (output) => {
         console.log("Editor Data to Save::", { output });
 
@@ -142,7 +132,6 @@ export default function WalkthroughCreator() {
             setPage(value);
             setPageId(value.id)
             setSteps(local);
-            setBuilder({ guide: false });
             const newUrl = `/editor/${navigation}?page=${value.id}`
             window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
         }
@@ -251,6 +240,19 @@ export default function WalkthroughCreator() {
         HandleAddPage(position, parent_id);
     }
 
+    const CancelAndDelete = () => {
+        // RESET THE CURRENT EDITOR COMPONENTS TREE & MDX
+        // - INDICATE UNSAVED WORK
+        setPage({ ...page, content: { ...page.content, editor: {} } });
+        setEdited(true);
+    }
+
+    const AddGuideToPage = () => {
+        let editor = EditorPageBlocksHandler(page?.title, page?.description);
+        setPage({ ...page, content: { ...page.content, editor } });
+        setEdited(true);
+    }
+
     const HandlePageEdit = (page) => {
         setEdited(true);
     }
@@ -341,17 +343,17 @@ export default function WalkthroughCreator() {
     }, [pageId, render]);
 
     const StepEditorOption = () => {
+        let show_guide = _.isEmpty(page?.content?.editor)
+
         return (
             <div>
-                {builder?.guide == true ?
+                {show_guide == false ?
                     <div className='border shadow-sm rounded-lg pb-3 mt-3'>
                         <div className="p-5">
                             <div className="flex border-b justify-between pb-3">
                                 <h2 className='font-bold'>Step/Selectable Guide Editor</h2>
-                                <Button color="gray" pill size={'xs'} onClick={() => {
-                                    setBuilder({ ...builder, guide: false })
-                                }}>
-                                    Cancel
+                                <Button color="gray" pill size={'xs'} onClick={() => CancelAndDelete()}>
+                                    Cancel & Delete
                                 </Button>
                             </div>
                         </div>
@@ -360,9 +362,7 @@ export default function WalkthroughCreator() {
                     </div>
                     :
                     <div className='p-5 flex justify-between items-center'>
-                        <Button color="gray" pill size={'xs'} onClick={() => {
-                            setBuilder({ ...builder, guide: true })
-                        }}>
+                        <Button color="gray" pill size={'xs'} onClick={() => AddGuideToPage()}>
                             Add guide +
                         </Button>
                         <p className='text-xs'>This will disable options for this page and render the guide, when it's clicked on as a option.</p>
