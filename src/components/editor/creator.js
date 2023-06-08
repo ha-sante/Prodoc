@@ -98,6 +98,15 @@ export default function WalkthroughCreator() {
             api.uploadCollection.clearAll();
         }
 
+
+
+        let show_guide = page?.content?.editor?.blocks.length > 0 && page?.content?.editor?.blocks[0]["id"] !== undefined;
+
+        console.log("show.guide", { show_guide, keys: page?.content?.editor?.blocks.length });
+
+        // HANDLE OPENING THE EDITOR OR CLOSING IT
+        setBuilder({ guide: show_guide })
+
     }, [pageId]);
 
 
