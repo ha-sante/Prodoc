@@ -160,7 +160,7 @@ export default async function handler(req, res) {
 
             console.log("is.editor.empty", editor_empty);
 
-            let editor = editor_empty ? { time: null, blocks: null } : body.content.editor;
+            let editor = editor_empty ? { time: null, blocks: null, version: null } : body.content.editor;
 
             console.log("here.editor", editor);
 
