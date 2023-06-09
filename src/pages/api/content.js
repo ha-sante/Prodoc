@@ -1,6 +1,7 @@
 const fauna = require('../../integrations/fauna.js');
 let q = fauna.q;
 import { kv } from "@vercel/kv"; // CACHING LAYER
+const _ = require('lodash');
 
 
 export const config = {
@@ -155,7 +156,14 @@ export default async function handler(req, res) {
 
             // ! FOR WHEN WE WANT EDITOR TO BE EMPTY - USING AN EMPTY OBJECT WONT GET ITS CONTENT DELETED (BY FAUNA DB)
             let ready = body;
-            let editor = body.content.editor.time == null ? { time: null, blocks: null } : body.content.editor;
+            let editor_empty = _.isEmpty(ready?.content?.editor)
+
+            console.log("is.editor.empty", editor_empty);
+
+            let editor = editor_empty ? { time: null, blocks: null } : body.content.editor;
+
+            console.log("here.editor", editor);
+
             ready.content.editor = editor;
 
             // Process a PUT request
