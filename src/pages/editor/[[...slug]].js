@@ -123,7 +123,6 @@ export default function Editor() {
     setEdited(edited);
   }
 
-
   const handleSavePageData = () => {
     // GET THE DATA FOR THE UPDATED PAGE 
     // let page = content.find(page => page.id == page?.id);
