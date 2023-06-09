@@ -400,14 +400,14 @@ export default function Editor() {
   }
 
   function WalkthroughsPage() {
-    let render_editor = page != undefined && page.type === "walkthroughs";
-    // let render_editor = true;
+    // let render_editor = page != undefined && page.type === "walkthroughs";
+    // // let render_editor = true;
 
-    console.log("walkthroughs_editor", { render_editor, page })
+    // console.log("walkthroughs_editor", { render_editor, page })
     return (
       <div className="p-4 pt-2 sm:ml-64 flex flex-row justify-between">
 
-        {render_editor ?
+        {page != undefined && page.type === "walkthroughs" ?
           <div className="p-4 w-[100%] mx-auto">
             <WalkthroughCreator />
           </div>

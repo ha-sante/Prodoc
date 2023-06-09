@@ -32,11 +32,8 @@ import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
 export default function PageEditor(props) {
   const ejInstance = useRef();
-  const isReady = useRef(false);
-
   const [page, setPage] = useAtom(pageAtom);
   const pageId = useAtomValue(pageIdAtom);
-  const [editor, setEditor] = useState("")
 
   const initEditor = () => {
     logger.log("initEditor.called");

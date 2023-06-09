@@ -101,9 +101,9 @@ export default function WalkthroughCreator() {
 
     // FUNCTIONS
     const EditorOutputHandler = (output) => {
-        console.log("Editor Data to Save::", { output });
+        // console.log("Editor Data to Save::", { output });
 
-        // FIND IF IT'S DIFFERENT FROM WHAT IS STORED IN CONTENT PAGE
+        // // FIND IF IT'S DIFFERENT FROM WHAT IS STORED IN CONTENT PAGE
         let difference = Object.keys(diff(output, page?.content?.editor));
         let edited = false;
         console.log("editor.output.difference", difference);
@@ -116,7 +116,7 @@ export default function WalkthroughCreator() {
         // UPDATE THE PAGE WITH THIS NEW DATA
         let local = page;
         let update = _.set(local, ["content", "editor"], output);
-        setPage({ ...page, content: update.content });
+        setPage({ ...update, content: { ...update.content, editor: output } });
 
         // HANDLE EDITED STATE
         setEdited(edited);
@@ -343,8 +343,9 @@ export default function WalkthroughCreator() {
         )
     }, [pageId, render]);
 
-    const StepEditorOption = () => {
-        let show_guide = _.isEmpty(page?.content?.editor)
+    const StepEditorOption = useMemo(() => {
+        let show_guide = _.isEmpty(page?.content?.editor);
+        // let render_editor = page != undefined && pageId != undefined && content.length > 0;
 
         return (
             <div>
@@ -371,7 +372,7 @@ export default function WalkthroughCreator() {
                 }
             </div>
         )
-    }
+    }, [pageId, page]);
 
     const OptionsStepper = () => {
         let children = content.filter((item) => page.children.includes(item?.id));
@@ -438,7 +439,7 @@ export default function WalkthroughCreator() {
                 <div className="flex-column rounded-lg dark:border-gray-700 w-[100%]">
                     <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
                         {StepIntroduction}
-                        <StepEditorOption />
+                        {StepEditorOption}
                     </div>
                 </div>
             </div>
