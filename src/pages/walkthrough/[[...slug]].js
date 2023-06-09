@@ -84,10 +84,10 @@ export default function Walkthrough() {
                         }
                         <div className='w-[90%]'>
                             <h1 className='text-4xl'>{page?.title}</h1>
-                            <p className='mt-3 text-sm'>{page?.description}</p>
+                            <p className='mt-5 text-sm'>{page?.description}</p>
 
 
-                            <div className='flex gap-2 mx-auto mt-4'>
+                            <div className='flex gap-2 mx-auto mt-5'>
                                 {options && options.map((step) => {
                                     return (
                                         <div key={step.id} className='border rounded p-4 cursor-pointer'>
