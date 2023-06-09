@@ -130,6 +130,8 @@ export default function Editor() {
     if (page) {
       setProcessing(true);
       let toastId = toast.loading('Saving this Page...');
+
+      console.log("saving.this", page);
       ContentAPIHandler('PUT', page).then(response => {
 
         // SET IT IN CONTENT LOADING

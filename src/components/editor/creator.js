@@ -243,13 +243,14 @@ export default function WalkthroughCreator() {
     const CancelAndDelete = () => {
         // RESET THE CURRENT EDITOR COMPONENTS TREE & MDX
         // - INDICATE UNSAVED WORK
-        setPage({ ...page, content: { ...page.content, editor: {} } });
+        setPage({ ...page, content: { ...page.content, editor: { } } });
         setEdited(true);
     }
 
     const AddGuideToPage = () => {
-        let editor = EditorPageBlocksHandler(page?.title, page?.description);
-        setPage({ ...page, content: { ...page.content, editor } });
+        let anew = EditorPageBlocksHandler(page?.title, page?.description);
+        console.log("add-guide-page", anew)
+        setPage({ ...page, content: { ...page.content, editor: { ...anew }, added: null }, added: null });
         setEdited(true);
     }
 
