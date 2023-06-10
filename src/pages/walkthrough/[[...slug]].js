@@ -44,6 +44,7 @@ export default function Walkthrough() {
                 setProcessing(false);
                 setContent([...content]);
                 setPage(page);
+                setSteps([page]);
             }).catch(error => {
                 setProcessing(false);
                 console.log('error', error);
@@ -71,26 +72,33 @@ export default function Walkthrough() {
 
 
         console.log("options", options);
+        console.log("steps", steps);
 
         return (
             <div className="p-4 flex justify-center items-center h-screen bg-gray-100 polka-background">
                 <div className='text-left shadow rounded-lg p-32 w-2/3 bg-white justify-center glass-background'>
 
-                    <div className='flex gap-3 items-stretch mx-auto'>
-                        {page?.logo &&
-                            <div className='w-[10%]'>
-                                <Avatar img={page?.logo} className='' rounded width="200px" />
-                            </div>
-                        }
-                        <div className='w-[90%]'>
-                            <h1 className='text-4xl'>{page?.title}</h1>
-                            <p className='mt-5 text-sm'>{page?.description}</p>
+                    <div className='flex !justify-center items-center gap-2 mb-10'>
+                        {steps.map((step, index) => {
+                            return (<span key={step.id} className='rounded-full bg-gray-200 !w-[70px] !h-[5px] p-1 cursor-pointer' onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
+                        })}
+                    </div>
 
+                    <div className='flex gap-3 items-stretch mx-auto'>
+                        <div className='w-[10%]'>
+                            {page?.logo && <Avatar img={page?.logo} className='' rounded width="200px" />}
+                        </div>
+                        <div className='w-[90%]'>
+                            <h1 className='text-4xl animate__animated animate__fadeInUp'>{page?.title}</h1>
+                            <p className='mt-5 text-sm animate__animated animate__fadeInUp'>{page?.description}</p>
 
                             <div className='flex gap-2 mx-auto mt-5'>
                                 {options && options.map((step) => {
                                     return (
-                                        <div key={step.id} className='border rounded p-4 cursor-pointer'>
+                                        <div key={step.id} className='border rounded p-4 cursor-pointer' onClick={() => {
+                                            setPage(step);
+                                            setSteps([...steps, step]);
+                                        }}>
                                             <p className='text-sm'> {step.title} </p>
                                         </div>
                                     )
