@@ -12,8 +12,11 @@ import {
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom } from "jotai";
 
+import Output from 'editorjs-react-renderer';
 
 const inter = Inter({ subsets: ['latin'] })
+
+const _ = require('lodash');
 
 export default function Walkthrough() {
 
@@ -69,7 +72,7 @@ export default function Walkthrough() {
 
     const WalkthroughThis = () => {
         let options = page?.children.map(child_id => content.find(child => child.id == child_id)).filter(item => item != undefined);
-
+        let render_body = _.isEmpty(page?.content?.editor) === false;
 
         console.log("options", options);
         console.log("steps", steps);
@@ -104,8 +107,14 @@ export default function Walkthrough() {
                                     )
                                 })}
                             </div>
+
+                            <div>
+                                {render_body && <section><Output data={page?.content?.editor} /></section>}
+                            </div>
+
                         </div>
                     </div>
+
 
                 </div>
             </div>
