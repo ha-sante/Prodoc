@@ -4,6 +4,10 @@ import axios from 'axios';
 import localForage from 'localforage';
 const loglevel = require("loglevel");
 
+import Output from 'editorjs-react-renderer';
+import StringToReactComponent from 'string-to-react-component';
+import Highlight from 'react-highlight'
+
 // loglevel.config({
 //   development: {
 //     "level": "debug"
@@ -54,6 +58,7 @@ export const DEFAULT_PAGE_DATA = {
   configuration: PAGE_CONFIGURATION
 }
 
+// FUNCTIONS
 export function EditorPageBlocksHandler(title, description, navigation) {
   if (navigation != "walkthroughs") {
     return ({
@@ -167,6 +172,83 @@ export function roughSizeOfObject(object) {
   }
   return niceBytes(bytes[0]);
 }
+
+
+export function EditorPageContentRenderer(content) {
+
+  // All valid JSX inline styles are allowed
+  const style = {
+    header: {
+      h1: {
+        border: "1px solid black",
+        margin: "20px"
+      },
+      h2: {
+        border: "1px solid black",
+        margin: "20px"
+      },
+    },
+    paragraph: {
+      fontSize: '16px',
+    }
+  };
+
+  const classes = {
+    header: {
+      h1: "mb-40 text-lg font-medium",
+      h2: "mb-40 text-lg font-bold",
+    },
+    paragraph: '',
+  };
+
+  const config = {
+    header: {
+      disableDefaultStyle: false,
+    },
+    image: {
+      disableDefaultStyle: false,
+    },
+    video: {
+      disableDefaultStyle: false,
+    },
+  };
+
+
+  // REACT COMPONENTS CUSTOM RENDERED
+  const ComponentsRenderer = ({ data, style, classNames, config }) => {
+    console.log("components.data", { data, style, classNames, config });
+
+    return (
+      <StringToReactComponent>
+        {`()=>{data}`}
+      </StringToReactComponent>
+    )
+  };
+
+  const CodeSectionRenderer = ({ data, style, classNames, config }) => {
+    console.log("components.data", { data, style, classNames, config })
+
+    return (<div className='overflow-scroll'>
+      <Highlight className='javascript overflow-scroll'>
+        {data.code}
+      </Highlight>
+    </div>);
+  };
+
+
+  // CUSTOM RENDERERS FOR BLOCKS
+  const renderers = {
+    components: ComponentsRenderer,
+    code: CodeSectionRenderer,
+  };
+
+  // RENDERED
+  return (<Output renderers={renderers} data={content} classNames={classes} config={config} />);
+}
+
+
+
+
 
 // API CALLS 
 export function ContentAPIHandler(option, data) {

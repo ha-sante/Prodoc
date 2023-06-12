@@ -1,4 +1,6 @@
 import Image from 'next/image'
+import Head from 'next/head';
+
 import { Inter } from 'next/font/google'
 import { useState, useEffect, useContext, useRef, useLayoutEffect, useMemo, memo } from "react";
 import { useRouter } from 'next/router'
@@ -8,7 +10,8 @@ import axios from 'axios';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger,
+    EditorPageContentRenderer,
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom } from "jotai";
 
@@ -55,10 +58,9 @@ export default function Walkthrough() {
         }
     }, [slug]);
 
-
     const PageLoadingIndication = () => {
         return (
-            <div className='text-center h-screen flex justify-center items-center border w-full'>
+            <div className='text-center min-h-screen flex justify-center items-center border w-full'>
                 <div className='text-center'>
                     <Spinner
                         aria-label="Extra large spinner example"
@@ -78,8 +80,8 @@ export default function Walkthrough() {
         console.log("steps", steps);
 
         return (
-            <div className="p-4 flex justify-center items-center h-screen bg-gray-100 polka-background">
-                <div className='text-left shadow rounded-lg p-32 w-2/3 bg-white justify-center glass-background'>
+            <div className="p-4 flex justify-center items-center min-h-screen bg-gray-100 polka-background">
+                <div className='text-left shadow p-32 w-2/3 bg-white justify-center'>
 
                     <div className='flex !justify-center items-center gap-2 mb-10'>
                         {steps.map((step, index) => {
@@ -109,7 +111,7 @@ export default function Walkthrough() {
                             </div>
 
                             <div>
-                                {render_body && <section><Output data={page?.content?.editor} /></section>}
+                                {render_body && EditorPageContentRenderer(page?.content?.editor)}
                             </div>
 
                         </div>
@@ -122,8 +124,13 @@ export default function Walkthrough() {
     }
 
     return (
-        <main className="min-h-screen bg-white">
-            {processing ? <PageLoadingIndication /> : <WalkthroughThis />}
-        </main>
+        <div>
+            <Head>
+                <link rel="stylesheet" href="node_modules/highlight.js/styles/an-old-hope.css"/>
+            </Head>
+            <main className="min-h-screen bg-white walkthrough">
+                {processing ? <PageLoadingIndication /> : <WalkthroughThis />}
+            </main>
+        </div>
     )
 }

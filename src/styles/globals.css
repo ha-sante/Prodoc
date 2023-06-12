@@ -26,12 +26,14 @@ body {
     rgb(var(--background-start-rgb)); */
 }
 
-
+.walkthrough pre{
+  overflow: scroll;
+}
 
 /* width */
 ::-webkit-scrollbar {
   width: 8px;
-  height: 100px;
+  height: 8px;
 }
 
 /* Handle */
