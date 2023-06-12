@@ -80,31 +80,33 @@ export default function Walkthrough() {
         console.log("steps", steps);
 
         return (
-            <div className="p-4 flex justify-center items-center min-h-screen bg-gray-100 polka-background">
+            <div className={`p-4 flex justify-center items-center min-h-screen polka-background ${render_body == false ? "-mt-10" : ""}`}>
                 <div className='text-left shadow p-32 w-2/3 bg-white justify-center'>
-
-                    <div className='flex !justify-center items-center gap-2 mb-10'>
-                        {steps.map((step, index) => {
-                            return (<span key={step.id} className='rounded-full bg-gray-200 !w-[70px] !h-[5px] p-1 cursor-pointer' onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
-                        })}
-                    </div>
 
                     <div className='flex gap-3 items-stretch mx-auto'>
                         <div className='w-[10%]'>
                             {page?.logo && <Avatar img={page?.logo} className='' rounded width="200px" />}
                         </div>
                         <div className='w-[90%]'>
-                            <h1 className='text-4xl animate__animated animate__fadeInUp'>{page?.title}</h1>
-                            <p className='mt-5 text-sm animate__animated animate__fadeInUp'>{page?.description}</p>
+                            <h1 className='text-4xl'>{page?.title}</h1>
+                            <p className='mt-5 text-sm'>{page?.description}</p>
 
                             <div className='flex gap-2 mx-auto mt-5'>
                                 {options && options.map((step) => {
                                     return (
-                                        <div key={step.id} className='border rounded p-4 cursor-pointer' onClick={() => {
+                                        <div key={step.id} className='flex flex-col items-center shadow rounded-sm p-4 cursor-pointer' onClick={() => {
                                             setPage(step);
                                             setSteps([...steps, step]);
                                         }}>
-                                            <p className='text-sm'> {step.title} </p>
+
+                                            <div className='w-[100%]'>
+                                                {step?.logo && <Avatar img={step?.logo} className='mb-3' height="10px" width="10px" />}
+                                            </div>
+
+                                            <div className='w-[100%] text-center mt'>
+                                                <p className='text-sm'> {step.title} </p>
+                                            </div>
+
                                         </div>
                                     )
                                 })}
@@ -117,16 +119,29 @@ export default function Walkthrough() {
                         </div>
                     </div>
 
-
                 </div>
+            </div>
+        )
+    }
+
+
+    const Navbar = () => {
+        return (
+            <div className='bg-white h-[60px] w-100 shadow sticky p-2 top-0 z-10 flex items-center'>
+
+                <div className='flex !justify-center items-center gap-2 mx-auto'>
+                    {steps.map((step, index) => {
+                        return (<span key={step.id} className='rounded-full bg-gray-200 !w-[70px] !h-[5px] p-1 cursor-pointer' onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
+                    })}
+                </div>
+
             </div>
         )
     }
 
     return (
         <div>
-            <Head>
-            </Head>
+            <Navbar />
             <main className="min-h-screen bg-white walkthrough">
                 {processing ? <PageLoadingIndication /> : <WalkthroughThis />}
             </main>

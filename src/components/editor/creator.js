@@ -75,7 +75,8 @@ export default function WalkthroughCreator() {
         typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
             console.log("image.uploader.called", e);
             let cdnURL = e.detail.data[0]?.cdnUrl
-            setPage({ ...page, logo: cdnURL ? cdnURL : "" })
+            setPage({ ...page, logo: cdnURL ? cdnURL : "" });
+            setEdited(true);
         });
 
         if (page.logo) {
