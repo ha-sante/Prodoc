@@ -228,11 +228,13 @@ export function EditorPageContentRenderer(content) {
   const CodeSectionRenderer = ({ data, style, classNames, config }) => {
     console.log("components.data", { data, style, classNames, config })
 
-    return (<div className='overflow-scroll'>
-      <Highlight className='javascript overflow-scroll'>
-        {data.code}
-      </Highlight>
-    </div>);
+    return (
+      <div className='editor-codebox-area'>
+        <Highlight className='python overflow-scroll text-xs p-2 !rounded-sm [&>pre]:rounded-sm'>
+          {data.code}
+        </Highlight>
+      </div>
+    );
   };
 
 

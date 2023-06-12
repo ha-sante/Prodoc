@@ -126,7 +126,6 @@ export default function Walkthrough() {
     return (
         <div>
             <Head>
-                <link rel="stylesheet" href="node_modules/highlight.js/styles/an-old-hope.css"/>
             </Head>
             <main className="min-h-screen bg-white walkthrough">
                 {processing ? <PageLoadingIndication /> : <WalkthroughThis />}
