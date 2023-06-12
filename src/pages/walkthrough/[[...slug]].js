@@ -7,6 +7,7 @@ import { useRouter } from 'next/router'
 
 import { Label, TextInput, Checkbox, Button, Alert, Avatar, Spinner } from "flowbite-react";
 import axios from 'axios';
+import { ArrowSquareRight, ArrowRight2, TickSquare } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -126,6 +127,8 @@ export default function Walkthrough() {
 
 
     const Navbar = () => {
+        let render_body = _.isEmpty(page?.content?.editor) === false;
+
         return (
             <div className='bg-white h-[60px] w-100 shadow sticky p-5 pr-20 pl-20 top-0 z-10 flex items-center justify-between'>
 
@@ -135,13 +138,18 @@ export default function Walkthrough() {
 
                 <div className='flex !justify-center items-center gap-2 mx-auto w-[40%]'>
                     {steps.map((step, index) => {
-                        return (<span key={step.id} className='rounded-full bg-gray-200 !w-[70px] !h-[5px] p-1 cursor-pointer' onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
+                        return (<span key={step.id} className={`rounded-full !w-[70px] !h-[5px] p-1 cursor-pointer ${page?.id == step.id ? "bg-gray-200" : "bg-gray-200"}`} onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
                     })}
                 </div>
 
                 <div className='w-[30%] text-right flex justify-end'>
-                    <Button className='border-none' color="light">Skip Onboarding </Button>
+                    {render_body ?
+                        <Button className='border-none items-center' color="light"> Complete Onboarding  <TickSquare className='ml-3' size="16" color="#000000" /> </Button>
+                        :
+                        <Button className='border-none' color="light"> Skip Onboarding </Button>
+                    }
                 </div>
+
             </div>
         )
     }
