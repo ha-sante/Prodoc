@@ -127,14 +127,21 @@ export default function Walkthrough() {
 
     const Navbar = () => {
         return (
-            <div className='bg-white h-[60px] w-100 shadow sticky p-2 top-0 z-10 flex items-center'>
+            <div className='bg-white h-[60px] w-100 shadow sticky p-5 pr-20 pl-20 top-0 z-10 flex items-center justify-between'>
 
-                <div className='flex !justify-center items-center gap-2 mx-auto'>
+                <div className='w-[30%] justify-start'>
+                    {<img src={"https://ucarecdn.com/84f42343-490a-4927-ac1c-5c8ff2b26aab/autharmorconsumerblack.svg"} className="" width="150px" height="auto" />}
+                </div>
+
+                <div className='flex !justify-center items-center gap-2 mx-auto w-[40%]'>
                     {steps.map((step, index) => {
                         return (<span key={step.id} className='rounded-full bg-gray-200 !w-[70px] !h-[5px] p-1 cursor-pointer' onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
                     })}
                 </div>
 
+                <div className='w-[30%] text-right flex justify-end'>
+                    <Button className='border-none' color="light">Skip Onboarding </Button>
+                </div>
             </div>
         )
     }
