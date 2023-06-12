@@ -86,7 +86,7 @@ export default function Walkthrough() {
 
                     <div className='flex gap-3 items-stretch mx-auto'>
                         <div className='w-[10%]'>
-                            {page?.logo && <Avatar img={page?.logo} className='' rounded width="200px" />}
+                            {page?.logo && <Avatar img={page?.logo} className='' width="200px" />}
                         </div>
                         <div className='w-[90%]'>
                             <h1 className='text-4xl'>{page?.title}</h1>
