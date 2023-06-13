@@ -54,7 +54,14 @@ const EditorSidebarComponent = (props) => {
         { icon: <Box size="16" color="#111827" />, title: "Product", id: 'product' },
         { icon: <Code1 size="16" color="#111827" />, title: "API Reference", id: 'api' },
         { icon: <MapIcon size="16" color="#111827" />, title: "Walkthroughs", id: 'walkthroughs' },
-        // { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
+        { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
+    ];
+
+    const configRoutes = [
+        { icon: <Box size="16" color="#111827" />, title: "Organization/Team", id: 'product' },
+        { icon: <Code1 size="16" color="#111827" />, title: "Integrations", id: 'api' },
+        { icon: <MapIcon size="16" color="#111827" />, title: "Walkthroughs", id: 'walkthroughs' },
+        { icon: <Setting3 size="16" color="#111827" />, title: "Configuration", id: 'configuration' },
     ];
 
     function HandleAddPage(position, parent_id) {
@@ -195,7 +202,7 @@ const EditorSidebarComponent = (props) => {
     }
 
     const HandleMoveToAPage = async (newPage) => {
-        
+
         // CHECK IF THE USER HAS EDITED THE CURRENT PAGE
         // TAKE PERMISSION FROM HIM BEFORE MOVING 
         // - USE A PROMPT TO SHOW A JSX DIALOG (INFITELY)
@@ -545,6 +552,46 @@ const EditorSidebarComponent = (props) => {
         }
     }
 
+    function SubMenuNavigation() {
+        return (
+            <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 flex justify-between flex-col">
+
+                <ul className="space-y-2 font-medium">
+                    <li className='flex flex-row items-center'>
+
+                        <p onClick={HandleBacktoMain} className="border cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <ArrowLeft size="16" color="#111827" />
+                        </p>
+
+                        <p className="pl-2 flex items-center">Configuration</p>
+
+                    </li>
+
+                    {configRoutes.map((route) => {
+                        return (
+                            <li key={route.id}>
+                                <Link href={`/editor/${route.id.toLowerCase()}`} className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    {route.icon}
+                                    <span className="ml-3">{route.title}</span>
+                                </Link >
+                            </li>
+                        )
+                    })}
+                </ul>
+
+                <ul className="space-y-2 font-medium">
+                    <li >
+                        <p onClick={HandleLogOut} className="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <Logout size="16" color="#111827" />
+                            <span className="ml-3"> Log out</span>
+                        </p>
+                    </li>
+                </ul>
+
+            </div >
+        )
+    }
+
     function MainNavigation() {
         return (
             <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 flex justify-between flex-col">
@@ -642,7 +689,8 @@ const EditorSidebarComponent = (props) => {
         // This function will only be called if passed in values change
         return (
             <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-                {navigation == 'main' ? MainNavigation() : SubPageNavigation()}
+                {["product", "api", "walkthroughs"].includes(navigation) && SubPageNavigation()}
+                {["main", "configuration"].includes(navigation) && MainNavigation()}
             </aside>
         );
     }, [content, navigation]);

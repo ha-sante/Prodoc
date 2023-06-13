@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useState, useEffect, useContext, useRef, useLayoutEffect, useMemo, memo } from "react";
 import { useRouter } from 'next/router'
 
-import { Label, TextInput, Checkbox, Button, Alert, Avatar, Modal } from "flowbite-react";
+import { Label, TextInput, Checkbox, Button, Alert, Textarea, Tabs } from "flowbite-react";
 import axios from 'axios';
 
 import EditorSidebar from '@/components/editor/sidebar';
@@ -21,14 +21,14 @@ const inter = Inter({ subsets: ['latin'] })
 
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger
+  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger, configurationAtom
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom } from "jotai";
 
 import { serialize } from 'next-mdx-remote/serialize'
 import { MDXRemote } from 'next-mdx-remote'
 
-import { DocumentUpload, CloudAdd, CloudPlus, ArrowLeft2, CloudChange } from 'iconsax-react';
+import { DocumentUpload, TickSquare, CloudPlus, ArrowLeft2, CloudChange } from 'iconsax-react';
 import ReactPlayer from 'react-player'
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -43,6 +43,7 @@ export default function Editor() {
   const [content, setContent] = useAtom(contentAtom);
   const [pagination, setPagination] = useAtom(paginationAtom);
   const [page, setPage] = useAtom(pageAtom);
+  const [configuration, setConfiguration] = useAtom(configurationAtom);
   // const setPageId = useSetAtom(pageIdAtom);
   const [pageId, setPageId] = useAtom(pageIdAtom);
 
@@ -61,6 +62,13 @@ export default function Editor() {
   const [example, setExample] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  const [refs, setRefs] = useState(new Map());
+
+
+  const sections = {
+    standalone: ["configuration"],
+    content: ["product", "api", "walkthroughs"],
+  }
 
   // FUNCTIONS
   const authenticate = () => {
@@ -222,7 +230,7 @@ export default function Editor() {
 
   useEffect(() => {
     let nav = { slug, page: router.query.page };
-    logger.log("slug.url.changed", { nav });
+    console.log("slug.url.changed", { nav });
 
     // - /PRODUCT OR /API LOADS : (GET ALL CONTENT AT THIS POINT)
     // - /PRODUCT/PAGE (NO CONTENT) : (GET ALL CONTENT) (FROM THE RESPONSE CHECK FOR THE PAGE)
@@ -236,58 +244,34 @@ export default function Editor() {
         setNavigation(slug[0]);
       }
 
-      // IF AT THE MAIN ENTRY ONLY (/product or /api)
-      if (nav.page == null) {
-        let toastId = toast.loading('Getting Pages Content...');
+      // GET SECTION NAME 
+      let section_name = slug[0];
 
-        // GET ALL CONTENT ANEW
-        ContentAPIHandler('GET').then(response => {
+      // CHECK IF NAVIGATION IS A REGULAR CONTENT SPECIFIC NAVIGATION
+      if (sections.content.includes(section_name)) {
 
-          // SET THE NEW CONTENT
-          logger.log('get.all.content', { content: response.data, page_id: router.query.page });
-          setContent(response.data);
-          toast.dismiss(toastId);
-
-          // SET THE CURRENT PAGE WE ARE ON
-          if (nav.page != undefined) {
-            let found = response.data.find(page => page.id == nav.page);
-            console.log("slug.page.matched.content.new.load", { found });
-            setPage(found);
-            setPageId(found.id);
-            setEdited(false);
-            StorageHandler.set(`edited`, false);
-          }
-
-        }).catch(error => {
-          logger.log('error', error);
-          toast.dismiss(toastId);
-          toast.error('Recieved an error whiles getting pages content');
-        })
-      }
-
-      // IF AT A CHILD PAGE
-      if (nav.page != null) {
-        // IF NO CONTENT
-        if (content.length == 0) {
+        // IF AT THE MAIN ENTRY ONLY (/product or /api)
+        if (nav.page == null) {
           let toastId = toast.loading('Getting Pages Content...');
 
           // GET ALL CONTENT ANEW
           ContentAPIHandler('GET').then(response => {
-            logger.log('get.all.content', { content: response.data, page_id: router.query.page });
 
             // SET THE NEW CONTENT
+            logger.log('get.all.content', { content: response.data, page_id: router.query.page });
             setContent(response.data);
             toast.dismiss(toastId);
 
             // SET THE CURRENT PAGE WE ARE ON
             if (nav.page != undefined) {
               let found = response.data.find(page => page.id == nav.page);
-              console.log("slug.change.new.page", { page });
+              console.log("slug.page.matched.content.new.load", { found });
               setPage(found);
               setPageId(found.id);
               setEdited(false);
               StorageHandler.set(`edited`, false);
             }
+
           }).catch(error => {
             logger.log('error', error);
             toast.dismiss(toastId);
@@ -295,15 +279,58 @@ export default function Editor() {
           })
         }
 
-        // IF CONTENT EXISTS
-        if (content.length > 0) {
-          let found = content.find(page => page.id == nav.page);
-          console.log("page.loaded.from.current.content", { found });
-          setPage(found);
-          setPageId(found.id);
-          setEdited(false);
-          StorageHandler.set(`edited`, false);
+        // IF AT A CHILD PAGE
+        if (nav.page != null) {
+          // IF NO CONTENT
+          if (content.length == 0) {
+            let toastId = toast.loading('Getting Pages Content...');
+
+            // GET ALL CONTENT ANEW
+            ContentAPIHandler('GET').then(response => {
+              logger.log('get.all.content', { content: response.data, page_id: router.query.page });
+
+              // SET THE NEW CONTENT
+              setContent(response.data);
+              toast.dismiss(toastId);
+
+              // SET THE CURRENT PAGE WE ARE ON
+              if (nav.page != undefined) {
+                let found = response.data.find(page => page.id == nav.page);
+                console.log("slug.change.new.page", { page });
+                setPage(found);
+                setPageId(found.id);
+                setEdited(false);
+                StorageHandler.set(`edited`, false);
+              }
+            }).catch(error => {
+              logger.log('error', error);
+              toast.dismiss(toastId);
+              toast.error('Recieved an error whiles getting pages content');
+            })
+          }
+
+          // IF CONTENT EXISTS
+          if (content.length > 0) {
+            let found = content.find(page => page.id == nav.page);
+            console.log("page.loaded.from.current.content", { found });
+            setPage(found);
+            setPageId(found.id);
+            setEdited(false);
+            StorageHandler.set(`edited`, false);
+          }
         }
+
+      }
+
+      // CHECK IF USER IS GOING TO A STANDALONE PAGE
+      if (sections.standalone.includes(section_name)) {
+
+        if (section_name == "configuration") {
+          // GET THE PAGE PORTAL CONFIGURATION
+          let toastId = toast.loading('Getting portal configuration...');
+          toast.dismiss(toastId);
+        }
+
       }
 
     } else {
@@ -446,6 +473,77 @@ export default function Editor() {
     )
   }
 
+
+  const ConfigurationsPage = useMemo(() => {
+    return (
+      <div className="p-5 pt-0 sm:ml-64 flex flex-row justify-between">
+        <div className="p-4 w-[90%] mx-auto mt-5">
+          <div className="p-4 rounded-lg dark:border-gray-700">
+
+            <div className='flex flex-row items-center justify-between'>
+              <div className='flex flex-col items-start justify-left'>
+                <h2 className="block text-lg font-medium text-gray-900 dark:text-white">Configuration</h2>
+                <p className='text-sm'>Manage general landing page, team and integrations info.</p>
+              </div>
+
+              {edited ?
+                <Button size={"sm"} className='' onClick={() => { }} color={"warning"}>
+                  Update Configuration <TickSquare className='ml-3' size="16" color="#fff" />
+                </Button>
+                :
+                <Button size={"sm"} className='' onClick={() => { }}>
+                  Save Configuration <TickSquare className='ml-3' size="16" color="#fff" />
+                </Button>
+              }
+            </div>
+
+            <Tabs.Group aria-label="Pills" style="pills" className='mt-3 gap-2' >
+
+              <Tabs.Item active title="Integrations" size="sm" className='border' color='light'>
+                <p className="text-sm text-gray-500 dark:text-gray-400"> Activate an integration by inserting it's API key.</p>
+                <div className="flex gap-2 mt-5 items-center">
+                  <div className="flex flex-col gap-2 border rounded p-4 1fr w-[50%]">
+                    <h2 className="text-xl mr-2"> Readme </h2>
+                    <TextInput
+                      id={"readme-api-key"}
+                      type={"password"}
+                      className='w-[100%]'
+                      placeholder={`API KEY`}
+                      required={true}
+                      key={`${Math.floor((Math.random() * 1000))}-min`}
+                      defaultValue={configuration?.readme}
+                      ref={el => {
+                        if (el) {
+                          el.addEventListener('keyup', (e) => {
+                            let value = e.target.value;
+                            setConfiguration({ ...configuration, readme: value });
+                            setEdited(true);
+
+                            // TODO: Handle input values of a different type from text
+                            e.target.focus();
+                          });
+
+                          return setRefs(refs.set("readme", el))
+                        }
+
+                        return null
+                      }}
+
+                    />
+                  </div>
+
+                </div>
+
+              </Tabs.Item>
+
+            </Tabs.Group>
+
+          </div>
+        </div>
+      </div>
+    )
+  }, [navigation]);
+
   function Navigation() {
     // logger.log("editor.navigation.bar.rendered")
     return (
@@ -504,6 +602,7 @@ export default function Editor() {
               {navigation === 'api' && APIPage()}
               {navigation === 'product' && EditorPage()}
               {navigation === 'walkthroughs' && WalkthroughsPage()}
+              {navigation === 'configuration' && ConfigurationsPage}
             </div>
           }
         </div>

@@ -297,6 +297,7 @@ export const contentAtom = atom([]);
 export const paginationAtom = atom({});
 export const pageAtom = atom({});
 export const builderAtom = atom({});
+export const configurationAtom = atom({});
 
 export const configureAtom = atom(false);
 export const editedAtom = atom(false);

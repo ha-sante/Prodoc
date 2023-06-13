@@ -41,7 +41,6 @@ function msConversion(millis) {
     return output
 }
 
-
 const units = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
 
 function niceBytes(x) {
@@ -199,7 +198,7 @@ export default async function handler(req, res) {
             });
             break;
         case "PATCH":
-            console.clear();
+            // console.clear();
             let body_size = roughSizeOfObject(body);
             let configuration_object = roughSizeOfObject(body?.configuration);
             console.log("api.content.patch.called.diagnostics.body_size", body_size);
