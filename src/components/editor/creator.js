@@ -373,7 +373,7 @@ export default function WalkthroughCreator() {
 
                                 <div className='flex flex-row gap-2'>
 
-                                    {configuration.readme && <Button color={reademeView ? "gray" : "gray"} pill size={'xs'} className="items-center" onClick={() => {
+                                    {configuration.readme != "" && <Button color={reademeView ? "gray" : "gray"} pill size={'xs'} className="items-center" onClick={() => {
                                         let choice = !reademeView;
                                         setReademeView(choice);
 
