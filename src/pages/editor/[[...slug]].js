@@ -87,7 +87,6 @@ export default function Editor() {
     });
   };
 
-
   function ElementText(element) {
     // HANDLE THE SECOND BLOCK
     var html = element;
@@ -214,7 +213,7 @@ export default function Editor() {
     }
     EditorEditing();
   }
-  
+
   const SavePortalConfiguration = () => {
     // TAKE THE CONFIGURATION STATE
     // CALL THE API HANDLER TO SAVE
@@ -498,8 +497,6 @@ export default function Editor() {
       </div>
     )
   }
-
-
 
   const ConfigurationsPage = useMemo(() => {
     return (

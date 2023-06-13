@@ -408,11 +408,12 @@ export default function WalkthroughCreator() {
                                         let value = e.target.value;
                                         setPage({ ...page, content: { ...page.content, readme: value } });
                                         setReadmeGuide(value);
+                                        setEdited(true);
                                         console.log("configuration.from.inputtting", { page, value });
                                     }}
                                 />
 
-                                <p className='text-xs text-gray-400 mt-3 p-3'> Utilizing this readme content is dependent on the setup made for it by your engineers, default as recieved is that, this is rendered instead of the regular editor content. </p>
+                                <p className='text-xs text-gray-400 mt-3 p-3'> Utilizing this readme content is dependent on the setup made for it in the landing page of this portal, default as recieved is that, this is rendered instead of the regular editor content. </p>
 
                             </div>
                         }
