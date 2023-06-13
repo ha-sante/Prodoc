@@ -214,7 +214,23 @@ export default function Editor() {
     }
     EditorEditing();
   }
-
+  
+  const SavePortalConfiguration = () => {
+    // TAKE THE CONFIGURATION STATE
+    // CALL THE API HANDLER TO SAVE
+    let toastId = toast.loading('Saving portal configuration...');
+    console.log("configuration.to.save", { configuration });
+    ConfigAPIHandler('PUT', configuration).then(response => {
+      console.log("response.data", { response_herny: response.data })
+      setConfiguration(response.data);
+      toast.dismiss(toastId);
+      toast.success("Portal Configuration Saved")
+    }).catch(error => {
+      logger.log('error', error);
+      toast.dismiss(toastId);
+      toast.error('Recieved an error whiles saving portal config');
+    })
+  }
 
   useEffect(() => {
     logger.log("page.or.content.changed", { page, content })
@@ -483,22 +499,7 @@ export default function Editor() {
     )
   }
 
-  const SavePortalConfiguration = () => {
-    // TAKE THE CONFIGURATION STATE
-    // CALL THE API HANDLER TO SAVE
-    let toastId = toast.loading('Saving portal configuration...');
-    console.log("configuration.to.save", { configuration });
-    ConfigAPIHandler('PUT', configuration).then(response => {
-      console.log("response.data", { response_herny: response.data })
-      setConfiguration(response.data);
-      toast.dismiss(toastId);
-      toast.success("Portal Configuration Saved")
-    }).catch(error => {
-      logger.log('error', error);
-      toast.dismiss(toastId);
-      toast.error('Recieved an error whiles saving portal config');
-    })
-  }
+
 
   const ConfigurationsPage = useMemo(() => {
     return (

@@ -8,8 +8,8 @@ import { useRouter } from 'next/router'
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
-import { Label, TextInput, Checkbox, Button, Dropdown, Badge, Spinner, Tooltip, Timeline } from "flowbite-react";
-import { Copy, ArrowLeft2, ArrowRight2, Edit } from 'iconsax-react';
+import { Label, TextInput, Checkbox, Button, Dropdown, Avatar, Spinner, Tooltip, Timeline } from "flowbite-react";
+import { Copy, ArrowLeft2, ArrowRight2, Edit, Link1 } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -53,14 +53,24 @@ export default function WalkthroughCreator() {
     const [render, setRender] = useState(0);
     const [refs, setRefs] = useState(new Map());
 
-
     const [processing, setProcessing] = useState(false);
+
+    const [readmeGuide, setReadmeGuide] = useState("");
+    const [reademeView, setReademeView] = useState(false);
 
     // EXECUTIONS
     useEffect(() => {
         console.log("page.changed", { page, steps })
         if (page.position === "chapter") {
-            setSteps([page])
+            setSteps([page]);
+        }
+
+        if (page?.content?.readme) {
+            setReadmeGuide(page.content.readme);
+            setReademeView(true);
+        } else {
+            setReadmeGuide("");
+            setReademeView(false);
         }
     }, [page]);
 
@@ -355,13 +365,57 @@ export default function WalkthroughCreator() {
                         <div className="p-5">
                             <div className="flex border-b justify-between pb-3">
                                 <h2 className='font-bold'>Step/Selectable Guide Editor</h2>
-                                <Button color="gray" pill size={'xs'} onClick={() => CancelAndDelete()}>
-                                    Cancel & Delete
-                                </Button>
+
+                                <div className='flex flex-row gap-2'>
+
+                                    <Button color={reademeView ? "gray" : "gray"} pill size={'xs'} className="items-center" onClick={() => {
+                                        let choice = !reademeView;
+                                        setReademeView(choice);
+
+                                        if (choice == false) {
+                                            setPage({ ...page, content: { ...page.content, readme: null } });
+                                            setEdited(true);
+                                        }
+
+                                    }}>
+                                        {reademeView == false && <Link1 size="12" color="#000" className='mr-3' />}
+
+                                        {reademeView ? "Switch to normal editor" : "Link to Readme Content Instead"}
+                                        {reademeView == false && <img src={"/editor/readme-logo.png"} className='ml-3 !h-[20px] !w-[20px]' size={"xs"} rounded />}
+                                    </Button>
+
+                                    <Button color="gray" pill size={'xs'} onClick={() => CancelAndDelete()}>
+                                        Cancel & Delete
+                                    </Button>
+
+                                </div>
                             </div>
+
                         </div>
 
-                        <BlocksEditor EditorOutputHandler={(output) => EditorOutputHandler(output)} />
+                        {reademeView == false ?
+                            < BlocksEditor EditorOutputHandler={(output) => EditorOutputHandler(output)} />
+                            :
+                            <div className="p-5">
+                                <input
+                                    id={"readme-api-key"}
+                                    type={"text"}
+                                    className='w-[100%] rounded-lg border-gray-300 bg-gray-50'
+                                    placeholder={`Paste your readme page url here`}
+                                    required={true}
+                                    value={readmeGuide}
+                                    onChange={(e) => {
+                                        let value = e.target.value;
+                                        setPage({ ...page, content: { ...page.content, readme: value } });
+                                        setReadmeGuide(value);
+                                        console.log("configuration.from.inputtting", { page, value });
+                                    }}
+                                />
+
+                                <p className='text-xs text-gray-400 mt-3 p-3'> Utilizing this readme content is dependent on the setup made for it by your engineers, default as recieved is that, this is rendered instead of the regular editor content. </p>
+
+                            </div>
+                        }
                     </div>
                     :
                     <div className='p-5 flex justify-between items-center'>
@@ -373,7 +427,7 @@ export default function WalkthroughCreator() {
                 }
             </div>
         )
-    }, [pageId, page]);
+    }, [pageId, page, reademeView]);
 
     const OptionsStepper = () => {
         let children = content.filter((item) => page.children.includes(item?.id));
