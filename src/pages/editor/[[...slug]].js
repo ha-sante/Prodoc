@@ -528,7 +528,7 @@ export default function Editor() {
                       id={"readme-api-key"}
                       type={"password"}
                       autoComplete="new-password"
-                      className='w-[100%] rounded border-gray-300 bg-gray-50'
+                      className='w-[100%] rounded-lg border-gray-300 bg-gray-50'
                       placeholder={`API KEY`}
                       required={true}
                       value={configuration.readme}
