@@ -249,9 +249,6 @@ export function EditorPageContentRenderer(content) {
 }
 
 
-
-
-
 // API CALLS 
 export function ContentAPIHandler(option, data) {
   switch (option) {
@@ -287,6 +284,17 @@ export function ContentAPIHandler(option, data) {
   }
 }
 
+export function ConfigAPIHandler(option, data) {
+  switch (option) {
+    case 'GET':
+      return axios.get('/api/config');
+      break;
+    case 'PUT':
+      return axios.put('/api/config', data);
+      break;
+  }
+}
+
 // JOTAI STATE MANAGEMENT
 import { createStore, Provider, useStore, atom, useAtom } from "jotai";
 export const store = createStore();
@@ -297,7 +305,7 @@ export const contentAtom = atom([]);
 export const paginationAtom = atom({});
 export const pageAtom = atom({});
 export const builderAtom = atom({});
-export const configurationAtom = atom({});
+export const configurationAtom = atom({ readme: "", });
 
 export const configureAtom = atom(false);
 export const editedAtom = atom(false);

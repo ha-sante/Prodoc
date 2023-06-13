@@ -21,7 +21,8 @@ const inter = Inter({ subsets: ['latin'] })
 
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger, configurationAtom
+  editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger, configurationAtom,
+  ConfigAPIHandler
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom } from "jotai";
 
@@ -328,7 +329,16 @@ export default function Editor() {
         if (section_name == "configuration") {
           // GET THE PAGE PORTAL CONFIGURATION
           let toastId = toast.loading('Getting portal configuration...');
-          toast.dismiss(toastId);
+          ConfigAPIHandler('GET').then(response => {
+            console.log("configuration.data", response.data)
+            setConfiguration(response.data);
+            toast.dismiss(toastId);
+          }).catch(error => {
+            logger.log('error', error);
+            toast.dismiss(toastId);
+            toast.error('Recieved an error whiles getting config content');
+          })
+
         }
 
       }
@@ -473,6 +483,22 @@ export default function Editor() {
     )
   }
 
+  const SavePortalConfiguration = () => {
+    // TAKE THE CONFIGURATION STATE
+    // CALL THE API HANDLER TO SAVE
+    let toastId = toast.loading('Saving portal configuration...');
+    console.log("configuration.to.save", { configuration });
+    ConfigAPIHandler('PUT', configuration).then(response => {
+      console.log("response.data", { response_herny: response.data })
+      setConfiguration(response.data);
+      toast.dismiss(toastId);
+      toast.success("Portal Configuration Saved")
+    }).catch(error => {
+      logger.log('error', error);
+      toast.dismiss(toastId);
+      toast.error('Recieved an error whiles saving portal config');
+    })
+  }
 
   const ConfigurationsPage = useMemo(() => {
     return (
@@ -486,15 +512,9 @@ export default function Editor() {
                 <p className='text-sm'>Manage general landing page, team and integrations info.</p>
               </div>
 
-              {edited ?
-                <Button size={"sm"} className='' onClick={() => { }} color={"warning"}>
-                  Update Configuration <TickSquare className='ml-3' size="16" color="#fff" />
-                </Button>
-                :
-                <Button size={"sm"} className='' onClick={() => { }}>
-                  Save Configuration <TickSquare className='ml-3' size="16" color="#fff" />
-                </Button>
-              }
+              <Button size={"sm"} className='' onClick={() => { SavePortalConfiguration() }}>
+                Save Configuration <TickSquare className='ml-3' size="16" color="#fff" />
+              </Button>
             </div>
 
             <Tabs.Group aria-label="Pills" style="pills" className='mt-3 gap-2' >
@@ -504,31 +524,19 @@ export default function Editor() {
                 <div className="flex gap-2 mt-5 items-center">
                   <div className="flex flex-col gap-2 border rounded p-4 1fr w-[50%]">
                     <h2 className="text-xl mr-2"> Readme </h2>
-                    <TextInput
+                    <input
                       id={"readme-api-key"}
                       type={"password"}
-                      className='w-[100%]'
+                      autoComplete="new-password"
+                      className='w-[100%] rounded border-gray-300 bg-gray-50'
                       placeholder={`API KEY`}
                       required={true}
-                      key={`${Math.floor((Math.random() * 1000))}-min`}
-                      defaultValue={configuration?.readme}
-                      ref={el => {
-                        if (el) {
-                          el.addEventListener('keyup', (e) => {
-                            let value = e.target.value;
-                            setConfiguration({ ...configuration, readme: value });
-                            setEdited(true);
-
-                            // TODO: Handle input values of a different type from text
-                            e.target.focus();
-                          });
-
-                          return setRefs(refs.set("readme", el))
-                        }
-
-                        return null
+                      value={configuration.readme}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        setConfiguration({ readme: value });
+                        console.log("configuration.from.inputtting", { configuration, value });
                       }}
-
                     />
                   </div>
 
@@ -542,7 +550,7 @@ export default function Editor() {
         </div>
       </div>
     )
-  }, [navigation]);
+  }, [navigation, configuration]);
 
   function Navigation() {
     // logger.log("editor.navigation.bar.rendered")
