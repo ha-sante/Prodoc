@@ -67,7 +67,7 @@ export default function Editor() {
 
 
   const sections = {
-    standalone: ["configuration"],
+    config: ["configuration", "walkthroughs"],
     content: ["product", "api", "walkthroughs"],
   }
 
@@ -339,22 +339,19 @@ export default function Editor() {
       }
 
       // CHECK IF USER IS GOING TO A STANDALONE PAGE
-      if (sections.standalone.includes(section_name)) {
+      if (sections.config.includes(section_name)) {
 
-        if (section_name == "configuration") {
-          // GET THE PAGE PORTAL CONFIGURATION
-          let toastId = toast.loading('Getting portal configuration...');
-          ConfigAPIHandler('GET').then(response => {
-            console.log("configuration.data", response.data)
-            setConfiguration(response.data);
-            toast.dismiss(toastId);
-          }).catch(error => {
-            logger.log('error', error);
-            toast.dismiss(toastId);
-            toast.error('Recieved an error whiles getting config content');
-          })
-
-        }
+        // GET THE PAGE PORTAL CONFIGURATION
+        let toastId = toast.loading('Getting portal configuration...');
+        ConfigAPIHandler('GET').then(response => {
+          console.log("configuration.data", response.data)
+          setConfiguration(response.data);
+          toast.dismiss(toastId);
+        }).catch(error => {
+          logger.log('error', error);
+          toast.dismiss(toastId);
+          toast.error('Recieved an error whiles getting config content');
+        })
 
       }
 

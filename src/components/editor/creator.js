@@ -13,7 +13,8 @@ import { Copy, ArrowLeft2, ArrowRight2, Edit, Link1 } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger, NewPageHandler, EditorPageBlocksHandler
+    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger, NewPageHandler, EditorPageBlocksHandler,
+    configurationAtom
 } from '../../context/state';
 import { useStore, useAtom, useAtomValue } from "jotai";
 
@@ -45,6 +46,8 @@ export default function WalkthroughCreator() {
     const [content, setContent] = useAtom(contentAtom);
     const [page, setPage] = useAtom(pageAtom);
     const [pageId, setPageId] = useAtom(pageIdAtom);
+    const [configuration, setConfiguration] = useAtom(configurationAtom);
+
     const navigation = useAtomValue(navigationAtom);
 
     const [builder, setBuilder] = useAtom(builderAtom);
@@ -89,24 +92,25 @@ export default function WalkthroughCreator() {
             setEdited(true);
         });
 
-        if (page.logo) {
-            const api = document.querySelector("lr-upload-ctx-provider");
-            console.log("api.data", api.uploadCollection)
-            // IF THE COMPONENT DOSENT HAVE ANY IMAGES - SET THE IMAGES FOR IT
-            if (api.uploadCollection.size === 0) {
-                api.uploadCollection.add({ externalUrl: page.logo });
+        const walkthrough_logo_uploader = document.querySelector("lr-upload-ctx-provider");
 
-
-                var min = render + 1;
-                var max = 50000
-                var random = Math.random() * (max - min) + min;
-
-                setRender(random)
+        if (walkthrough_logo_uploader) {
+            if (page.logo) {
+                console.log("api.data", walkthrough_logo_uploader.uploadCollection)
+                // IF THE COMPONENT DOSENT HAVE ANY IMAGES - SET THE IMAGES FOR IT
+                if (walkthrough_logo_uploader.uploadCollection.size === 0) {
+                    walkthrough_logo_uploader.uploadCollection.add({ externalUrl: page.logo });
+                    var min = render + 1;
+                    var max = 50000
+                    var random = Math.random() * (max - min) + min;
+                    setRender(random)
+                }
+            } else {
+                const walkthrough_logo_uploader = document.querySelector("lr-upload-ctx-provider");
+                walkthrough_logo_uploader.uploadCollection.clearAll();
             }
-        } else {
-            const api = document.querySelector("lr-upload-ctx-provider");
-            api.uploadCollection.clearAll();
         }
+
     }, [pageId]);
 
 
@@ -277,7 +281,7 @@ export default function WalkthroughCreator() {
             <div className='border shadow-sm rounded-lg p-5'>
                 <h2 className='mb-3 font-bold'>Step/Selectable Option Editor</h2>
 
-                <div className="flex mt-3 border-t">
+                {page && <div className="flex mt-3 border-t">
                     <div className="p-4 rounded-lg dark:border-gray-700 w-[30%] mx-auto">
                         <p className='mb-2'>Image/Logo</p>
                         <lr-file-uploader-minimal
@@ -348,8 +352,9 @@ export default function WalkthroughCreator() {
                         />
                     </div>
 
+                </div>}
 
-                </div>
+
             </div>
         )
     }, [pageId, render]);
@@ -368,7 +373,7 @@ export default function WalkthroughCreator() {
 
                                 <div className='flex flex-row gap-2'>
 
-                                    <Button color={reademeView ? "gray" : "gray"} pill size={'xs'} className="items-center" onClick={() => {
+                                    {configuration.readme && <Button color={reademeView ? "gray" : "gray"} pill size={'xs'} className="items-center" onClick={() => {
                                         let choice = !reademeView;
                                         setReademeView(choice);
 
@@ -382,7 +387,7 @@ export default function WalkthroughCreator() {
 
                                         {reademeView ? "Switch to normal editor" : "Link to Readme Content Instead"}
                                         {reademeView == false && <img src={"/editor/readme-logo.png"} className='ml-3 !h-[20px] !w-[20px]' size={"xs"} rounded />}
-                                    </Button>
+                                    </Button>}
 
                                     <Button color="gray" pill size={'xs'} onClick={() => CancelAndDelete()}>
                                         Cancel & Delete
