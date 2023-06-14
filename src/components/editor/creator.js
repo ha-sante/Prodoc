@@ -199,6 +199,7 @@ export default function WalkthroughCreator() {
         let title = titles[`${navigation}_${position}`];
         let description = "Page Description here"
         let page = NewPageHandler(navigation, position, title, description);
+        page.parent = parent_id != undefined ? parent_id : "chapter"; // TAG THE PAGES PARENT
         logger.debug({ page, parent_id, position, title });
         let toastId = toast.loading('Adding the new Page...');
 

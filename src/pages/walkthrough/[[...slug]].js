@@ -17,16 +17,13 @@ import {
 import { useStore, useAtom, useSetAtom } from "jotai";
 
 import Output from 'editorjs-react-renderer';
-
 const inter = Inter({ subsets: ['latin'] })
-
 const _ = require('lodash');
 
 
-// GET THE PAGE BY ITS SLUG
-// PASS IT'S CONTENT TO THE PARAMETER
-
-// 
+// EVERY PAGE VISIT WILL GET ALL PAGES CONTENT
+// WALKTHROUGHS PAGES WILL RENDER THEIR PARENT IDS WHEN SETTING THEM TO STATE
+// - 
 
 export default function Walkthrough() {
 

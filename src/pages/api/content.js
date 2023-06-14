@@ -223,6 +223,7 @@ export default async function handler(req, res) {
                 start = performance.now();
                 console.log("api.patch.configured.call.start", `${start} ms`);
 
+                // STORE THE OPEN API SPEC
                 let configured = await fauna.client.query(q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body?.configuration } }));
                 console.log("api.patch.configured", true);
                 const end = performance.now();
@@ -231,6 +232,7 @@ export default async function handler(req, res) {
                 console.log("api.patch.error.call.executionTime", msConversion(executionTime));
 
 
+                // CREATE THE FOLDER/PARENT PAGES
                 let chapters = await fauna.client.query(q.Map(body.chapters,
                     q.Lambda(
                         'page',
@@ -245,7 +247,20 @@ export default async function handler(req, res) {
                 console.log("api.patch.chapters", true);
 
 
-                let pages = await fauna.client.query(q.Map(body.pages,
+
+                let parented_pages = [];
+                // MAP CHAPTERS TO THEIR PAGES
+                body.pages.map((page) => {
+                    let tags = [...page.content.api.tags];
+                    // CHECK IF THE PAGE TAGS
+                    let parents = chapters.filter((chapter) => tags.includes(chapter.title))
+                    let parent_id = parents[0]?.id;
+                    let parent = parent_id != undefined ? parent_id : "chapter"; // TAG THE PAGES PARENT
+                    parented_pages.push({ ...page, parent });
+                })
+
+                // CREATE THE CHILD PAGES
+                let pages = await fauna.client.query(q.Map(parented_pages,
                     q.Lambda(
                         'page',
                         q.Let({
@@ -258,7 +273,7 @@ export default async function handler(req, res) {
                     )));
                 console.log("api.patch.pages", true);
 
-
+                // UPDATE THE PARENT PAGES WITH IDS OF THEIR CHILDREN
                 let updated_chapters = await fauna.client.query(q.Map(chapters,
                     q.Lambda(
                         'chapter',

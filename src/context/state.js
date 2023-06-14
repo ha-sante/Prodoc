@@ -265,20 +265,20 @@ export function ContentAPIHandler(option, data) {
       return axios.delete(`/api/content?id=${data.id}`);
       break;
     case 'PATCH':
-
-      let body_size = roughSizeOfObject(data);
-      let configuration_object = roughSizeOfObject(data?.configuration);
-      console.log("api.content.patch.called.diagnostics.body_size", body_size);
-      console.log("api.content.patch.called.diagnostics.configuration_object", configuration_object);
+        
+      // let body_size = roughSizeOfObject(data);
+      // let configuration_object = roughSizeOfObject(data?.configuration);
+      // console.log("api.content.patch.called.diagnostics.body_size", body_size);
+      // console.log("api.content.patch.called.diagnostics.configuration_object", configuration_object);
 
       return axios({
         method: 'PATCH',
         url: '/api/content',
         data: data,
-        timeout: 180, // 30 minutes in seconds
-        // headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-        maxContentLength: 100000000,
-        maxBodyLength: 1000000000
+        // timeout: 180, // 30 minutes in seconds
+        // // headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        // maxContentLength: 100000000,
+        // maxBodyLength: 1000000000
       })
       break;
   }

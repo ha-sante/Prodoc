@@ -88,7 +88,8 @@ const EditorSidebarComponent = (props) => {
         let title = titles[`${navigation}_${position}`];
         let description = "Page Description here"
         let page = NewPageHandler(navigation, position, title, description);
-        logger.debug({ page, parent_id, position, title });
+        page.parent = parent_id != undefined ? parent_id : "chapter"; // TAG THE PAGES PARENT
+        console.log({ page, parent_id, position, title });
         let toastId = toast.loading('Adding the new Page...');
 
         // GET ALL THE LATEST CONTENT

@@ -163,6 +163,7 @@ export default function APIDefinitionsPrompt(props) {
                         ...DEFAULT_PAGE_DATA?.content,
                         api: {}
                     },
+                    parent: "chapter"
                 };
 
                 page.content.api["configuration"] = {};
