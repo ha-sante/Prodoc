@@ -22,6 +22,12 @@ const inter = Inter({ subsets: ['latin'] })
 
 const _ = require('lodash');
 
+
+// GET THE PAGE BY ITS SLUG
+// PASS IT'S CONTENT TO THE PARAMETER
+
+// 
+
 export default function Walkthrough() {
 
     const router = useRouter();
@@ -124,7 +130,6 @@ export default function Walkthrough() {
             </div>
         )
     }
-
 
     const Navbar = () => {
         let render_body = _.isEmpty(page?.content?.editor) === false;
