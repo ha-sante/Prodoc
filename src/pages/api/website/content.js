@@ -36,28 +36,29 @@ export default async function handler(req, res) {
                     case "readme":
                         let page = params.page;
                         let slug = "";
-                        let endpoint = "https://dash.readme.com/api/v1/api-specification";
+                        let endpoint = "https://dash.readme.com/api/v1/docs/authentication-and-authorization";
                         // HANDLE README INTEGRATED CONTENT
-                        return axios.get(endpoint, {
-                            Headers: {
-                                "accept": "application/json",
-                                "authorization": `Basic ${config.data.readme}`
-                            }
-                        }).then((result) => {
-                            res.status(200).send(result);
-                        }).catch((error) => {
-                            // console.log("content.get.readme.get.error", error)
+                        try {
+                            let result = await axios.get(endpoint, {
+                                headers: {
+                                    "accept": "application/json",
+                                    "authorization": `Basic ${config.data.readme}`
+                                }
+                            })
+                            console.log("content.get.readme.get.result", result.data)
+                            res.status(200).send(result.data);
+                        } catch (error) {
+                            console.log("content.get.readme.get.error", error)
                             res.status(404).send({ message: "Was unable to get this document", config: config.data, error })
-                        })
-
+                        }
                 }
             } else {
-             
+                console.log("request.method.not.supported", method);
+                res.status(404).send({ message: "Request method not supported" });
             }
-            console.log("request.method.not.supported", method);
-            res.status(404).send({ message: "Request method not supported" });
+
             break;
 
-        }
+    }
 
 }
