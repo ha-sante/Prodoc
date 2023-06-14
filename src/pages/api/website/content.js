@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     switch (method) {
         case "GET":
             // Process a GET request
-            //http://localhost:3000/api/website/content?integration=readme&slug=https://docs.autharmor.com/docs/getting-started
+            //http://localhost:3000/api/website/content?integration=readme&url=https://docs.autharmor.com/docs/getting-started
 
             // FIRST CHECK IF THE REQUESTER IS REQUESTING CONTENT FROM AN INTEGRATION OR NORMAL PAGE CONTENT
             let integration_content = _.has(params, "integration");
@@ -34,11 +34,14 @@ export default async function handler(req, res) {
 
                 switch (integration) {
                     case "readme":
-                        let page = params.page;
-                        let slug = "";
-                        let endpoint = "https://dash.readme.com/api/v1/docs/authentication-and-authorization";
+
                         // HANDLE README INTEGRATED CONTENT
                         try {
+                            let url = params.url;
+                            let parts = url.split('/');
+                            let slug = parts[parts.length - 1];
+                            let endpoint = `https://dash.readme.com/api/v1/docs/${slug}`;
+
                             let result = await axios.get(endpoint, {
                                 headers: {
                                     "accept": "application/json",
@@ -49,7 +52,7 @@ export default async function handler(req, res) {
                             res.status(200).send(result.data);
                         } catch (error) {
                             console.log("content.get.readme.get.error", error)
-                            res.status(404).send({ message: "Was unable to get this document", config: config.data, error })
+                            res.status(404).send({ message: "Was unable to get this document - please check the following info 1.API KEY IS LEGITIMATE 2.REQUEST HAS THE INTERGRATION & URL QUERY PROPERTIES"})
                         }
                 }
             } else {
