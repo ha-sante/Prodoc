@@ -71,6 +71,7 @@ export default function Walkthrough() {
 
         // CHECK IF PAGE IS INTEGRATION ENABLED
         if (page.content?.readme) {
+            setReadmeHTML("");
 
             // CALL FOR THE CONTENT & RENDER IT
             let query = `?integration=readme&url=${page.content.readme}`;
@@ -88,12 +89,35 @@ export default function Walkthrough() {
     }
 
     function Forward(step) {
+        setProcessing(true);
         setPage(step);
         setSteps([...steps, step]);
 
         // UPDATE THE PAGE URL
         const newUrl = `/walkthrough/${step.slug}`
         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+
+        let identifier = step.slug;
+        let walkthrough_content = content.filter(item => item.type == "walkthroughs");
+        let page = walkthrough_content.find(item => item.slug == identifier);
+
+        // CHECK IF PAGE IS INTEGRATION ENABLED
+        if (page.content?.readme) {
+            setReadmeHTML("");
+
+            // CALL FOR THE CONTENT & RENDER IT
+            let query = `?integration=readme&url=${page.content.readme}`;
+            WebsiteContentAPIHandler("GET", null, query).then((response) => {
+                setReadmeHTML(response.data.body_html)
+                setProcessing(false);
+            }).catch((error) => {
+                toast.error("Error getting page html data")
+            })
+
+        } else {
+            setProcessing(false);
+            setReadmeHTML("");
+        }
     }
 
     useEffect(() => {
@@ -200,15 +224,13 @@ export default function Walkthrough() {
                                 })}
                             </div>
 
-                            {
-                                readmeHTML ?
-                                    <div dangerouslySetInnerHTML={{ __html: readmeHTML }} />
-                                    :
-                                    <div>
-                                        {render_body == true && EditorPageContentRenderer(page?.content?.editor)}
-                                    </div>
+                            { readmeHTML ?
+                                <div dangerouslySetInnerHTML={{ __html: readmeHTML }} />
+                                :
+                                <div>
+                                    {render_body == true && EditorPageContentRenderer(page?.content?.editor)}
+                                </div>
                             }
-
 
                         </div>
                     </div>
