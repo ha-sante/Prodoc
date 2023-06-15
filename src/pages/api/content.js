@@ -81,7 +81,16 @@ export function roughSizeOfObject(object) {
 }
 
 
-
+export function SluggifyPageTitle(title, content) {
+    let slugged = slugify(title);
+    let copies = content.filter(page => page.slug == slugged);
+    if(copies.length > 0){
+      slugged += copies.length+1;
+    }
+  
+    return slugged;
+  }
+  
 
 export default async function handler(req, res) {
     const method = req.method;
@@ -300,7 +309,6 @@ export default async function handler(req, res) {
                         }, q.Select(["data"], q.Var("update")))
                     )));
                 console.log("api.patch.updated_chapters", true);
-
 
 
                 // HANDLE CACHING

@@ -7,6 +7,7 @@ const loglevel = require("loglevel");
 import Output from 'editorjs-react-renderer';
 import StringToReactComponent from 'string-to-react-component';
 import Highlight from 'react-highlight'
+import slugify from '@sindresorhus/slugify';
 
 // loglevel.config({
 //   development: {
@@ -83,6 +84,16 @@ export function EditorPageBlocksHandler(title, description, navigation) {
   } else {
     return ({});
   }
+}
+
+export function SluggifyPageTitle(title, content) {
+  let slugged = slugify(title);
+  let copies = content.filter(page => page.slug == slugged);
+  if (copies.length > 0) {
+    slugged += `-${copies.length + 1}`;
+  }
+
+  return slugged;
 }
 
 export function NewPageHandler(navigation, position, title, description) {
@@ -265,7 +276,7 @@ export function ContentAPIHandler(option, data) {
       return axios.delete(`/api/content?id=${data.id}`);
       break;
     case 'PATCH':
-        
+
       // let body_size = roughSizeOfObject(data);
       // let configuration_object = roughSizeOfObject(data?.configuration);
       // console.log("api.content.patch.called.diagnostics.body_size", body_size);

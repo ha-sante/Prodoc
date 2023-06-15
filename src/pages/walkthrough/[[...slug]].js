@@ -20,11 +20,6 @@ import Output from 'editorjs-react-renderer';
 const inter = Inter({ subsets: ['latin'] })
 const _ = require('lodash');
 
-
-// EVERY PAGE VISIT WILL GET ALL PAGES CONTENT
-// WALKTHROUGHS PAGES WILL RENDER THEIR PARENT IDS WHEN SETTING THEM TO STATE
-// - 
-
 export default function Walkthrough() {
 
     const router = useRouter();
@@ -35,10 +30,15 @@ export default function Walkthrough() {
     const [steps, setSteps] = useState([]);
     const [content, setContent] = useState([]);
 
+    // 1.
     // ON LOAD, GET THE SLUG
-    // - PER SLUG, CALL FOR CONTENT
-    // - GET THE WALKTHROUGH OBJECT
-    // - RENDER THE WALKTHROUGH TUTORIAL
+    // - PER SLUG, CALL FOR WALKTHROUGH CONTENT
+    // - GET THE WALKTHROUGH OBJECT PER THE SLUG
+    // 2.
+    // - WE TRACE BACK FROM THAT OBJECT TO ITS UTMOST PARENT OBJECT
+    // - WE THEN PUSH THIS INTO THE STEPS LIST
+    // 3.
+    // - RENDER THE FOUND WALKTHROUGH TUTORIAL
 
     useEffect(() => {
         console.log("page.slug", slug);

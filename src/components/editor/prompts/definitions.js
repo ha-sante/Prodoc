@@ -4,7 +4,7 @@ import { DocumentUpload, CloudAdd, CloudPlus, ExportCircle, Book1 } from 'iconsa
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, DEFAULT_PAGE_DATA, ContentAPIHandler, logger
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, DEFAULT_PAGE_DATA, ContentAPIHandler, logger, SluggifyPageTitle
 } from '../../../context/state';
 import { useStore, useAtom } from "jotai";
 
@@ -64,6 +64,12 @@ export default function APIDefinitionsPrompt(props) {
     }
 
     const ReturnHandlingForAllMethods = (data, url, components, paths, method) => {
+
+
+        // CONFIGURE THE PAGE TITLE
+        let content_anew = [...content]
+
+
         return {
             ...DEFAULT_PAGE_DATA,
             type: "api",
@@ -133,6 +139,10 @@ export default function APIDefinitionsPrompt(props) {
                         let page = ReturnHandlingForAllMethods(data, url, components, paths, name);
                         // logger.log("generated.api.child.page", page);
 
+                        // GENERATE PAGE SLUG
+                        let future_content = [...content, page];
+                        page.slug = SluggifyPageTitle(page.title, future_content); // GENERATE A PAGE SLUG FOR IT
+
                         page.content.api["configuration"] = {};
                         page.content.api.configuration.servers = servers ? servers : [];
                         page.content.api.configuration.openapi = openapi ? openapi : "";
@@ -166,6 +176,11 @@ export default function APIDefinitionsPrompt(props) {
                     parent: "chapter"
                 };
 
+
+                // GENERATE PAGE SLUG
+                let future_content = [...content, page];
+                page.slug = SluggifyPageTitle(page.title, future_content); // GENERATE A PAGE SLUG FOR IT
+
                 page.content.api["configuration"] = {};
                 page.content.api.configuration.servers = servers ? servers : [];
                 page.content.api.configuration.openapi = openapi ? openapi : "";
@@ -175,6 +190,7 @@ export default function APIDefinitionsPrompt(props) {
                 mappings[label].page = page;
                 chapters.push(page);
             })
+
 
             toast.success("Converted spec JSON to pages content type.", { position: "bottom-right" });
             let toastId = toast.loading("Persisting content & creating pages for it.", { position: "bottom-right" });
@@ -249,7 +265,7 @@ export default function APIDefinitionsPrompt(props) {
                             }}
                             disabled={processing}
                             className='text-sm min-h-[400px]'
-                            />
+                        />
 
                     </div>
                 </Modal.Body>

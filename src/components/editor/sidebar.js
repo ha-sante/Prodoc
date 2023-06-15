@@ -12,7 +12,7 @@ import { Box, Logout, Code1, Setting3, Map1 as MapIcon, ArrowLeft, ArrowRight2, 
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, NewPageHandler, ContentAPIHandler, StorageHandler, logger
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, NewPageHandler, ContentAPIHandler, StorageHandler, logger, SluggifyPageTitle
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
@@ -88,7 +88,11 @@ const EditorSidebarComponent = (props) => {
         let title = titles[`${navigation}_${position}`];
         let description = "Page Description here"
         let page = NewPageHandler(navigation, position, title, description);
+
         page.parent = parent_id != undefined ? parent_id : "chapter"; // TAG THE PAGES PARENT
+        page.slug = SluggifyPageTitle(title, content); // GENERATE A PAGE SLUG FOR IT
+
+
         console.log({ page, parent_id, position, title });
         let toastId = toast.loading('Adding the new Page...');
 
