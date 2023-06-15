@@ -159,13 +159,15 @@ export default function Walkthrough() {
                                 })}
                             </div>
 
-                            {<div>
-                                {render_body == true && EditorPageContentRenderer(page?.content?.editor)}
-                            </div>}
+                            {
+                                readmeHTML ?
+                                    <div dangerouslySetInnerHTML={{ __html: readmeHTML }} />
+                                    :
+                                    <div>
+                                        {render_body == true && EditorPageContentRenderer(page?.content?.editor)}
+                                    </div>
+                            }
 
-
-
-                            <div dangerouslySetInnerHTML={{ __html: readmeHTML }} />
 
                         </div>
                     </div>
