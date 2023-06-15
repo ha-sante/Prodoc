@@ -13,7 +13,7 @@ import { Copy, ArrowLeft2, ArrowRight2, Edit, Link1 } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger, NewPageHandler, EditorPageBlocksHandler,
+    editedAtom, authenticatedAtom, permissionAtom, pageIdAtom, codeAtom, navigationAtom, ContentAPIHandler, serverAtom, logger, NewPageHandler, EditorPageBlocksHandler, SluggifyPageTitle,
     configurationAtom
 } from '../../context/state';
 import { useStore, useAtom, useAtomValue } from "jotai";
@@ -199,7 +199,11 @@ export default function WalkthroughCreator() {
         let title = titles[`${navigation}_${position}`];
         let description = "Page Description here"
         let page = NewPageHandler(navigation, position, title, description);
+
         page.parent = parent_id != undefined ? parent_id : "chapter"; // TAG THE PAGES PARENT
+        page.slug = SluggifyPageTitle(title, content); // GENERATE A PAGE SLUG FOR IT
+
+
         logger.debug({ page, parent_id, position, title });
         let toastId = toast.loading('Adding the new Page...');
 
