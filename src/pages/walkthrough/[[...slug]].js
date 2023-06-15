@@ -142,10 +142,10 @@ export default function Walkthrough() {
                     // CALL FOR THE CONTENT & RENDER IT
                     let query = `?integration=readme&url=${page.content.readme}`;
                     WebsiteContentAPIHandler("GET", null, query).then((response) => {
-                        setReadmeHTML(response.data.body_html)
                         setContent([...content]);
                         setPage(page);
                         setSteps([...back_steps]);
+                        setReadmeHTML(response.data.body_html)
                         setProcessing(false);
                     }).catch((error) => {
                         toast.error("Error getting page html data")
