@@ -160,7 +160,7 @@ export default function Walkthrough() {
         <div>
             <Navbar />
             <main className="min-h-screen bg-white walkthrough">
-                {processing ? <PageLoadingIndication /> : <WalkthroughThis />}
+                {processing ? <PageLoadingIndication /> : page && <WalkthroughThis />}
             </main>
         </div>
     )
