@@ -21,6 +21,9 @@ import { toast } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] })
 const _ = require('lodash');
 
+import rdmd from '@readme/markdown';
+
+
 export default function Walkthrough() {
 
     const router = useRouter();
@@ -222,8 +225,10 @@ export default function Walkthrough() {
                                 })}
                             </div>
 
-                            { readmeHTML ?
-                                <div dangerouslySetInnerHTML={{ __html: readmeHTML }} />
+                            {readmeHTML ?
+                                <div className='readme_content'>
+                                    <div dangerouslySetInnerHTML={{ __html: readmeHTML }} />
+                                </div>
                                 :
                                 <div>
                                     {render_body == true && EditorPageContentRenderer(page?.content?.editor)}
