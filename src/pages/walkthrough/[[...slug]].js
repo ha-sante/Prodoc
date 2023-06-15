@@ -97,28 +97,30 @@ export default function Walkthrough() {
 
                             <div className='flex gap-2 mx-auto mt-5'>
                                 {options && options.map((step) => {
-                                    return (
-                                        <div key={step.id} className='flex flex-col items-center shadow rounded-sm p-4 cursor-pointer' onClick={() => {
-                                            setPage(step);
-                                            setSteps([...steps, step]);
-                                        }}>
+                                    if (step) {
+                                        return (
+                                            <div key={step?.id} className='flex flex-col items-center shadow rounded-sm p-4 cursor-pointer' onClick={() => {
+                                                setPage(step);
+                                                setSteps([...steps, step]);
+                                            }}>
 
-                                            <div className='w-[100%]'>
-                                                {step?.logo && <Avatar img={step?.logo} className='mb-3' height="10px" width="10px" />}
+                                                <div className='w-[100%]'>
+                                                    {step?.logo && <Avatar img={step?.logo} className='mb-3' height="10px" width="10px" />}
+                                                </div>
+
+                                                <div className='w-[100%] text-center mt'>
+                                                    <p className='text-sm'> {step?.title} </p>
+                                                </div>
+
                                             </div>
-
-                                            <div className='w-[100%] text-center mt'>
-                                                <p className='text-sm'> {step.title} </p>
-                                            </div>
-
-                                        </div>
-                                    )
+                                        )
+                                    }
                                 })}
                             </div>
 
-                            <div>
-                                {render_body && EditorPageContentRenderer(page?.content?.editor)}
-                            </div>
+                            {<div>
+                                {render_body == true && EditorPageContentRenderer(page?.content?.editor)}
+                            </div>}
 
                         </div>
                     </div>
@@ -140,12 +142,14 @@ export default function Walkthrough() {
 
                 <div className='flex !justify-center items-center gap-2 mx-auto w-[40%]'>
                     {steps.map((step, index) => {
-                        return (<span key={step.id} className={`rounded-full !w-[70px] !h-[5px] p-1 cursor-pointer ${page?.id == step.id ? "bg-gray-200" : "bg-gray-200"}`} onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
+                        if (step) {
+                            return (<span key={step.id} className={`rounded-full !w-[70px] !h-[5px] p-1 cursor-pointer ${page?.id == step.id ? "bg-gray-200" : "bg-gray-200"}`} onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
+                        }
                     })}
                 </div>
 
                 <div className='w-[30%] text-right flex justify-end'>
-                    {render_body ?
+                    {render_body == true ?
                         <Button className='border-none items-center' color="light"> Complete Onboarding  <TickSquare className='ml-3' size="16" color="#000000" /> </Button>
                         :
                         <Button className='border-none' color="light"> Skip Onboarding </Button>
@@ -160,7 +164,11 @@ export default function Walkthrough() {
         <div>
             <Navbar />
             <main className="min-h-screen bg-white walkthrough">
-                {processing ? <PageLoadingIndication /> : page && <WalkthroughThis />}
+                {processing ?
+                    <PageLoadingIndication />
+                    :
+                    page != undefined ? <WalkthroughThis /> : <p className='text-center p-10'>Page was not found, please contact support for help or the updated url.</p>
+                }
             </main>
         </div>
     )
