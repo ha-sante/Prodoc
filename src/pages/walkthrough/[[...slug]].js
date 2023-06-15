@@ -80,11 +80,12 @@ export default function Walkthrough() {
                 setProcessing(false);
             }).catch((error) => {
                 toast.error("Error getting page html data")
+                setProcessing(false);
             })
 
         } else {
-            setProcessing(false);
             setReadmeHTML("");
+            setProcessing(false);
         }
     }
 
@@ -142,23 +143,20 @@ export default function Walkthrough() {
                     let query = `?integration=readme&url=${page.content.readme}`;
                     WebsiteContentAPIHandler("GET", null, query).then((response) => {
                         setReadmeHTML(response.data.body_html)
-                        // toast.success("Success getting page data")
-
-                        setProcessing(false);
                         setContent([...content]);
                         setPage(page);
                         setSteps([...back_steps]);
-
+                        setProcessing(false);
                     }).catch((error) => {
                         toast.error("Error getting page html data")
                     })
 
                 } else {
-                    setProcessing(false);
                     setContent([...content]);
                     setPage(page);
                     setSteps([...back_steps]);
                     setReadmeHTML("");
+                    setProcessing(false);
                 }
 
             }).catch(error => {
