@@ -43,7 +43,7 @@ export default function Walkthrough() {
     // - RENDER THE FOUND WALKTHROUGH TUTORIAL
 
 
-    function BuildTraceBack(page, steps, content) {
+    function BuildTraceHandleMoveToStep(page, steps, content) {
         console.log("steps_traced.loop", { page, steps, content });
         if (page.parent == "chapter") {
             // RETURNS STEPS
@@ -51,9 +51,49 @@ export default function Walkthrough() {
         } else {
             let parent = content.find(item => item.id == page.parent);
             let path = [parent, ...steps];
-            let stepped = BuildTraceBack(parent, path, content);
+            let stepped = BuildTraceHandleMoveToStep(parent, path, content);
             return stepped;
         }
+    }
+
+    function Back(step, index) {
+        setProcessing(true);
+        setPage(step);
+        setSteps(steps.filter((item, itemIndex) => itemIndex <= index));
+
+        // UPDATE THE PAGE URL
+        const newUrl = `/walkthrough/${step.slug}`
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+
+        let identifier = step.slug;
+        let walkthrough_content = content.filter(item => item.type == "walkthroughs");
+        let page = walkthrough_content.find(item => item.slug == identifier);
+
+        // CHECK IF PAGE IS INTEGRATION ENABLED
+        if (page.content?.readme) {
+
+            // CALL FOR THE CONTENT & RENDER IT
+            let query = `?integration=readme&url=${page.content.readme}`;
+            WebsiteContentAPIHandler("GET", null, query).then((response) => {
+                setReadmeHTML(response.data.body_html)
+                setProcessing(false);
+            }).catch((error) => {
+                toast.error("Error getting page html data")
+            })
+
+        } else {
+            setProcessing(false);
+            setReadmeHTML("");
+        }
+    }
+
+    function Forward(step) {
+        setPage(step);
+        setSteps([...steps, step]);
+
+        // UPDATE THE PAGE URL
+        const newUrl = `/walkthrough/${step.slug}`
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
     }
 
     useEffect(() => {
@@ -68,7 +108,7 @@ export default function Walkthrough() {
                 let page = walkthrough_content.find(item => item.slug == identifier);
                 console.log('response', { response, page, content });
 
-                let back_steps = BuildTraceBack(page, [page], content);
+                let back_steps = BuildTraceHandleMoveToStep(page, [page], content);
                 console.log("back_steps", back_steps);
 
                 // CHECK IF PAGE IS INTEGRATION ENABLED
@@ -94,6 +134,7 @@ export default function Walkthrough() {
                     setContent([...content]);
                     setPage(page);
                     setSteps([...back_steps]);
+                    setReadmeHTML("");
                 }
 
             }).catch(error => {
@@ -141,8 +182,8 @@ export default function Walkthrough() {
                                     if (step) {
                                         return (
                                             <div key={step?.id} className='flex flex-col items-center shadow rounded-sm p-4 cursor-pointer' onClick={() => {
-                                                setPage(step);
-                                                setSteps([...steps, step]);
+
+                                                Forward(step);
                                             }}>
 
                                                 <div className='w-[100%]'>
@@ -192,7 +233,7 @@ export default function Walkthrough() {
                         if (step) {
                             return (
                                 <span key={step.id} className={`rounded-full !w-[70px] !h-[5px] p-1 cursor-pointer ${page?.id == step.id ? "bg-gray-200" : "bg-gray-200"}`}
-                                    onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>
+                                    onClick={() => { Back(step, index); }}>
                                 </span>
                             )
                         }
