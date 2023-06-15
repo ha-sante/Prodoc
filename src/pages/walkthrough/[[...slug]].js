@@ -78,7 +78,7 @@ export default function Walkthrough() {
                     let query = `?integration=readme&url=${page.content.readme}`;
                     WebsiteContentAPIHandler("GET", null, query).then((response) => {
                         setReadmeHTML(response.data.body_html)
-                        toast.success("Success getting page data")
+                        // toast.success("Success getting page data")
 
                         setProcessing(false);
                         setContent([...content]);
