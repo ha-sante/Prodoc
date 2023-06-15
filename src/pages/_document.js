@@ -11,7 +11,6 @@ export default function Document() {
         <title>The Prodoc Documentation Site</title>
         <link rel="stylesheet" href="node_modules/highlight.js/styles/an-old-hope.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-cave-dark.min.css" />
-        {/* <link rel="stylesheet" href="/readme.css" /> */}
 
       </head>
       <Head />

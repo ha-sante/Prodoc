@@ -136,7 +136,12 @@ body {
   max-width: 100%;
 }
 
-
 .readme_content ul {
   padding: 20px;
+
+  list-style-type: square;
+  list-style-position: outside;
+  margin-left: 20px;
+  padding-left: 20px;
 } 
+
