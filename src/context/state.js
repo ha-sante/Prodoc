@@ -327,6 +327,22 @@ export function ConfigAPIHandler(option, data) {
   }
 }
 
+
+export function WebsiteContentAPIHandler(option, data, query) {
+  switch (option) {
+    case 'GET':
+      let endpoint = '/api/website/content';
+      if(query){
+        endpoint += `${query}`;
+      }
+      return axios.get(endpoint);
+      break;
+    case 'PUT':
+      return axios.put('/api/website/content', data);
+      break;
+  }
+}
+
 // JOTAI STATE MANAGEMENT
 import { createStore, Provider, useStore, atom, useAtom } from "jotai";
 export const store = createStore();

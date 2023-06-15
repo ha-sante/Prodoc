@@ -11,12 +11,13 @@ import { ArrowSquareRight, ArrowRight2, TickSquare } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
-    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger,
+    editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, WebsiteContentAPIHandler, logger,
     EditorPageContentRenderer,
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom } from "jotai";
 
 import Output from 'editorjs-react-renderer';
+import { toast } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] })
 const _ = require('lodash');
 
@@ -29,6 +30,7 @@ export default function Walkthrough() {
     const [page, setPage] = useState();
     const [steps, setSteps] = useState([]);
     const [content, setContent] = useState([]);
+    const [readmeHTML, setReadmeHTML] = useState("");
 
     // 1.
     // ON LOAD, GET THE SLUG
@@ -69,10 +71,31 @@ export default function Walkthrough() {
                 let back_steps = BuildTraceBack(page, [page], content);
                 console.log("back_steps", back_steps);
 
-                setProcessing(false);
-                setContent([...content]);
-                setPage(page);
-                setSteps([...back_steps]);
+                // CHECK IF PAGE IS INTEGRATION ENABLED
+                if (page.content?.readme) {
+
+                    // CALL FOR THE CONTENT & RENDER IT
+                    let query = `?integration=readme&url=${page.content.readme}`;
+                    WebsiteContentAPIHandler("GET", null, query).then((response) => {
+                        setReadmeHTML(response.data.body_html)
+                        toast.success("Success getting page data")
+
+                        setProcessing(false);
+                        setContent([...content]);
+                        setPage(page);
+                        setSteps([...back_steps]);
+
+                    }).catch((error) => {
+                        toast.error("Error getting page html data")
+                    })
+
+                } else {
+                    setProcessing(false);
+                    setContent([...content]);
+                    setPage(page);
+                    setSteps([...back_steps]);
+                }
+
             }).catch(error => {
                 setProcessing(false);
                 console.log('error', error);
@@ -139,6 +162,10 @@ export default function Walkthrough() {
                             {<div>
                                 {render_body == true && EditorPageContentRenderer(page?.content?.editor)}
                             </div>}
+
+
+
+                            <div dangerouslySetInnerHTML={{ __html: readmeHTML }} />
 
                         </div>
                     </div>
