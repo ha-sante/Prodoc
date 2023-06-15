@@ -14,8 +14,6 @@
     "@blocknote/react": "^0.6.2",
     "@dnd-kit/sortable": "^7.0.2",
     "@editorjs/editorjs": "^2.26.5",
-    "@readme/markdown": "^6.62.4",
-    "@readme/variable": "^15.1.2",
     "@sindresorhus/slugify": "^2.2.1",
     "@uiw/react-md-editor": "^3.20.8",
     "@uiw/react-textarea-code-editor": "^2.1.1",

@@ -21,9 +21,6 @@ import { toast } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] })
 const _ = require('lodash');
 
-import rdmd from '@readme/markdown';
-
-
 export default function Walkthrough() {
 
     const router = useRouter();
