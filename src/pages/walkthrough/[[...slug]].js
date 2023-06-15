@@ -40,6 +40,20 @@ export default function Walkthrough() {
     // 3.
     // - RENDER THE FOUND WALKTHROUGH TUTORIAL
 
+
+    function BuildTraceBack(page, steps, content) {
+        console.log("steps_traced.loop", { page, steps, content });
+        if (page.parent == "chapter") {
+            // RETURNS STEPS
+            return (steps)
+        } else {
+            let parent = content.find(item => item.id == page.parent);
+            let path = [parent, ...steps];
+            let stepped = BuildTraceBack(parent, path, content);
+            return stepped;
+        }
+    }
+
     useEffect(() => {
         console.log("page.slug", slug);
         if (slug) {
@@ -49,12 +63,16 @@ export default function Walkthrough() {
                 let identifier = slug[0];
                 let content = response.data;
                 let walkthrough_content = content.filter(item => item.type == "walkthroughs");
-                let page = walkthrough_content.find(item => item.configuration.seo.slug == identifier);
+                let page = walkthrough_content.find(item => item.slug == identifier);
                 console.log('response', { response, page, content });
+
+                let back_steps = BuildTraceBack(page, [page], content);
+                console.log("back_steps", back_steps);
+
                 setProcessing(false);
                 setContent([...content]);
                 setPage(page);
-                setSteps([page]);
+                setSteps([...back_steps]);
             }).catch(error => {
                 setProcessing(false);
                 console.log('error', error);
@@ -143,7 +161,11 @@ export default function Walkthrough() {
                 <div className='flex !justify-center items-center gap-2 mx-auto w-[40%]'>
                     {steps.map((step, index) => {
                         if (step) {
-                            return (<span key={step.id} className={`rounded-full !w-[70px] !h-[5px] p-1 cursor-pointer ${page?.id == step.id ? "bg-gray-200" : "bg-gray-200"}`} onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>  </span>)
+                            return (
+                                <span key={step.id} className={`rounded-full !w-[70px] !h-[5px] p-1 cursor-pointer ${page?.id == step.id ? "bg-gray-200" : "bg-gray-200"}`}
+                                    onClick={() => { setPage(step); setSteps(steps.filter((item, itemIndex) => itemIndex <= index)); }}>
+                                </span>
+                            )
                         }
                     })}
                 </div>

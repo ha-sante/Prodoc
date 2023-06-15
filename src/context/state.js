@@ -86,6 +86,27 @@ export function EditorPageBlocksHandler(title, description, navigation) {
   }
 }
 
+export function SluggifyUpdatedPageTitle(title, content) {
+
+
+  // CHECK IF THE PAGE IS USING A DEFAULT PAGE TITLE
+  // IF IT IS NOT - IT LEAVES IT ALONE
+
+  // KNOW IF THE PAGE TITLE CHANGE - IS THE FIRST PAGE TITLE CHANGE
+  // - CONNECTING THE PAGE BEING EDITED
+  // - WITH WHAT IS IT'S PREVIOUS STATE IN CONTENT
+
+
+
+  let slugged = slugify(title);
+  let copies = content.filter(page => page.slug == slugged);
+  if (copies.length > 0) {
+    slugged += `-${copies.length + 1}`;
+  }
+
+  return slugged;
+}
+
 export function SluggifyPageTitle(title, content) {
   let slugged = slugify(title);
   let copies = content.filter(page => page.slug == slugged);
