@@ -604,7 +604,7 @@ export default function Editor() {
                       value={configuration.readme}
                       onChange={(e) => {
                         let value = e.target.value;
-                        setConfiguration({ readme: value });
+                        setConfiguration({ ...configuration, readme: value });
                         console.log("configuration.from.inputtting", { configuration, value });
                       }}
                     />
