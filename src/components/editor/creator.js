@@ -491,7 +491,7 @@ export default function WalkthroughCreator() {
                     <input
                         id={"complete-skip-url"}
                         type={"text"}
-                        className='w-[100%] rounded-lg border-gray-300 bg-gray-50'
+                        className='w-[100%] rounded-lg border-gray-300 bg-gray-50 text-sm'
                         placeholder={`Skip Onboarding URL`}
                         required={true}
                         value={skip_walkthrough_url}
@@ -502,12 +502,12 @@ export default function WalkthroughCreator() {
                     />
                 </div>
 
-                <div className='w-[48%]'>
+                <div className='w-[50%]'>
                     <p className='mb-1 font-medium text-xs'> Complete onboarding url</p>
                     <input
                         id={"complete-walkthrough-url"}
                         type={"text"}
-                        className='w-[100%] rounded-lg border-gray-300 bg-gray-50'
+                        className='w-[100%] rounded-lg border-gray-300 bg-gray-50 text-sm'
                         placeholder={`Complete Onboarding URL`}
                         required={true}
                         value={complete_walkthrough_url}
