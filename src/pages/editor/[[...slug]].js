@@ -35,6 +35,9 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import { diff } from 'deep-object-diff';
 
+import * as LR from "@uploadcare/blocks";
+LR.registerBlocks(LR);
+
 
 export default function Editor() {
 
@@ -363,6 +366,27 @@ export default function Editor() {
   }, [slug]);
 
 
+  useEffect(() => {
+    typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
+      console.log("image.uploader.called", e);
+
+      let cdnURL = e.detail.data[0]?.cdnUrl
+      switch (e.detail.ctx) {
+        case "LOGO_ONLY":
+          setConfiguration({ ...configuration, logo_only: cdnURL ? cdnURL : "" });
+          break;
+        case "LOGO_LABEL_LIGHT_MODE":
+          setConfiguration({ ...configuration, logo_label_light_mode: cdnURL ? cdnURL : "" });
+          break;
+        case "LOGO_LABEL_DARK_MODE":
+          setConfiguration({ ...configuration, logo_label_dark_mode: cdnURL ? cdnURL : "" });
+          break;
+      }
+
+      setEdited(true);
+    });
+  }, []);
+
   // COMPONENTS
   function AuthenticationPage() {
     return (
@@ -514,6 +538,57 @@ export default function Editor() {
 
             <Tabs.Group aria-label="Pills" style="pills" className='mt-3 gap-2' >
 
+              <Tabs.Item active title="General" size="sm" className='border' color='light'>
+                <p className="text-sm text-gray-500 dark:text-gray-400"> General information to be used in the development/use of the front facing sections of your website.</p>
+                <div className="mt-5 items-center">
+
+                  {/* LOGO_ONLY, LOGO_LABEL_LIGHT_MODE, LOGO_LABEL_DARK_MODE, 
+                  TITLE, DESCRIPTION */}
+
+                  <div className='flex justify-between gap-5 border p-5 w-[55%]'>
+                    <div>
+                      <p className="text-xs mb-2"> LOGO_ONLY </p>
+                      <lr-file-uploader-minimal
+                        css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
+                        ctx-name="LOGO_ONLY"
+                        class="my-config"
+                        id="step-image-uploader"
+                      >
+                        <lr-upload-ctx-provider ctx-name="LOGO_ONLY"></lr-upload-ctx-provider>
+
+                      </lr-file-uploader-minimal>
+                    </div>
+
+                    <div>
+                      <p className="text-xs mb-2"> LOGO_LABEL_LIGHT_MODE </p>
+                      <lr-file-uploader-minimal
+                        css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
+                        ctx-name="LOGO_LABEL_LIGHT_MODE"
+                        class="my-config"
+                        id="step-image-uploader"
+                      >
+                        <lr-upload-ctx-provider ctx-name="LOGO_LABEL_LIGHT_MODE"></lr-upload-ctx-provider>
+
+                      </lr-file-uploader-minimal>
+                    </div>
+
+                    <div>
+                      <p className="text-xs mb-2"> LOGO_LABEL_DARK_MODE </p>
+                      <lr-file-uploader-minimal
+                        css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
+                        ctx-name="LOGO_LABEL_DARK_MODE"
+                        class="my-config"
+                        id="step-image-uploader"
+                      >
+                        <lr-upload-ctx-provider ctx-name="LOGO_LABEL_DARK_MODE"></lr-upload-ctx-provider>
+
+                      </lr-file-uploader-minimal>
+                    </div>
+                  </div>
+
+                </div>
+              </Tabs.Item>
+
               <Tabs.Item active title="Integrations" size="sm" className='border' color='light'>
                 <p className="text-sm text-gray-500 dark:text-gray-400"> Activate an integration by inserting it's API key.</p>
                 <div className="flex gap-2 mt-5 items-center">
@@ -536,7 +611,6 @@ export default function Editor() {
                   </div>
 
                 </div>
-
               </Tabs.Item>
 
             </Tabs.Group>
