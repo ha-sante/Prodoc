@@ -479,35 +479,96 @@ export default function WalkthroughCreator() {
         )
     }
 
-    return (
-        <div className="flex">
+    const WalkthroughConfigurator = useMemo(() => {
+        let skip_walkthrough_url = page.configuration.skip_walkthrough_url ? page.configuration.skip_walkthrough_url : "";
+        let complete_walkthrough_url = page.configuration.complete_walkthrough_url ? page.configuration.complete_walkthrough_url : "";
 
-            <div className="p-4 rounded-lg dark:border-gray-700 w-[25%] mx-auto">
-                <div className='border shadow-sm rounded-lg p-5'>
+        return (
+            <div className='w-100 flex gap-2 justify-between mt-5'>
 
-                    <div className=''>
-                        <h2 className='mb-1 font-bold text-sm'>
-                            {page?.position != 'chapter' &&
-                                <Button color="gray" className='items-center' pill size={'xs'} onClick={StepBack}>
-                                    <ArrowLeft2 size="12" color="#000" /> Back
-                                </Button>
-                            }
-                        </h2>
-                        <p className='mb-3 font-medium text-sm'> {page.title}</p>
-                        {/* <p className='mb-3 font-normal text-xs'> {page.description}</p> */}
-                    </div>
-
-                    <OptionsStepper />
+                <div className='w-[48%]'>
+                    <p className='mb-1 font-medium text-xs'> Skip onboarding url</p>
+                    <input
+                        id={"complete-skip-url"}
+                        type={"text"}
+                        className='w-[100%] rounded-lg border-gray-300 bg-gray-50'
+                        placeholder={`Skip Onboarding URL`}
+                        required={true}
+                        value={skip_walkthrough_url}
+                        onChange={(e) => {
+                            let value = e.target.value;
+                            setPage({ ...page, configuration: { ...page.configuration, skip_walkthrough_url: value } });
+                        }}
+                    />
                 </div>
+
+                <div className='w-[48%]'>
+                    <p className='mb-1 font-medium text-xs'> Complete onboarding url</p>
+                    <input
+                        id={"complete-walkthrough-url"}
+                        type={"text"}
+                        className='w-[100%] rounded-lg border-gray-300 bg-gray-50'
+                        placeholder={`Complete Onboarding URL`}
+                        required={true}
+                        value={complete_walkthrough_url}
+                        onChange={(e) => {
+                            let value = e.target.value;
+                            setPage({ ...page, configuration: { ...page.configuration, complete_walkthrough_url: value } });
+                        }}
+                    />
+                </div>
+
             </div>
+        )
+    }, [pageId, page]);
 
-            <div className="p-4 rounded-lg border-gray-700 w-[75%] mx-auto">
-                <div className="flex-column rounded-lg dark:border-gray-700 w-[100%]">
-                    <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
-                        {StepIntroduction}
-                        {StepEditorOption}
+    return (
+        <div className="w-100">
+
+            {page.position == "chapter" && <div className="flex w-100 p-4 pb-0 pt-0">
+                <div className='p-4 border rounded-lg mb-5 w-[100%] shadow-sm shadow-blue-200'>
+                    <h2 className='mb-1 font-bold text-sm'>
+                        Walkthrough Configurator
+                    </h2>
+                    <p className='mb-3 font-normla text-xs'>
+                        On completing the steps of your walkthrough, in the default experience of Prodoc, your user can click on skip or complete onboarding
+                        to get redirected anywhere you choose.
+                    </p>
+
+                    {WalkthroughConfigurator}
+                </div>
+            </div>}
+
+            <div className="flex">
+
+                <div className="p-4 rounded-lg dark:border-gray-700 w-[25%] mx-auto">
+                    <div className='border shadow-sm rounded-lg p-5'>
+
+                        <div className=''>
+                            <h2 className='mb-1 font-bold text-sm'>
+                                {page?.position != 'chapter' &&
+                                    <Button color="gray" className='items-center' pill size={'xs'} onClick={StepBack}>
+                                        <ArrowLeft2 size="12" color="#000" /> Back
+                                    </Button>
+                                }
+                            </h2>
+                            <p className='mb-3 font-medium text-sm'> {page.title}</p>
+                            {/* <p className='mb-3 font-normal text-xs'> {page.description}</p> */}
+                        </div>
+
+                        <OptionsStepper />
                     </div>
                 </div>
+
+                <div className="p-4 rounded-lg border-gray-700 w-[75%] mx-auto">
+                    <div className="flex-column rounded-lg dark:border-gray-700 w-[100%]">
+                        <div className="rounded-lg border-gray-700 w-[100%] mx-auto">
+                            {StepIntroduction}
+                            {StepEditorOption}
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </div>
