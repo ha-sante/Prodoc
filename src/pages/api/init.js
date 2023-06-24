@@ -1,4 +1,4 @@
-const fauna = require('../../integrations/fauna.js');
+const fauna = require('../../integrations/services/fauna.js');
 const q = fauna.q;
 import { kv } from "@vercel/kv";
 
