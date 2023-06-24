@@ -22,7 +22,7 @@ const inter = Inter({ subsets: ['latin'] })
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
   editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger, configurationAtom,
-  ConfigAPIHandler
+  ConfigAPIHandler, AuthAPIHandler
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom } from "jotai";
 
@@ -77,7 +77,7 @@ export default function Editor() {
   // FUNCTIONS
   const authenticate = () => {
     let toastId = toast.loading('Authenticating...');
-    axios.post('/api/auth', { password }).then(response => {
+    AuthAPIHandler('POST', { password }).then(response => {
       toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
       typeof window !== undefined && localStorage.setItem("authenticated", true);

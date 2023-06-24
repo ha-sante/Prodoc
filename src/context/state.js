@@ -282,19 +282,39 @@ export function EditorPageContentRenderer(content) {
 
 
 // API CALLS 
+export function AuthAPIHandler(option, data) {
+  switch (option) {
+    case 'POST':
+      return axios.post('/api/editor/auth', data);
+      break;
+    case 'GET':
+      return axios.get('/api/editor/auth');
+      break;
+    case 'PUT':
+      return axios.put('/api/editor/auth', data);
+      break;
+    case 'DELETE':
+      return axios.delete(`/api/editor/auth?id=${data.id}`);
+      break;
+    case 'PATCH':
+      return axios.patch('/api/editor/auth', data)
+      break;
+  }
+}
+
 export function ContentAPIHandler(option, data) {
   switch (option) {
     case 'POST':
-      return axios.post('/api/content', data);
+      return axios.post('/api/editor/content', data);
       break;
     case 'GET':
-      return axios.get('/api/content');
+      return axios.get('/api/editor/content');
       break;
     case 'PUT':
-      return axios.put('/api/content', data);
+      return axios.put('/api/editor/content', data);
       break;
     case 'DELETE':
-      return axios.delete(`/api/content?id=${data.id}`);
+      return axios.delete(`/api/editor/content?id=${data.id}`);
       break;
     case 'PATCH':
 
@@ -305,7 +325,7 @@ export function ContentAPIHandler(option, data) {
 
       return axios({
         method: 'PATCH',
-        url: '/api/content',
+        url: '/api/editor/content',
         data: data,
         // timeout: 180, // 30 minutes in seconds
         // // headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
@@ -319,20 +339,19 @@ export function ContentAPIHandler(option, data) {
 export function ConfigAPIHandler(option, data) {
   switch (option) {
     case 'GET':
-      return axios.get('/api/config');
+      return axios.get('/api/editor/config');
       break;
     case 'PUT':
-      return axios.put('/api/config', data);
+      return axios.put('/api/editor/config', data);
       break;
   }
 }
-
 
 export function WebsiteContentAPIHandler(option, data, query) {
   switch (option) {
     case 'GET':
       let endpoint = '/api/website/content';
-      if(query){
+      if (query) {
         endpoint += `${query}`;
       }
       return axios.get(endpoint);
