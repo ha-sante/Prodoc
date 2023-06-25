@@ -1,4 +1,10 @@
-import { createClient } from 'redis';
+import Redis from "ioredis"
+import { createClient } from '@vercel/kv';
 
-const client = createClient({ url: env.process.REDIS_SERVICE_URL });
-export const redis = await client.connect();
+const client = createClient({
+    url: process.env.REDIS_SERVICE_REST_URL,
+    token: process.env.REDIS_SERVICE_REST_TOKEN,
+});
+
+export default { client };
+

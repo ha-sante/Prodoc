@@ -86,7 +86,7 @@ export default function Editor() {
       logger.error(error);
       toast.error('Invalid auth details.');
       toast.dismiss(toastId);
-      setAuthenticated(true);
+      setAuthenticated(false);
     });
   };
 

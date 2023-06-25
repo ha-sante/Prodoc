@@ -1,7 +1,10 @@
-const fauna = require('../../integrations/services/fauna.js');
+const fauna = require('../../../integrations/services/fauna.js');
+// const redis = require('../../../integrations/services/redis.js');
+import redis from '../../../integrations/services/redis';
+
 let q = fauna.q;
-import { kv } from "@vercel/kv"; // CACHING LAYER
 const _ = require('lodash');
+
 
 
 export const config = {
@@ -84,13 +87,13 @@ export function roughSizeOfObject(object) {
 export function SluggifyPageTitle(title, content) {
     let slugged = slugify(title);
     let copies = content.filter(page => page.slug == slugged);
-    if(copies.length > 0){
-      slugged += copies.length+1;
+    if (copies.length > 0) {
+        slugged += copies.length + 1;
     }
-  
+
     return slugged;
-  }
-  
+}
+
 
 export default async function handler(req, res) {
     const method = req.method;
@@ -120,7 +123,7 @@ export default async function handler(req, res) {
                 let result = await fauna.client.query(request);
 
                 // HANDLE CACHING
-                await kv.set("content_cache_valid", false);
+                await redis.client.set("content_cache_valid", false);
 
                 // SEND REPLY
                 res.status(200).json(result.data)
@@ -131,7 +134,7 @@ export default async function handler(req, res) {
             break;
         case "GET":
             // Process a GET request
-            let cache_valid = await kv.get("content_cache_valid");
+            let cache_valid = await redis.client.get("content_cache_valid");
             console.log("get.content.cache_valid", cache_valid);
 
             if (cache_valid == false || cache_valid == null) {
@@ -143,8 +146,8 @@ export default async function handler(req, res) {
                 ).then(async (result) => {
                     // HANDLE CACHE
                     let pages = result.data.map(page => page.data);
-                    await kv.set("content", pages);
-                    await kv.set("content_cache_valid", true);
+                    await redis.client.set("content", pages);
+                    await redis.client.set("content_cache_valid", true);
 
                     // SEND REPLY
                     res.status(200).send(pages);
@@ -153,7 +156,7 @@ export default async function handler(req, res) {
                     res.status(404).send(error)
                 });
             } else if (cache_valid == true) {
-                let pages = await kv.get("content");
+                let pages = await redis.client.get("content");
                 res.status(200).send(pages);
             } else {
                 res.status(200).send([]);
@@ -179,7 +182,7 @@ export default async function handler(req, res) {
                 q.Update(q.Ref(q.Collection('Content'), body.id), { data: { ...ready } })
             ).then(async (result) => {
                 // HANDLE CACHING
-                await kv.set("content_cache_valid", false);
+                await redis.client.set("content_cache_valid", false);
 
                 console.log("api.content.update.result", result);
 
@@ -197,7 +200,7 @@ export default async function handler(req, res) {
                 q.Delete(q.Ref(q.Collection('Content'), params.id))
             ).then(async (result) => {
                 // HANDLE CACHING
-                await kv.set("content_cache_valid", false);
+                await redis.client.set("content_cache_valid", false);
 
                 // SEND REPLY
                 res.status(200).send(result.data);
@@ -312,7 +315,7 @@ export default async function handler(req, res) {
 
 
                 // HANDLE CACHING
-                await kv.set("content_cache_valid", false);
+                await redis.client.set("content_cache_valid", false);
 
                 // SEND REPLY
                 let data = [...updated_chapters, ...pages];

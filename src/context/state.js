@@ -281,7 +281,7 @@ export function EditorPageContentRenderer(content) {
 }
 
 
-// API CALLS 
+// EDITOR API CALLS 
 export function AuthAPIHandler(option, data) {
   switch (option) {
     case 'POST':
@@ -347,6 +347,28 @@ export function ConfigAPIHandler(option, data) {
   }
 }
 
+export function StorageAPIHandler(option, data) {
+  switch (option) {
+    case 'POST':
+      return axios.post('/api/editor/content', data);
+      break;
+    case 'GET':
+      return axios.get('/api/editor/content');
+      break;
+    case 'PUT':
+      return axios.put('/api/editor/content', data);
+      break;
+    case 'DELETE':
+      return axios.delete(`/api/editor/content?id=${data.id}`);
+      break;
+    case 'PATCH':
+      return axios.patch('/api/editor/content', data);
+      break;
+  }
+}
+
+
+// WEBSITE API CALLS
 export function WebsiteContentAPIHandler(option, data, query) {
   switch (option) {
     case 'GET':

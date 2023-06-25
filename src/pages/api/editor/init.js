@@ -1,6 +1,7 @@
-const fauna = require('../../integrations/services/fauna.js');
+const fauna = require('../../../integrations/services/fauna.js');
+const redis = require('../../../integrations/services/redis.js');
+
 const q = fauna.q;
-import { kv } from "@vercel/kv";
 
 function FaunaDatabaseInitiations() {
     // CREACTE COLLECTIONS - ACCOUNTS, CONTENT, CONFIGURATION
@@ -45,8 +46,8 @@ function FaunaDatabaseInitiations() {
 }
 
 async function VercelKVDatabaseInitiations() {
-    await kv.set('content', "[]");
-    await kv.set("configuration", "{}");
+    await redis.client.set('content', "[]");
+    await redis.client.set("configuration", "{}");
 }
 
 export default async function handler(req, res) {

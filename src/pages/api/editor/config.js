@@ -1,6 +1,8 @@
 const fauna = require('../../../integrations/services/fauna.js');
+// const redis = require('../../../integrations/services/redis.js');
+import redis from '../../../integrations/services/redis';
+
 let q = fauna.q;
-import { kv } from "@vercel/kv"; // CACHING LAYER
 const _ = require('lodash');
 
 export const config = {
