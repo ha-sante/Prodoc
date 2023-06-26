@@ -602,7 +602,7 @@ const EditorSidebarComponent = (props) => {
             <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 flex justify-between flex-col">
 
                 <div className="space-y-2 font-medium">
-                    <div className='mt-2 mb-2 border rounded-md cursor-pointer'>
+                    <div className='mt-2 mb-2 border rounded-md cursor-pointer text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'>
                         <div className='flex justify-between items-center p-2'>
                             <div className='flex items-center'>
                                 <Home size="16" color="#111827" />
