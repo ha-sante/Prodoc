@@ -15,6 +15,7 @@ import DefinitionsPrompt from '@/components/editor/prompts/definitions';
 const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
 import WalkthroughCreator from '@/components/editor/creator';
 
+import Uploader from '@/components/editor/utilities/uploader';
 
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
@@ -37,7 +38,6 @@ import { diff } from 'deep-object-diff';
 
 import * as LR from "@uploadcare/blocks";
 LR.registerBlocks(LR);
-
 
 export default function Editor() {
 
@@ -67,7 +67,6 @@ export default function Editor() {
   const [processing, setProcessing] = useState(false);
 
   const [refs, setRefs] = useState(new Map());
-
 
   const sections = {
     config: ["configuration", "walkthroughs"],
@@ -367,24 +366,27 @@ export default function Editor() {
 
 
   useEffect(() => {
-    typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
-      console.log("image.uploader.called", e);
+    // typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
+    //   console.log("image.uploader.called", e);
 
-      let cdnURL = e.detail.data[0]?.cdnUrl
-      switch (e.detail.ctx) {
-        case "LOGO_ONLY":
-          setConfiguration({ ...configuration, logo_only: cdnURL ? cdnURL : "" });
-          break;
-        case "LOGO_LABEL_LIGHT_MODE":
-          setConfiguration({ ...configuration, logo_label_light_mode: cdnURL ? cdnURL : "" });
-          break;
-        case "LOGO_LABEL_DARK_MODE":
-          setConfiguration({ ...configuration, logo_label_dark_mode: cdnURL ? cdnURL : "" });
-          break;
-      }
+    //   let cdnURL = e.detail.data[0]?.cdnUrl
+    //   switch (e.detail.ctx) {
+    //     case "LOGO_ONLY":
+    //       setConfiguration({ ...configuration, logo_only: cdnURL ? cdnURL : "" });
+    //       break;
+    //     case "LOGO_LABEL_LIGHT_MODE":
+    //       setConfiguration({ ...configuration, logo_label_light_mode: cdnURL ? cdnURL : "" });
+    //       break;
+    //     case "LOGO_LABEL_DARK_MODE":
+    //       setConfiguration({ ...configuration, logo_label_dark_mode: cdnURL ? cdnURL : "" });
+    //       break;
+    //   }
 
-      setEdited(true);
-    });
+    //   setEdited(true);
+    // });
+    if (window != undefined && localStorage.getItem("authenticated") == true) {
+      setAuthenticated(true);
+    }
   }, []);
 
   // COMPONENTS
@@ -503,6 +505,7 @@ export default function Editor() {
   }
 
   function HomePage() {
+
     return (
       <div className="p-5 pt-0 sm:ml-64 flex flex-row justify-between">
         <div className="p-4 w-[60%] mx-auto">
@@ -512,6 +515,8 @@ export default function Editor() {
               <h2 className="block text-lg font-medium text-gray-900 dark:text-white">Welcome to Prodoc 👋</h2>
               <p>Home will be updated soon.</p>
             </div>
+
+            <Uploader events={(e) => { e.type == "uploaded" && console.log(true) }} init={"https://prodoc.blob.core.windows.net/prodoc/client_secret_537048180923-9i4a2mjdjuu5ejhv2scj0abpth87fcbt.apps.googleusercontent.com.json"} />
 
           </div>
         </div>
@@ -674,7 +679,7 @@ export default function Editor() {
             </div>
             :
             <div className="w-100">
-              {page?.id !== undefined && Navigation()}
+              {page?.id !== undefined || navigation !== 'configuration' && Navigation()}
               <EditorSidebar />
               {navigation === 'api' && APIPage()}
               {navigation === 'product' && EditorPage()}

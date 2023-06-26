@@ -64,12 +64,8 @@ export default function APIDefinitionsPrompt(props) {
     }
 
     const ReturnHandlingForAllMethods = (data, url, components, paths, method) => {
-
-
         // CONFIGURE THE PAGE TITLE
         let content_anew = [...content]
-
-
         return {
             ...DEFAULT_PAGE_DATA,
             type: "api",

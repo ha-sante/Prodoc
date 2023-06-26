@@ -1,5 +1,8 @@
 import React, { Component, useContext, useState } from 'react';
 import { render } from 'react-dom';
+const { BlobServiceClient, StorageSharedKeyCredential } = require("@azure/storage-blob");
+import { uploadFile } from '@uploadcare/upload-client'
+
 import axios from 'axios';
 import localForage from 'localforage';
 const loglevel = require("loglevel");
@@ -347,23 +350,53 @@ export function ConfigAPIHandler(option, data) {
   }
 }
 
-export function StorageAPIHandler(option, data) {
-  switch (option) {
-    case 'POST':
-      return axios.post('/api/editor/content', data);
+export async function StorageAPIHandler(file, filename, progress) {
+  // NEXTJS SERVERLESS FUNCTIONS ARE LIMITED TO 4.5MB IN BODY SIZES
+  // - ALL FILES ARE STORED TO THEIR SERVICES DIRECTLY FROM THE FRONTEND AS A RESULT OF THIS
+  // - THIS METHOD SUPPORTS ALL TYPES OF UPLOADER CLIENTS (BIG CLOUD & SERVICES)
+
+
+  // DETECT WHICH STORAGE OPTION TO USE
+  let location = "";
+  if (process.env.NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING) {
+    location = "azure"
+  } else if (process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY) {
+    location = "uploadcare"
+  }
+
+  // UPLOAD TO THAT CLOUD OPTION - RETURN PUBLIC URL
+  switch (location) {
+    case "azure":
+      // INITIATE THE CONTAINER NAME
+      const storageAccountName = "prodoc";
+      const containerName = "prodoc";
+
+      // INITIATE THE CLIENT
+      const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING);
+
+      // CONNECT THE CONTAINER
+      const containerClient = blobServiceClient.getContainerClient(containerName);
+      await containerClient.createIfNotExists({ access: "blob" }); // CREATE IT IF IT DOSENT EXIST
+
+      // UPLOAD THE FILE
+      const blockBlobClient = containerClient.getBlockBlobClient(filename);
+      const uploadBlobResponse = await blockBlobClient.upload(file, file.size, { onProgress: ev => progress && progress(ev, "azure", file) });
+
+      // GET ITS RESPONSE
+      const url = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${filename}`;
+      return url;
       break;
-    case 'GET':
-      return axios.get('/api/editor/content');
+    case "uploadcare":
+      // FILEDATA must be `Blob`, `File`, `Buffer`, UUID, CDN URL or Remote URL
+      // - CAN BE FORM DATA OR FILE DATA
+      const result = await uploadFile(file, {
+        publicKey: process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY,
+        store: "auto",
+        onProgress: ev => progress && progress(ev, "uploadcare", file)
+      })
+      return result.cdnUrl;
       break;
-    case 'PUT':
-      return axios.put('/api/editor/content', data);
-      break;
-    case 'DELETE':
-      return axios.delete(`/api/editor/content?id=${data.id}`);
-      break;
-    case 'PATCH':
-      return axios.patch('/api/editor/content', data);
-      break;
+
   }
 }
 

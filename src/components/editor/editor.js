@@ -19,13 +19,12 @@ import Delimiter from '@editorjs/delimiter'
 import InlineCode from '@editorjs/inline-code'
 import SimpleImage from '@editorjs/simple-image'
 
-import { uploadFile } from '@uploadcare/upload-client'
 import { DocumentUpload, CloudAdd, CloudPlus } from 'iconsax-react';
 
 import Components from './tools/components'
 
 import {
-  store, contentAtom, pageAtom, pageIdAtom, logger, EditorPageBlocksHandler
+  store, contentAtom, pageAtom, pageIdAtom, logger, EditorPageBlocksHandler, StorageAPIHandler
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom, useAtomValue } from "jotai";
 
@@ -69,22 +68,16 @@ export default function PageEditor(props) {
               async uploadByFile(fileData) {
                 logger.log("supposed.to.upload.file", fileData);
 
-                // fileData must be `Blob`, `File`, `Buffer`, UUID, CDN URL or Remote URL
-                const result = await uploadFile(fileData, {
-                  publicKey: process.env.NEXT_PUBLIC_EDITOR_UPLOADCARE_PUBLIC_KEY,
-                  store: 'auto',
-                  metadata: {
-                    subsystem: 'uploader',
-                    pet: 'cat'
-                  }
-                })
-                logger.log(`URL: ${result.cdnUrl}`)
+                // UPLOAD THE FILE
+                const blob = new Blob([fileData], { type: fileData.type });
+                let url = await StorageAPIHandler(blob, blob?.name, null);
+                logger.log(`URL: ${url}`)
 
-                // Return the url to the uploaded file
+                // RETURN THE URL OF THE UPLOADED FILE
                 return {
                   success: 1,
                   file: {
-                    url: result.cdnUrl,
+                    url: url,
                     // any other image data you want to store, such as width, height, color, extension, etc
                   }
                 }
