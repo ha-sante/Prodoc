@@ -23,6 +23,7 @@ registerPlugin(FilePondPluginImageExifOrientation)
 
 import { parse as ParseContentDisposition } from 'content-disposition-attachment';
 const mimeTypes = require("mime-types");
+const contentDisposition = require('content-disposition')
 
 export default function Uploader(props) {
     const [file, setFile] = useState(null);
@@ -86,7 +87,7 @@ export default function Uploader(props) {
 
             let url = await StorageAPIHandler(file, file.name, handleProgress);
 
-            if(file.type.includes("image")){
+            if (file.type.includes("image")) {
                 setImage(url);
             }
             // console.log("file.uploaded", { url });
@@ -97,53 +98,75 @@ export default function Uploader(props) {
     };
 
     const SetFile = (url) => {
-        // SET A FILE WITH AN UPLOADED EFFECT
+        // NEED FILE NAME & IMAGE
+        fetch(url, { method: "HEAD", headers: { 'Access-Control-Expose-Headers': 'Content-Disposition' }, }).then(response => {
+            // FILE DETAILS
+            let fileDetails = {
+                size: response.headers.get("Content-Length"),
+                type: response.headers.get("Content-Type"),
+                name: "",
+                disposition: response.headers.get("Content-Disposition"),
+            };
+            console.log("setfile", { response, fileDetails });
 
-        // 1. IF AN IMAGE PULL IT AND RENDER
+            // FILE EXTENSIONS
+            let extension = mimeTypes.extension(fileDetails.type);
 
+            // FILE NAME
+            if (url.includes("core.windows.net")) {
+                let filename = url.split('/').pop();
+                fileDetails.name = `${filename}.${extension}`;
+            } else {
+                // USE CONTENT DISPOSITION
+                if (fileDetails.disposition) {
+                    let filename = contentDisposition.parse(`${fileDetails.disposition}`)?.parameters?.filename;
+                    fileDetails.name = `${filename}.${extension}`;
+                } else {
+                    // USE PLACEHOLDER
+                    fileDetails.name = "placeholder-name." + extension;
+                }
+            }
 
-        // 2. IF A FILE ONLY, CALL HEAD TO GET IT'S NAME AND DETAILS
-        // CREATE A DEMO FILE WITH THE PR
+            setFile(fileDetails);
+            setStatus("uploaded");
+            setProgress(0);
+            console.log("fileDetails", { url, fileDetails })
+
+            if (fileDetails.type.includes("image")) {
+                setImage(props.init);
+                setInit(false);
+            }
+
+        }).catch(error => {
+            console.log("error", error)
+        });
     }
 
-    const ResetUploader = () => {
+    const ResetUploader = ({ emit }) => {
         setFile(null);
         setStatus(null);
         setProgress(0);
         setImage("#");
+        setInit(false);
+
+        console.log("uploader.reset")
+        if (emit) {
+            props?.events({ type: "removed", url: "" });
+        }
     }
 
-
     useEffect(() => {
-        if (init == false) {
-            setInit(true);
-            // setImage(props.url);
-            // NEED FILE NAME & IMAGE
-            fetch(props.init, { method: "HEAD" }).then(response => {
-                // console.log("response", response)
+        console.log("uploader.init", { props })
 
-                const fileDetails = {
-                    size: response.headers.get("Content-Length"),
-                    type: response.headers.get("Content-Type"),
-                    name: response.headers.get("Content-Disposition"),
-                };
-
-                const extension = mimeTypes.extension(fileDetails.type);
-                fileDetails.name = "placeholder-for-uploaded-file."+extension; 
-
-                setFile(fileDetails);
-                setStatus("uploaded");
-                setProgress(0);
-
-                if(fileDetails.type.includes("image")){
-                    setImage(props.init);
-                }
-
-            }).catch(error => {
-                // console.log("error", error)
-            });
+        setInit(true);
+        if (props.init) {
+            SetFile(props.init);
+        } else {
+            // RESET THE 
+            ResetUploader(false);
         }
-    }, [props.init]);
+
+    }, [props]);
 
     useEffect(() => {
         if (status == "uploading") {
@@ -209,7 +232,7 @@ export default function Uploader(props) {
                                 </div>
 
                                 <div className='!w-[10%]'>
-                                    <p className='text-gray-900 text-sm'> <Trash size="16" className='text-gray-900' onClick={() => { ResetUploader(); }} /> </p>
+                                    <p className='text-gray-900 text-sm'> <Trash size="16" className='text-gray-900' onClick={() => { ResetUploader({ emit: true }); }} /> </p>
                                 </div>
 
                             </div>

@@ -347,7 +347,7 @@ export default function Editor() {
         let toastId = toast.loading('Getting portal configuration...');
         ConfigAPIHandler('GET').then(response => {
           console.log("configuration.data", response.data)
-          setConfiguration(response.data);
+          setConfiguration({ ...response.data });
           toast.dismiss(toastId);
         }).catch(error => {
           logger.log('error', error);
@@ -366,24 +366,6 @@ export default function Editor() {
 
 
   useEffect(() => {
-    // typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
-    //   console.log("image.uploader.called", e);
-
-    //   let cdnURL = e.detail.data[0]?.cdnUrl
-    //   switch (e.detail.ctx) {
-    //     case "LOGO_ONLY":
-    //       setConfiguration({ ...configuration, logo_only: cdnURL ? cdnURL : "" });
-    //       break;
-    //     case "LOGO_LABEL_LIGHT_MODE":
-    //       setConfiguration({ ...configuration, logo_label_light_mode: cdnURL ? cdnURL : "" });
-    //       break;
-    //     case "LOGO_LABEL_DARK_MODE":
-    //       setConfiguration({ ...configuration, logo_label_dark_mode: cdnURL ? cdnURL : "" });
-    //       break;
-    //   }
-
-    //   setEdited(true);
-    // });
     if (window != undefined && localStorage.getItem("authenticated") == true) {
       setAuthenticated(true);
     }
@@ -516,8 +498,6 @@ export default function Editor() {
               <p>Home will be updated soon.</p>
             </div>
 
-            <Uploader events={(e) => { e.type == "uploaded" && console.log(true) }} init={"https://prodoc.blob.core.windows.net/prodoc/client_secret_537048180923-9i4a2mjdjuu5ejhv2scj0abpth87fcbt.apps.googleusercontent.com.json"} />
-
           </div>
         </div>
       </div>
@@ -536,9 +516,13 @@ export default function Editor() {
                 <p className='text-sm'>Manage general landing page, team and integrations info.</p>
               </div>
 
-              <Button size={"sm"} className='' onClick={() => { SavePortalConfiguration() }}>
-                Save Configuration <TickSquare className='ml-3' size="16" color="#fff" />
-              </Button>
+              <div className='flex flex-row items-center gap-2'>
+                {/* <p>Edited ({edited ? "edited" : ""})</p> */}
+                <Button size={"sm"} className='' color={edited ? "warning" : "info"} onClick={() => { SavePortalConfiguration() }}>
+                  Save Configuration <TickSquare className='ml-3' size="16" color="#fff" />
+                </Button>
+              </div>
+
             </div>
 
             <Tabs.Group aria-label="Pills" style="pills" className='mt-3 gap-2' >
@@ -550,46 +534,67 @@ export default function Editor() {
                   {/* LOGO_ONLY, LOGO_LABEL_LIGHT_MODE, LOGO_LABEL_DARK_MODE, 
                   TITLE, DESCRIPTION */}
 
-                  <div className='flex justify-between gap-5 border p-5 w-[55%]'>
+                  {configuration != null && <div className='flex justify-between gap-5 border p-5 w-[70%]'>
                     <div>
                       <p className="text-xs mb-2"> LOGO_ONLY </p>
-                      <lr-file-uploader-minimal
-                        css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
-                        ctx-name="LOGO_ONLY"
-                        class="my-config"
-                        id="step-image-uploader"
-                      >
-                        <lr-upload-ctx-provider ctx-name="LOGO_ONLY"></lr-upload-ctx-provider>
-
-                      </lr-file-uploader-minimal>
+                      <Uploader
+                        accept={"image/*"}
+                        events={(e) => {
+                          switch (e.type) {
+                            case "uploaded":
+                              setConfiguration({ ...configuration, logo_only: e.url ? e.url : "" });
+                              setEdited(true);
+                              break;
+                            case "removed":
+                              setConfiguration({ ...configuration, logo_only: "" });
+                              setEdited(true);
+                              break;
+                          }
+                        }}
+                        init={configuration?.logo_only} />
                     </div>
 
                     <div>
                       <p className="text-xs mb-2"> LOGO_LABEL_LIGHT_MODE </p>
-                      <lr-file-uploader-minimal
-                        css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
-                        ctx-name="LOGO_LABEL_LIGHT_MODE"
-                        class="my-config"
-                        id="step-image-uploader"
-                      >
-                        <lr-upload-ctx-provider ctx-name="LOGO_LABEL_LIGHT_MODE"></lr-upload-ctx-provider>
 
-                      </lr-file-uploader-minimal>
+                      <Uploader
+                        accept={"image/*"}
+                        events={(e) => {
+                          switch (e.type) {
+                            case "uploaded":
+                              setConfiguration({ ...configuration, logo_label_light_mode: e.url ? e.url : "" });
+                              setEdited(true);
+                              break;
+                            case "removed":
+                              setConfiguration({ ...configuration, logo_label_light_mode: "" });
+                              setEdited(true);
+                              break;
+                          }
+                        }}
+                        init={configuration?.logo_label_light_mode} />
                     </div>
 
                     <div>
                       <p className="text-xs mb-2"> LOGO_LABEL_DARK_MODE </p>
-                      <lr-file-uploader-minimal
-                        css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
-                        ctx-name="LOGO_LABEL_DARK_MODE"
-                        class="my-config"
-                        id="step-image-uploader"
-                      >
-                        <lr-upload-ctx-provider ctx-name="LOGO_LABEL_DARK_MODE"></lr-upload-ctx-provider>
 
-                      </lr-file-uploader-minimal>
+                      <Uploader
+                        accept={"image/*"}
+                        events={(e) => {
+                          switch (e.type) {
+                            case "uploaded":
+                              setConfiguration({ ...configuration, logo_label_dark_mode: e.url ? e.url : "" });
+                              setEdited(true);
+                              break;
+                            case "removed":
+                              setConfiguration({ ...configuration, logo_label_dark_mode: "" });
+                              setEdited(true);
+                              break;
+                          }
+                        }}
+                        init={configuration?.logo_label_dark_mode} />
+                      {/* {configuration?.logo_label_dark_mode} */}
                     </div>
-                  </div>
+                  </div>}
 
                 </div>
               </Tabs.Item>
@@ -679,7 +684,7 @@ export default function Editor() {
             </div>
             :
             <div className="w-100">
-              {page?.id !== undefined || navigation !== 'configuration' && Navigation()}
+              {page?.id !== undefined && Navigation()}
               <EditorSidebar />
               {navigation === 'api' && APIPage()}
               {navigation === 'product' && EditorPage()}

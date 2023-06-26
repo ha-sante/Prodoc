@@ -39,6 +39,7 @@ import * as LR from "@uploadcare/blocks";
 LR.registerBlocks(LR);
 
 const BlocksEditor = dynamic(import('@/components/editor/editor'), { ssr: false });
+import Uploader from '@/components/editor/utilities/uploader';
 
 export default function WalkthroughCreator() {
     const router = useRouter();
@@ -80,39 +81,6 @@ export default function WalkthroughCreator() {
     useEffect(() => {
         console.log("steps.changed", { page, steps })
     }, [steps]);
-
-    useEffect(() => {
-        // 1. IF LOGO EXISTS, SET IT TO UPLOADER STATE
-        // 2. ADD AN EVENT LISTERNER TO SET THE STATE
-        // 3. ADD EVENT LISTERNER TO DELETE CURRENT STATE
-        typeof window !== undefined && window.addEventListener('LR_UPLOAD_FINISH', (e) => {
-            console.log("image.uploader.called", e);
-            let cdnURL = e.detail.data[0]?.cdnUrl
-            setPage({ ...page, logo: cdnURL ? cdnURL : "" });
-            setEdited(true);
-        });
-
-        const walkthrough_logo_uploader = document.querySelector("lr-upload-ctx-provider");
-
-        if (walkthrough_logo_uploader) {
-            if (page.logo) {
-                console.log("api.data", walkthrough_logo_uploader.uploadCollection)
-                // IF THE COMPONENT DOSENT HAVE ANY IMAGES - SET THE IMAGES FOR IT
-                if (walkthrough_logo_uploader.uploadCollection.size === 0) {
-                    walkthrough_logo_uploader.uploadCollection.add({ externalUrl: page.logo });
-                    var min = render + 1;
-                    var max = 50000
-                    var random = Math.random() * (max - min) + min;
-                    setRender(random)
-                }
-            } else {
-                const walkthrough_logo_uploader = document.querySelector("lr-upload-ctx-provider");
-                walkthrough_logo_uploader.uploadCollection.clearAll();
-            }
-        }
-
-    }, [pageId]);
-
 
     // FUNCTIONS
     const EditorOutputHandler = (output) => {
@@ -289,15 +257,23 @@ export default function WalkthroughCreator() {
                 {page && <div className="flex mt-3 border-t">
                     <div className="p-4 rounded-lg dark:border-gray-700 w-[30%] mx-auto">
                         <p className='mb-2'>Image/Logo</p>
-                        <lr-file-uploader-minimal
-                            css-src="https://esm.sh/@uploadcare/blocks@0.22.3/web/file-uploader-minimal.min.css"
-                            ctx-name="my-uploader"
-                            class="my-config"
-                            id="step-image-uploader"
-                        >
-                            <lr-upload-ctx-provider ctx-name="my-uploader"></lr-upload-ctx-provider>
 
-                        </lr-file-uploader-minimal>
+                        <Uploader
+                            accept={"image/*"}
+                            events={(e) => {
+                                switch (e.type) {
+                                    case "uploaded":
+                                        setPage({ ...page, logo: e.url });
+                                        setEdited(true);
+                                        break;
+                                    case "removed":
+                                        setPage({ ...page, logo: e.url });
+                                        setEdited(true);
+                                        break;
+                                }
+                            }}
+                            init={page?.logo} />
+
                     </div>
 
                     <div className="p-4 rounded-lg dark:border-gray-700 w-[90%] mx-auto">

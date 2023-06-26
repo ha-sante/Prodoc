@@ -355,6 +355,7 @@ export async function StorageAPIHandler(file, filename, progress) {
   // - ALL FILES ARE STORED TO THEIR SERVICES DIRECTLY FROM THE FRONTEND AS A RESULT OF THIS
   // - THIS METHOD SUPPORTS ALL TYPES OF UPLOADER CLIENTS (BIG CLOUD & SERVICES)
 
+  console.log({ file, filename, progress })
 
   // DETECT WHICH STORAGE OPTION TO USE
   let location = "";
@@ -373,6 +374,7 @@ export async function StorageAPIHandler(file, filename, progress) {
 
       // INITIATE THE CLIENT
       const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING);
+      await blobServiceClient.setProperties({defaultServiceVersion: "2020-02-10"}); // TO ENABLE CONTENT DISPOSITION FEATURES
 
       // CONNECT THE CONTAINER
       const containerClient = blobServiceClient.getContainerClient(containerName);
@@ -380,8 +382,11 @@ export async function StorageAPIHandler(file, filename, progress) {
 
       // UPLOAD THE FILE
       const blockBlobClient = containerClient.getBlockBlobClient(filename);
-      const uploadBlobResponse = await blockBlobClient.upload(file, file.size, { onProgress: ev => progress && progress(ev, "azure", file) });
-
+      const uploadBlobResponse = await blockBlobClient.upload(file, file.size, {
+        blobHTTPHeaders: { blobContentType: file.type, blobContentDisposition: `attachment; filename=${file.name}` },
+        onProgress: ev => progress && progress(ev, "azure", file),
+      });
+      
       // GET ITS RESPONSE
       const url = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${filename}`;
       return url;
@@ -394,6 +399,7 @@ export async function StorageAPIHandler(file, filename, progress) {
         store: "auto",
         onProgress: ev => progress && progress(ev, "uploadcare", file)
       })
+      console.log(result)
       return result.cdnUrl;
       break;
 
