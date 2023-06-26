@@ -116,6 +116,9 @@ export default function Uploader(props) {
             if (url.includes("core.windows.net")) {
                 let filename = url.split('/').pop();
                 fileDetails.name = `${filename}.${extension}`;
+            } else if (url.includes("ucarecdn.com")) {
+                let filename = url.split('/').pop();
+                fileDetails.name = `${filename}.${extension}`;
             } else {
                 // USE CONTENT DISPOSITION
                 if (fileDetails.disposition) {

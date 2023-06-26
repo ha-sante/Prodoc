@@ -366,6 +366,7 @@ export async function StorageAPIHandler(file, filename, progress) {
   }
 
   // UPLOAD TO THAT CLOUD OPTION - RETURN PUBLIC URL
+  let url = "";
   switch (location) {
     case "azure":
       // INITIATE THE CONTAINER NAME
@@ -374,7 +375,7 @@ export async function StorageAPIHandler(file, filename, progress) {
 
       // INITIATE THE CLIENT
       const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING);
-      await blobServiceClient.setProperties({defaultServiceVersion: "2020-02-10"}); // TO ENABLE CONTENT DISPOSITION FEATURES
+      await blobServiceClient.setProperties({ defaultServiceVersion: "2020-02-10" }); // TO ENABLE CONTENT DISPOSITION FEATURES
 
       // CONNECT THE CONTAINER
       const containerClient = blobServiceClient.getContainerClient(containerName);
@@ -386,9 +387,9 @@ export async function StorageAPIHandler(file, filename, progress) {
         blobHTTPHeaders: { blobContentType: file.type, blobContentDisposition: `attachment; filename=${file.name}` },
         onProgress: ev => progress && progress(ev, "azure", file),
       });
-      
+
       // GET ITS RESPONSE
-      const url = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${filename}`;
+      url = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${filename}`;
       return url;
       break;
     case "uploadcare":
@@ -399,7 +400,7 @@ export async function StorageAPIHandler(file, filename, progress) {
         store: "auto",
         onProgress: ev => progress && progress(ev, "uploadcare", file)
       })
-      console.log(result)
+      url = `${result.cdnUrl}/${file.name}`
       return result.cdnUrl;
       break;
 
