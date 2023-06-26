@@ -8,7 +8,7 @@ import { Inter, Lora } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
-import { Box, Logout, Code1, Setting3, Map1 as MapIcon, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, CloudConnection } from 'iconsax-react';
+import { Box, Logout, Code1, Setting3, Map1 as MapIcon, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, Home } from 'iconsax-react';
 
 import {
     store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
@@ -601,19 +601,29 @@ const EditorSidebarComponent = (props) => {
         return (
             <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 flex justify-between flex-col">
 
-                <ul className="space-y-2 font-medium">
-                    <p className="pl-2 mb-3">Welcome 👋</p>
-                    {defaultRoutes.map((route) => {
-                        return (
-                            <li key={route.id}>
-                                <Link href={`/editor/${route.id.toLowerCase()}`} className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                                    {route.icon}
-                                    <span className="ml-3">{route.title}</span>
-                                </Link >
-                            </li>
-                        )
-                    })}
-                </ul>
+                <div className="space-y-2 font-medium">
+                    <div className='mt-2 mb-2 border rounded-md cursor-pointer'>
+                        <div className='flex justify-between items-center p-2'>
+                            <div className='flex items-center'>
+                                <Home size="16" color="#111827" />
+                                <p className="pl-2">Editor Overview</p>
+                            </div>
+                            <ArrowRight2 size="16" color="#111827" />
+                        </div>
+                    </div>
+                    <ul className="space-y-2 font-medium ml-2">
+                        {defaultRoutes.map((route) => {
+                            return (
+                                <li key={route.id}>
+                                    <Link href={`/editor/${route.id.toLowerCase()}`} className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        {route.icon}
+                                        <span className="ml-3">{route.title}</span>
+                                    </Link >
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
 
                 <ul className="space-y-2 font-medium">
                     <li >
