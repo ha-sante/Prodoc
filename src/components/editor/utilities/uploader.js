@@ -205,7 +205,7 @@ export default function Uploader(props) {
 
                         <div className="progressbar rounded-md" style={{ width: `${Math.round(progress)}%` }}></div>
 
-                        <div className='mx-auto w-[100%] h-[100%] flex items-center p-2'>
+                        <div className='mx-auto w-100 h-[100%] flex items-center p-2'>
                             <div className="flex justify-between items-center w-[100%]">
 
                                 <div className='!w-[85%] flex justify-start gap-1 items-center'>

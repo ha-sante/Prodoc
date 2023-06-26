@@ -534,7 +534,7 @@ export default function Editor() {
                   {/* LOGO_ONLY, LOGO_LABEL_LIGHT_MODE, LOGO_LABEL_DARK_MODE, 
                   TITLE, DESCRIPTION */}
 
-                  {configuration != null && <div className='flex justify-between gap-5 border p-5 w-[70%]'>
+                  {configuration != null && <div className='flex justify-between gap-5 border p-5 w-[auto]'>
                     <div>
                       <p className="text-xs mb-2"> LOGO_ONLY </p>
                       <Uploader
