@@ -1,0 +1,10 @@
+// HAS A FEW METHODS
+// YOU CALL IT AND WE SUB HANDLE IT FOR YOU BASED ON ADAPTERS
+
+// CREATE
+// UPDATE
+// DELETE
+
+class DatabaseHandler{
+    
+}

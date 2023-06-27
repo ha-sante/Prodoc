@@ -224,6 +224,7 @@ export default function Editor() {
     ConfigAPIHandler('PUT', configuration).then(response => {
       console.log("response.data", { response_herny: response.data })
       setConfiguration(response.data);
+      setEdited(false);
       toast.dismiss(toastId);
       toast.success("Portal Configuration Saved")
     }).catch(error => {
