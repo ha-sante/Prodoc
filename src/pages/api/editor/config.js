@@ -1,6 +1,6 @@
 const fauna = require('../../../integrations/services/fauna.js');
-// const redis = require('../../../integrations/services/redis.js');
-import redis from '../../../integrations/services/redis';
+import database from '../../../integrations/adapters/database';
+
 
 let q = fauna.q;
 const _ = require('lodash');
@@ -23,29 +23,25 @@ export default async function handler(req, res) {
 
     // HOW IT WORKS
     // - GET GETS THE CONFIG WORK
-    
+
+    let config = new database.ConfigDatabaseHandler(body, params); // THE BELOW FUNCTIONS ALREADY HAVE ACCESS THROUGH THIS SETUP
 
     switch (method) {
         case "GET":
-            // Process a GET request
-            return fauna.client.query(q.Get(q.Ref(q.Collection('Configuration'), "1"))).then((result) => {
-                res.status(200).send(result.data);
-            }).catch(error => {
-                console.log("get.content.error", error);
+            try {
+                let result = await config.get();
+                res.status(200).send(result);
+            } catch (error) {
                 res.status(404).send(error)
-            });
-
+            }
             break;
         case "PUT":
-            // Process a PUT request
             try {
-                let configured = await fauna.client.query(q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...body } }));
-                res.status(200).send(configured.data);
+                let result = await config.put();
+                res.status(200).send(result);
             } catch (error) {
-                console.log("api.config.put.error", error);
-                res.status(404).send(error);
+                res.status(404).send(error)
             }
-
             break;
         default:
             console.log("request.method.not.supported", method);

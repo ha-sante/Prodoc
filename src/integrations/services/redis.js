@@ -6,5 +6,4 @@ const client = createClient({
     token: process.env.REDIS_SERVICE_REST_TOKEN,
 });
 
-export default { client };
-
+module.exports = { client }
