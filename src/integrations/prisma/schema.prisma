@@ -1,33 +1,19 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("SQL_DATABASE_CONNECTION_STRING")
+  provider = "mysql"
+  url      = env("PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING")
 }
 
-model Page {
-  id   Int     @id @default(autoincrement())
-  logo String?
-
-  slug        String
-  title       String
-  description String
-
-  type     String
-  position String
-  parent   String
-
-  content       Json
-  configuration Json
-  children      String[]
+model account {
+  id    Int     @id @default(autoincrement())
+  name  String?
+  email String?
 }
 
-model Configuration {
+model configuration {
   id                    Int     @id @default(autoincrement())
   readme                String?
   openapi               Json
@@ -36,8 +22,16 @@ model Configuration {
   logo_label_dark_mode  String
 }
 
-model Account {
-  id    Int     @id @default(autoincrement())
-  name  String?
-  email String?
+model page {
+  id            Int     @id @default(autoincrement())
+  logo          String?
+  slug          String
+  title         String
+  description   String
+  type          String
+  position      String
+  parent        String
+  content       Json
+  configuration Json
+  children      Json
 }
