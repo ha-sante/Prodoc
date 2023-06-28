@@ -376,5 +376,4 @@ class ConfigDatabaseHandler {
 
 }
 
-
 module.exports = { PagesDatabaseHandler, ConfigDatabaseHandler }
