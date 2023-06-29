@@ -145,12 +145,6 @@ class FaunaPagesDatabaseHandler {
 
         return new Promise(async (resolve, reject) => {
 
-            // console.clear();
-            let body_size = utils.roughSizeOfObject(this.body);
-            let configuration_object = utils.roughSizeOfObject(this.body?.configuration);
-            console.log("api.content.patch.called.diagnostics.body_size", body_size);
-            console.log("api.content.patch.called.diagnostics.configuration_object", configuration_object);
-
             // Process a PATCH request
             // BULK UPLOADING OF CHAPTER & PAGES 
             // !FOR PROCESSING BULK API CONTENT ONLY
@@ -167,16 +161,9 @@ class FaunaPagesDatabaseHandler {
                 ));
                 console.log("api.patch.deleted", true);
 
-                start = performance.now();
-                console.log("api.patch.configured.call.start", `${start} ms`);
 
                 // STORE THE OPEN API SPEC
                 let configured = await fauna.client.query(q.Update(q.Ref(q.Collection('Configuration'), "1"), { data: { ...this.body?.configuration } }));
-                console.log("api.patch.configured", true);
-                const end = performance.now();
-                const executionTime = end - start;
-                console.log("api.patch.error.call.end", `${end} ms`);
-                console.log("api.patch.error.call.executionTime", msConversion(executionTime));
 
 
                 // CREATE THE FOLDER/PARENT PAGES
@@ -254,11 +241,6 @@ class FaunaPagesDatabaseHandler {
                 let data = [...updated_chapters, ...pages];
                 resolve(data);
             } catch (error) {
-                const end = performance.now();
-                const executionTime = end - start;
-                console.log("api.patch.error.call.end", `${end} ms`);
-                console.log("api.patch.error.call.executionTime", msConversion(executionTime));
-
                 console.log("api.content.patch.error", error);
                 reject(error);
             }
