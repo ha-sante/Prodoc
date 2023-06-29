@@ -15,6 +15,10 @@ Prodoc is an open source product and API documentation tool. It enables you to o
 - prodoc-demo.vercel.app
 
 
+## Deployment (Coming in a few hours)
+- Deploy to Azure
+- Deploy to Vercel
+
 ## Versioning
 - Prodoc is updated every day with minor or major upgrades
 - Every Prod version is tested to work
