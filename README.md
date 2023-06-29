@@ -19,14 +19,10 @@ Click to confirm and deploy.
 
 
 
+## Contribute
+- Clone this repo and contribute with pull requests
 
 
 ## Secure
 - Send me an email [henry@] [prodoc] [.tech]
-
-
-
-
-## Contribute
-- Clone this repo and contribute with pull requests
 
