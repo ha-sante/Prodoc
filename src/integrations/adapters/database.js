@@ -493,6 +493,9 @@ class PagesDatabaseHandler {
         this.database = Databased();
         this.body = body;
         this.params = params;
+
+
+        console.log("Database adapter is connected to ", this.database);
     }
 
     async create() {
@@ -597,6 +600,8 @@ class ConfigDatabaseHandler {
         this.database = Databased();
         this.body = body;
         this.params = params;
+
+        console.log("Database adapter is connected to ", this.database);
     }
 
     async get() {

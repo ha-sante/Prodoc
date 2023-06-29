@@ -10,3 +10,5 @@ README.md
 .vscode
 .terraform
 .husky
+.env
+deploy
