@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import Head from 'next/head';
 
-import { Inter } from 'next/font/google'
 import { useState, useEffect, useContext, useRef, useLayoutEffect, useMemo, memo } from "react";
 import { useRouter } from 'next/router'
 
@@ -18,7 +17,6 @@ import { useStore, useAtom, useSetAtom } from "jotai";
 
 import Output from 'editorjs-react-renderer';
 import { toast } from 'react-hot-toast';
-const inter = Inter({ subsets: ['latin'] })
 const _ = require('lodash');
 
 export default function Walkthrough() {

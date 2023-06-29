@@ -17,9 +17,6 @@ import WalkthroughCreator from '@/components/editor/creator';
 
 import Uploader from '@/components/editor/utilities/uploader';
 
-import { Inter } from 'next/font/google'
-const inter = Inter({ subsets: ['latin'] })
-
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
   editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger, configurationAtom,

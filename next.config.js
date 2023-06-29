@@ -25,6 +25,8 @@ const nextConfig = {
     // config.experiments.topLevelAwait = true 
     return config;
   },
+
+  output: 'standalone',
 }
 
 // The above is made to support all domain use-cases

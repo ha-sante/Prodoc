@@ -6,13 +6,13 @@ Prodoc is an open source product and API documentation tool. It enables you to o
 - [x] Editor Panel (Product Documentation)
 - [x] Editor Panel (API Documentation)
 - [x] Editor Panel (Walkthrough Experiences)
-- [ ] Docs Website Sections
+- [ ] Website Pages
 
 - [ ] Content Versioning
 - [ ] SDK Documentation
 
 ## Contributing
-- prodoc-demo.vercel.app
+- Clone this repo and contribute with pull requests
 
 
 ## Deployment (Coming in a few hours)

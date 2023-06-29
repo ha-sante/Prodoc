@@ -4,9 +4,6 @@ import Link from 'next/link'
 import { useState, useEffect, useContext, memo, useMemo, useRef } from "react";
 import { useRouter } from 'next/router'
 
-import { Inter, Lora } from 'next/font/google'
-const inter = Inter({ subsets: ['latin'] })
-
 import { Label, TextInput, Checkbox, Button, Dropdown, Badge } from "flowbite-react";
 import { Box, Logout, Code1, Setting3, Map1 as MapIcon, ArrowLeft, ArrowRight2, ArrowDown2, Add, More2, More, HambergerMenu, Menu, Fatrows, Home } from 'iconsax-react';
 

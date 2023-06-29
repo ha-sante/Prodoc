@@ -5,9 +5,6 @@ import dynamic from 'next/dynamic';
 import { useState, useEffect, useContext, useRef, useMemo } from "react";
 import { useRouter } from 'next/router'
 
-import { Inter } from 'next/font/google'
-const inter = Inter({ subsets: ['latin'] })
-
 import { Label, TextInput, Checkbox, Button, Dropdown, Avatar, Spinner, Tooltip, Timeline } from "flowbite-react";
 import { Copy, ArrowLeft2, ArrowRight2, Edit, Link1 } from 'iconsax-react';
 
