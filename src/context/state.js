@@ -359,7 +359,7 @@ export async function StorageAPIHandler(file, filename, progress) {
 
   // DETECT WHICH STORAGE OPTION TO USE
   let location = "";
-  if (process.env.NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING) {
+  if (process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING) {
     location = "azure"
   } else if (process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY) {
     location = "uploadcare"
@@ -370,11 +370,11 @@ export async function StorageAPIHandler(file, filename, progress) {
   switch (location) {
     case "azure":
       // INITIATE THE CONTAINER NAME
-      const storageAccountName = "prodoc";
-      const containerName = "prodoc";
+      const storageAccountName = process.env.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME;
+      const containerName = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONTAINER_NAME;
 
       // INITIATE THE CLIENT
-      const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING);
+      const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING);
       await blobServiceClient.setProperties({ defaultServiceVersion: "2020-02-10" }); // TO ENABLE CONTENT DISPOSITION FEATURES
 
       // CONNECT THE CONTAINER
