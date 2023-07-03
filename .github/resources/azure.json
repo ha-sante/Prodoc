@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "15501228846030626179"
+      "templateHash": "3958930436367511371"
     }
   },
   "parameters": {
@@ -13,37 +13,64 @@
       "type": "string",
       "defaultValue": "[resourceGroup().location]"
     },
-    "appPlanName": {
+    "containerEnvironmentLabel": {
       "type": "string",
-      "defaultValue": "[format('{0}plan', uniqueString(resourceGroup().id))]"
+      "defaultValue": "prodoc-environments-app"
     }
   },
+  "variables": {
+    "logAnalyticsWorkspaceName": "[format('{0}-logs-workspace', parameters('containerEnvironmentLabel'))]",
+    "containerPort": 3000
+  },
   "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[variables('logAnalyticsWorkspaceName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-03-01",
+      "name": "prodoc-apps-environment",
+      "location": "[parameters('location')]",
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName')), '2020-03-01-preview').customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName')), '2020-03-01-preview').primarySharedKey]"
+          }
+        },
+        "vnetConfiguration": {
+          "internal": false
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
+      ]
+    },
     {
       "type": "Microsoft.App/containerApps",
       "apiVersion": "2022-11-01-preview",
       "name": "prodoc-app-instance",
       "location": "[parameters('location')]",
+      "tags": {
+        "channel": "prodoc-quick-deploy"
+      },
       "properties": {
         "configuration": {
-          "registries": [
-            {
-              "identity": "string",
-              "passwordSecretRef": "string",
-              "server": "string",
-              "username": "string"
-            }
-          ]
+          "ingress": {
+            "allowInsecure": false,
+            "targetPort": 3000,
+            "transport": "auto",
+            "external": true
+          }
         },
+        "environmentId": "[resourceId('Microsoft.App/managedEnvironments', 'prodoc-apps-environment')]",
         "template": {
           "containers": [
             {
-              "args": [
-                "string"
-              ],
-              "command": [
-                "string"
-              ],
               "env": [
                 {
                   "name": "channel",
@@ -86,44 +113,53 @@
                   "value": "leave-empty-or-set-to-use"
                 }
               ],
-              "image": "prodoctech/prodoc:latest",
-              "name": "prodoc",
+              "image": "docker.io/prodoctech/prodoc:latest",
+              "name": "prodoc-container-instance",
               "resources": {
                 "cpu": "[json('0.25')]",
-                "memory": "512Mb"
-              }
+                "memory": "0.5Gi"
+              },
+              "probes": [
+                {
+                  "type": "liveness",
+                  "initialDelaySeconds": 15,
+                  "periodSeconds": 30,
+                  "failureThreshold": 3,
+                  "timeoutSeconds": 1,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                },
+                {
+                  "type": "startup",
+                  "timeoutSeconds": 2,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                },
+                {
+                  "type": "readiness",
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                }
+              ]
             }
           ],
-          "revisionSuffix": "string",
           "scale": {
-            "maxReplicas": 10,
+            "maxReplicas": 1,
             "minReplicas": 1
           }
         },
-        "workloadProfileName": "prodoc-app-instance-load-profile"
-      }
-    },
-    {
-      "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2020-12-01",
-      "name": "[parameters('appPlanName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "F1",
-        "capacity": 1
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-02-01",
-      "name": "[format('{0}storage', parameters('appPlanName'))]",
-      "location": "[parameters('location')]",
-      "kind": "StorageV2",
-      "sku": {
-        "name": "Premium_LRS"
+        "workloadProfileName": "prodoc-app-instance-workload-profile"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]"
+        "[resourceId('Microsoft.App/managedEnvironments', 'prodoc-apps-environment')]"
       ]
     }
   ]
