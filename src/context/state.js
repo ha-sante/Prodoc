@@ -365,6 +365,8 @@ export async function StorageAPIHandler(file, filename, progress) {
     location = "uploadcare"
   }
 
+  console.log(`Storage Handler in use is: ${location}`)
+
   // UPLOAD TO THAT CLOUD OPTION - RETURN PUBLIC URL
   let url = "";
   switch (location) {
@@ -372,9 +374,10 @@ export async function StorageAPIHandler(file, filename, progress) {
       // INITIATE THE CONTAINER NAME
       const storageAccountName = process.env.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME;
       const containerName = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONTAINER_NAME;
+      const connectionString = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING
 
       // INITIATE THE CLIENT
-      const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING);
+      const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
       await blobServiceClient.setProperties({ defaultServiceVersion: "2020-02-10" }); // TO ENABLE CONTENT DISPOSITION FEATURES
 
       // CONNECT THE CONTAINER

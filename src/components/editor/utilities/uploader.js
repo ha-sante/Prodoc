@@ -31,6 +31,7 @@ export default function Uploader(props) {
     const [progress, setProgress] = useState(0); // PERCENT ONLY
     const [image, setImage] = useState("#"); // FOR IMAGE PREVIEWS
     const [init, setInit] = useState(false); // FOR INITIAL FILES
+    const [indicate, setIndicate] = useState(false); 
 
     // THE UPLOADER IS SIMPLY AN UPLOAD ONLY
     // PREVIEWS IS SHOWN IN ANOTHER COMPONENT
@@ -57,7 +58,6 @@ export default function Uploader(props) {
 
             function handleProgress(status, service, file) {
                 // console.log("progress.called", { status, service, file })
-
                 let numerator = 0;
                 let denominator = 0;
                 let percent = 0;
@@ -72,6 +72,7 @@ export default function Uploader(props) {
                         if (percent == 100) {
                             setProgress(0);
                             setStatus("uploaded");
+                            setIndicate(true);
                         }
                         break;
                     case "uploadcare":
@@ -80,7 +81,9 @@ export default function Uploader(props) {
                         setProgress(percent);
                         if (percent == 100) {
                             setProgress(0);
+                            setIndicate(true);
                             setStatus("uploaded");
+                            setIndicate(true);
                         }
                 }
             }
@@ -113,10 +116,10 @@ export default function Uploader(props) {
             let extension = mimeTypes.extension(fileDetails.type);
 
             // FILE NAME
-            if (url.includes("core.windows.net")) {
+            if (url?.includes("core.windows.net")) {
                 let filename = url.split('/').pop();
                 fileDetails.name = `${filename}.${extension}`;
-            } else if (url.includes("ucarecdn.com")) {
+            } else if (url?.includes("ucarecdn.com")) {
                 let filename = url.split('/').pop();
                 fileDetails.name = `${filename}.${extension}`;
             } else {
@@ -135,7 +138,7 @@ export default function Uploader(props) {
             setProgress(0);
             console.log("fileDetails", { url, fileDetails })
 
-            if (fileDetails.type.includes("image")) {
+            if (fileDetails.type?.includes("image")) {
                 setImage(props.init);
                 setInit(false);
             }
@@ -151,6 +154,7 @@ export default function Uploader(props) {
         setProgress(0);
         setImage("#");
         setInit(false);
+        setIndicate(false)
 
         console.log("uploader.reset")
         if (emit) {
@@ -215,18 +219,18 @@ export default function Uploader(props) {
                                     <div className="!w-[20%]">
 
                                         <div className="uploader-complete-badge absolute top-1 ml-5 rounded-lg">
-                                            <div name="badge-success !text-white">
+                                            {indicate == true && <div name="badge-success !text-white">
                                                 <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
                                                     <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
                                                     <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
                                                 </svg>
-                                            </div>
+                                            </div>}
                                         </div>
 
                                         {render_image_preview ?
                                             <img src={image} id="file-preview" className='w-[30px] h-[30px] rounded-lg mr-2 bg-cover' />
                                             :
-                                            <DocumentText size="32" color="#555555" />
+                                            <DocumentText size="16" color="#555555" className='mx-auto' />
                                         }
                                     </div>
                                     <div className="!w-[80%] uploader-filename">
