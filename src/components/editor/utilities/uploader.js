@@ -31,7 +31,7 @@ export default function Uploader(props) {
     const [progress, setProgress] = useState(0); // PERCENT ONLY
     const [image, setImage] = useState("#"); // FOR IMAGE PREVIEWS
     const [init, setInit] = useState(false); // FOR INITIAL FILES
-    const [indicate, setIndicate] = useState(false); 
+    const [indicate, setIndicate] = useState(false);
 
     // THE UPLOADER IS SIMPLY AN UPLOAD ONLY
     // PREVIEWS IS SHOWN IN ANOTHER COMPONENT
@@ -103,44 +103,48 @@ export default function Uploader(props) {
     const SetFile = (url) => {
         // NEED FILE NAME & IMAGE
         fetch(url, { method: "HEAD", headers: { 'Access-Control-Expose-Headers': 'Content-Disposition' }, }).then(response => {
-            // FILE DETAILS
-            let fileDetails = {
-                size: response.headers.get("Content-Length"),
-                type: response.headers.get("Content-Type"),
-                name: "",
-                disposition: response.headers.get("Content-Disposition"),
-            };
-            console.log("setfile", { response, fileDetails });
 
-            // FILE EXTENSIONS
-            let extension = mimeTypes.extension(fileDetails.type);
+            let allow = true;
+            if (allow) {
+                // FILE DETAILS
+                let fileDetails = {
+                    size: response.headers.get("Content-Length"),
+                    type: response.headers.get("Content-Type"),
+                    name: "",
+                    disposition: response.headers.get("Content-Disposition"),
+                };
+                console.log("setfile", { response, fileDetails });
 
-            // FILE NAME
-            if (url?.includes("core.windows.net")) {
-                let filename = url.split('/').pop();
-                fileDetails.name = `${filename}.${extension}`;
-            } else if (url?.includes("ucarecdn.com")) {
-                let filename = url.split('/').pop();
-                fileDetails.name = `${filename}.${extension}`;
-            } else {
-                // USE CONTENT DISPOSITION
-                if (fileDetails.disposition) {
-                    let filename = contentDisposition.parse(`${fileDetails.disposition}`)?.parameters?.filename;
+                // FILE EXTENSIONS
+                let extension = mimeTypes.extension(fileDetails.type);
+
+                // FILE NAME
+                if (url?.includes("core.windows.net")) {
+                    let filename = url.split('/').pop();
+                    fileDetails.name = `${filename}`;
+                } else if (url?.includes("ucarecdn.com")) {
+                    let filename = url.split('/').pop();
                     fileDetails.name = `${filename}.${extension}`;
                 } else {
-                    // USE PLACEHOLDER
-                    fileDetails.name = "placeholder-name." + extension;
+                    // USE CONTENT DISPOSITION
+                    if (fileDetails.disposition) {
+                        let filename = contentDisposition.parse(`${fileDetails.disposition}`)?.parameters?.filename;
+                        fileDetails.name = `${filename}.${extension}`;
+                    } else {
+                        // USE PLACEHOLDER
+                        fileDetails.name = "placeholder-name." + extension;
+                    }
                 }
-            }
 
-            setFile(fileDetails);
-            setStatus("uploaded");
-            setProgress(0);
-            console.log("fileDetails", { url, fileDetails })
+                setFile(fileDetails);
+                setStatus("uploaded");
+                setProgress(0);
+                console.log("fileDetails", { url, fileDetails })
 
-            if (fileDetails.type?.includes("image")) {
-                setImage(props.init);
-                setInit(false);
+                if (fileDetails.type?.includes("image")) {
+                    setImage(props.init);
+                    setInit(false);
+                }
             }
 
         }).catch(error => {
