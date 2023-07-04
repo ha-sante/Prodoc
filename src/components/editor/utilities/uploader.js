@@ -255,9 +255,9 @@ export default function Uploader(props) {
     }
 
     return (
-        <div className='mt-5'>
+        <div className='mt-3 flex-1'>
 
-            <div className="w-[250px] border border-solid h-[60px] bg-white p-1 rounded-md flex justify-center items-center cursor-pointer" >
+            <div className="w-[100%] border border-solid h-[60px] bg-white p-1 rounded-md flex justify-center items-center cursor-pointer" >
                 <UploaderProcessView />
             </div>
 

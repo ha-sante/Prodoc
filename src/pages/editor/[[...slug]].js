@@ -532,67 +532,68 @@ export default function Editor() {
                   {/* LOGO_ONLY, LOGO_LABEL_LIGHT_MODE, LOGO_LABEL_DARK_MODE, 
                   TITLE, DESCRIPTION */}
 
-                  {configuration != null && <div className='flex justify-between gap-5 border p-5 w-[auto]'>
-                    <div>
-                      <p className="text-xs mb-2"> LOGO_ONLY </p>
-                      <Uploader
-                        accept={"image/*"}
-                        events={(e) => {
-                          switch (e.type) {
-                            case "uploaded":
-                              setConfiguration({ ...configuration, logo_only: e.url ? e.url : "" });
-                              setEdited(true);
-                              break;
-                            case "removed":
-                              setConfiguration({ ...configuration, logo_only: "" });
-                              setEdited(true);
-                              break;
-                          }
-                        }}
-                        init={configuration?.logo_only} />
-                    </div>
+                  {configuration != null &&
+                    <div className='flex justify-between gap-5 border p-5 w-[auto]'>
+                      <div class="w-1/2">
+                        <p className="text-xs mb-2"> LOGO_ONLY </p>
+                        <Uploader
+                          accept={"image/*"}
+                          events={(e) => {
+                            switch (e.type) {
+                              case "uploaded":
+                                setConfiguration({ ...configuration, logo_only: e.url ? e.url : "" });
+                                setEdited(true);
+                                break;
+                              case "removed":
+                                setConfiguration({ ...configuration, logo_only: "" });
+                                setEdited(true);
+                                break;
+                            }
+                          }}
+                          init={configuration?.logo_only} />
+                      </div>
 
-                    <div>
-                      <p className="text-xs mb-2"> LOGO_LABEL_LIGHT_MODE </p>
+                      <div class="w-1/2">
+                        <p className="text-xs mb-2"> LOGO_LABEL_LIGHT_MODE </p>
 
-                      <Uploader
-                        accept={"image/*"}
-                        events={(e) => {
-                          switch (e.type) {
-                            case "uploaded":
-                              setConfiguration({ ...configuration, logo_label_light_mode: e.url ? e.url : "" });
-                              setEdited(true);
-                              break;
-                            case "removed":
-                              setConfiguration({ ...configuration, logo_label_light_mode: "" });
-                              setEdited(true);
-                              break;
-                          }
-                        }}
-                        init={configuration?.logo_label_light_mode} />
-                    </div>
+                        <Uploader
+                          accept={"image/*"}
+                          events={(e) => {
+                            switch (e.type) {
+                              case "uploaded":
+                                setConfiguration({ ...configuration, logo_label_light_mode: e.url ? e.url : "" });
+                                setEdited(true);
+                                break;
+                              case "removed":
+                                setConfiguration({ ...configuration, logo_label_light_mode: "" });
+                                setEdited(true);
+                                break;
+                            }
+                          }}
+                          init={configuration?.logo_label_light_mode} />
+                      </div>
 
-                    <div>
-                      <p className="text-xs mb-2"> LOGO_LABEL_DARK_MODE </p>
+                      <div class="w-1/2">
+                        <p className="text-xs mb-2"> LOGO_LABEL_DARK_MODE </p>
 
-                      <Uploader
-                        accept={"image/*"}
-                        events={(e) => {
-                          switch (e.type) {
-                            case "uploaded":
-                              setConfiguration({ ...configuration, logo_label_dark_mode: e.url ? e.url : "" });
-                              setEdited(true);
-                              break;
-                            case "removed":
-                              setConfiguration({ ...configuration, logo_label_dark_mode: "" });
-                              setEdited(true);
-                              break;
-                          }
-                        }}
-                        init={configuration?.logo_label_dark_mode} />
-                      {/* {configuration?.logo_label_dark_mode} */}
-                    </div>
-                  </div>}
+                        <Uploader
+                          accept={"image/*"}
+                          events={(e) => {
+                            switch (e.type) {
+                              case "uploaded":
+                                setConfiguration({ ...configuration, logo_label_dark_mode: e.url ? e.url : "" });
+                                setEdited(true);
+                                break;
+                              case "removed":
+                                setConfiguration({ ...configuration, logo_label_dark_mode: "" });
+                                setEdited(true);
+                                break;
+                            }
+                          }}
+                          init={configuration?.logo_label_dark_mode} />
+                        {/* {configuration?.logo_label_dark_mode} */}
+                      </div>
+                    </div>}
 
                 </div>
               </Tabs.Item>
