@@ -11,7 +11,6 @@ if (process.env.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
     });
 }
 
-
 exec(`node server.js`, (err, stdout, stderr) => {
     if (err) {
         console.error(err);
