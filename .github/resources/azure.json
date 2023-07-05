@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "15221279148429554417"
+      "templateHash": "7959926226507459099"
     }
   },
   "parameters": {
@@ -411,7 +411,7 @@
     },
     "redisCacheRestUrl": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName]"
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
     },
     "redisCacheKey": {
       "type": "string",
