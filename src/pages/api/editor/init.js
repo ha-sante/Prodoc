@@ -1,7 +1,11 @@
 const fauna = require('../../../integrations/services/fauna.js');
-const redis = require('../../../integrations/services/redis.js');
-
 const q = fauna.q;
+const redis = require('../../../integrations/services/redis.js');
+// const prisma = require('../../../integrations/services/prisma.js');
+import prisma from "../../../integrations/services/prisma"
+const { BlobServiceClient, StorageSharedKeyCredential } = require("@azure/storage-blob");
+import { fromUrl, uploadFromUrl } from '@uploadcare/upload-client'
+
 
 function FaunaDatabaseInitiations() {
     // CREACTE COLLECTIONS - ACCOUNTS, CONTENT, CONFIGURATION
@@ -45,7 +49,7 @@ function FaunaDatabaseInitiations() {
 
 }
 
-async function VercelKVDatabaseInitiations() {
+async function RedisDatabaseInitiations() {
     await redis.client.set('content', "[]");
     await redis.client.set("configuration", "{}");
 }
@@ -53,16 +57,94 @@ async function VercelKVDatabaseInitiations() {
 export default async function handler(req, res) {
     const method = req.method;
     const body = req.body;
+    const params = req.query;
+
+    console.log("recieved.request", { method, params, body });
 
     switch (method) {
         case "POST":
             // Process a POST request
-            FaunaDatabaseInitiations();
-            VercelKVDatabaseInitiations();
-            res.status(200).json({ name: 'Initiations Complete' })
+            if (params.password == process.env.EDITOR_PASSWORD) {
+                if (process.env.FAUNA_DATABASE_SERVER_KEY) {
+                    FaunaDatabaseInitiations();
+                }
+
+                if (process.env.REDIS_SERVICE_REST_URL) {
+                    RedisDatabaseInitiations();
+                }
+
+                res.status(200).json({ name: 'Initiations Complete' })
+            } else {
+                res.status(404).send({ message: "UnAuthorized" })
+            }
+
             break;
         case "GET":
             // Process a GET request
+            if (params.password == process.env.EDITOR_PASSWORD) {
+                // GET THE STATUS OF EVERY SERVICE TO CECK IF THEY INIT
+                let status = {
+                    fauna: false,
+                    redis: false,
+                    mysql: false,
+                    azure_storage: false,
+                    uploadcare_storage: false,
+                }
+
+                // Fauna
+                try {
+                    let result = await fauna.client.query(q.ToDate('2018-06-06'))
+                    status.fauna = true;
+                } catch (error) {
+                    status.fauna = error;
+                }
+
+                // Redis
+                let result = await redis.client.ping()
+                if (result) {
+                    status.redis = true;
+                }
+
+                // MySQL
+                try {
+                    let result = await prisma.$queryRaw`SELECT 1`
+                    status.mysql = true;
+                } catch (error) {
+                    status.mysql = error;
+                }
+
+
+                // AZURE STORAGE
+                try {
+                    const connectionString = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING
+                    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+                    await blobServiceClient.setProperties({ defaultServiceVersion: "2020-02-10" }); // TO ENABLE CONTENT DISPOSITION FEATURES
+
+                    let info = await blobServiceClient.getProperties()
+                    status.azure_storage = true;
+                } catch (error) {
+                    status.azure_storage = { code: error.code };
+                }
+
+
+                // UPLOADCARE
+                try {
+                    let test_url = "https://ui-avatars.com/api/?name=Prodoc";
+                    const result = await fromUrl(test_url, {
+                        publicKey: process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY,
+                        store: "auto",
+                    })
+                    status.uploadcare_storage = true;
+                } catch (error) {
+                    console.log("error", error);
+                    status.uploadcare_storage = `${error}`;
+                }
+
+                res.status(200).json({ ...status })
+            } else {
+                res.status(404).send({ message: "UnAuthorized" })
+            }
+
             break;
     }
 }

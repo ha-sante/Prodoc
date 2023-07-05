@@ -13,18 +13,18 @@ param location string = resourceGroup().location
 
 
 // GENERAL INFORMATION
-@description('Provide a prefix for creating resource names. - E.G Company')
-param resourceNamePrefix string
+@description('Provide a prefix for creating resource names. - E.G Company Name')
+param collectiveResourcePrefixLabel string
 param generalTag object = { channel: 'prodoc-quick-deploy' }
 
 
-param storageAccountName string = '${resourceNamePrefix}-prodoc-storage'
-param storageContainerName string = 'files'
 
-
+// 1.
 // STORAGE ACCOUNT INSTANCE
 // STORAGE ACCOUNT - BLOB SERVICE
 // STORAGE ACCOUNT - CONTAINER
+param storageAccountName string = '${collectiveResourcePrefixLabel}pstorage'
+param storageContainerName string = 'files'
 resource prodoc_storage_account 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageAccountName
   location: location
@@ -54,7 +54,6 @@ resource prodoc_storage_account_blob_service 'Microsoft.Storage/storageAccounts/
   name: 'default'
   parent: prodoc_storage_account
   properties: {
-    defaultServiceVersion: 'string'
     isVersioningEnabled: false
   }
 }
@@ -65,36 +64,25 @@ resource prodoc_storage_account_container 'Microsoft.Storage/storageAccounts/blo
     immutableStorageWithVersioning: {
       enabled: false
     }
-    metadata: {}
     publicAccess: 'Blob'
   }
 }
 // STORAGE ACCOUNT - SHARED ACCESS SIGNATURE
 var sasConfig = {
-  signedResourceTypes: 'c'
-  signedPermission: 'r,w,d,l,a,c,u,p'
+  signedResourceTypes: 'cos'
+  signedPermission: 'rwdlacup'
   signedServices: 'b'
-  signedExpiry: '2123-12-1T00:00:00stZ'
+  signedExpiry: '2123-01-01T12:00:00Z'
   signedProtocol: 'https'
   keyToSign: 'key1'
 }
-output accountSasToken string = prodoc_storage_account.listAccountSas(prodoc_storage_account.apiVersion, sasConfig).accountSasToken
+// STORAGE ACCOUNT - CONNECTION STRINGS FOR UPLOADS
+var accountSasToken = prodoc_storage_account.listAccountSas(prodoc_storage_account.apiVersion, sasConfig).accountSasToken
+var connectionStringSAS = 'BlobEndpoint=${prodoc_storage_account.properties.primaryEndpoints.blob};SharedAccessSignature=${accountSasToken}'
 
+output accountSasToken string = accountSasToken
 
-// BlobEndpoint=https://prodoc.blob.core.windows.net/;
-// QueueEndpoint=https://prodoc.queue.core.windows.net/;
-// FileEndpoint=https://prodoc.file.core.windows.net/;
-// TableEndpoint=https://prodoc.table.core.windows.net/;
-// SharedAccessSignature=sv=2022-11-02
-// &ss=b
-// &srt=c
-// &sp=rwdlaciytfx
-// &se=2123-07-09T18:12:07Z
-// &st=2023-07-04T10:12:07Z
-// &spr=https,http
-// &sig=2Fzll%2FzOJQb79JbHMq831HNb2CQbr4PnmDAF7BeTJ5E%3D
-
-
+// 2.
 // MYSQL ISNTANCE
 @description('Provide the administrator login name for the MySQL server.')
 param administratorLogin string
@@ -149,8 +137,8 @@ param backupRetentionDays int = 7
   'Enabled'
 ])
 param geoRedundantBackup string = 'Disabled'
-param serverName string = '${resourceNamePrefix}-sqlserver'
-param databaseName string = '${resourceNamePrefix}-mysqldb'
+param serverName string = '${collectiveResourcePrefixLabel}-psqlserver'
+param databaseName string = '${collectiveResourcePrefixLabel}-pmysqldb'
 
 resource server 'Microsoft.DBforMySQL/flexibleServers@2021-12-01-preview' = {
   location: location
@@ -188,9 +176,19 @@ resource database 'Microsoft.DBforMySQL/flexibleServers/databases@2021-12-01-pre
   }
 }
 
+// MYSQL CONNECTION STRING
+// HOST, USERNAME, PASSWORD, PORT, 
+var hostPort = 3306
+var hostURL = '${serverName}.mysql.database.azure.com'
+var connectionStringMySQL = 'mysql://${administratorLogin}:${administratorLoginPassword}@${hostURL}:${hostPort}/${databaseName}'
+
+output connectionStringMySQL string = connectionStringMySQL
+
+// 3.
 // REDIS INSTANCE
+var redisName = '${collectiveResourcePrefixLabel}-predis'
 resource redis_instance 'Microsoft.Cache/redis@2022-06-01' = {
-  name: 'prodoc'
+  name: redisName
   location: location
   tags: generalTag
   properties: {
@@ -204,38 +202,49 @@ resource redis_instance 'Microsoft.Cache/redis@2022-06-01' = {
     }
   }
 }
+var redisCacheRestUrl = redis_instance.properties.hostName
+// var redisPort = redis_instance.properties.sslPort
+var redisCacheKey = redis_instance.listKeys().primaryKey 
+// var redisCacheKey = redis_instance.properties.accessKeys.primaryKey
 
-// CONTAINER PRE-SETUP INSTANCES 
-param containerEnvironmentLabel string = 'prodoc-environments-app'
-var logAnalyticsWorkspaceName = '${containerEnvironmentLabel}-logs-workspace'
+output redisCacheRestUrl string = 'https://${redisCacheRestUrl}'
+output redisCacheKey string = redisCacheKey
+
+
+// 4.
+// CONTAINER PRE-SETUP INSTANCES
+// param appNamePostFix string = 'p-app'
+var appEnvironmentName = '${collectiveResourcePrefixLabel}-p-apps-environment'
+// var logAnalyticsWorkspaceName = '${appNamePostFix}-logs-workspace'
 var containerPort = 3000
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
-  name: logAnalyticsWorkspaceName
-  location: location
-}
-
+// resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+//   name: logAnalyticsWorkspaceName
+//   location: location
+//   tags: generalTag
+// }
 resource container_app_environment 'Microsoft.App/managedEnvironments@2022-03-01' = {
-  name: 'prodoc-apps-environment'
+  name: appEnvironmentName
   location: location
   properties: {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: logAnalyticsWorkspace.properties.customerId
-        sharedKey: logAnalyticsWorkspace.listKeys().primarySharedKey
-      }
-    }
+    // appLogsConfiguration: {
+    //   destination: 'log-analytics'
+    //   logAnalyticsConfiguration: {
+    //     customerId: logAnalyticsWorkspace.properties.customerId
+    //     sharedKey: logAnalyticsWorkspace.listKeys().primarySharedKey
+    //   }
+    // }
     vnetConfiguration: {
       internal: false
-
     }
   }
 }
-
 // CONTAINER APP INSTANCE
+@secure()
+param editorPassword string
+var appName = '${collectiveResourcePrefixLabel}-p-app'
 resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-preview' = {
-  name: 'prodoc-app-instance'
+  name: appName
   location: location
   tags: generalTag
   properties: {
@@ -258,7 +267,7 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
             }
             {
               name: 'EDITOR_PASSWORD'
-              value: 'password'
+              value: editorPassword
             }
             {
               name: 'EDITOR_PASSWORD_SIGNING_KEY'
@@ -268,36 +277,38 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
               name: 'POCKETBASE_DATABASE_CONNECTION_STRING'
               value: ''
             }
+
             {
               name: 'PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING'
-              value: ''
+              value: connectionStringMySQL
             }
+
             {
               name: 'REDIS_SERVICE_URL'
               value: ''
             }
             {
               name: 'REDIS_SERVICE_REST_URL'
-              value: ''
+              value: redisCacheRestUrl
             }
             {
               name: 'REDIS_SERVICE_REST_TOKEN'
-              value: ''
+              value: redisCacheKey
             }
 
             {
               name: 'NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME'
-              value: ''
+              value: storageAccountName
             }
             {
               name: 'NEXT_PUBLIC_AZURE_STORAGE_CONTAINER_NAME'
-              value: ''
+              value: storageContainerName
             }
-
             {
               name: 'NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING'
-              value: ''
+              value: connectionStringSAS
             }
+
             {
               name: 'NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY'
               value: ''

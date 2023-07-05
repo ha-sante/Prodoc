@@ -5,24 +5,259 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "4543395261084269423"
+      "templateHash": "15221279148429554417"
     }
   },
   "parameters": {
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]"
+    },
+    "collectiveResourcePrefixLabel": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide a prefix for creating resource names. - E.G Company Name"
+      }
+    },
+    "generalTag": {
+      "type": "object",
+      "defaultValue": {
+        "channel": "prodoc-quick-deploy"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('{0}pstorage', parameters('collectiveResourcePrefixLabel'))]"
+    },
+    "storageContainerName": {
+      "type": "string",
+      "defaultValue": "files"
+    },
+    "administratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the administrator login name for the MySQL server."
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Provide the administrator login password for the MySQL server."
+      }
+    },
+    "serverEdition": {
+      "type": "string",
+      "defaultValue": "Burstable",
+      "allowedValues": [
+        "Burstable",
+        "Generalpurpose",
+        "MemoryOptimized"
+      ],
+      "metadata": {
+        "description": "The tier of the particular SKU. High Availability is available only for GeneralPurpose and MemoryOptimized sku."
+      }
+    },
+    "version": {
+      "type": "string",
+      "defaultValue": "8.0.21",
+      "allowedValues": [
+        "5.7",
+        "8.0.21"
+      ],
+      "metadata": {
+        "description": "Server version"
+      }
+    },
+    "availabilityZone": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "Availability Zone information of the server. (Leave blank for No Preference)."
+      }
+    },
+    "haEnabled": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "SameZone",
+        "ZoneRedundant"
+      ],
+      "metadata": {
+        "description": "High availability mode for a server : Disabled, SameZone, or ZoneRedundant"
+      }
+    },
+    "standbyAvailabilityZone": {
+      "type": "string",
+      "defaultValue": "2",
+      "metadata": {
+        "description": "Availability zone of the standby server."
+      }
+    },
+    "storageSizeGB": {
+      "type": "int",
+      "defaultValue": 20
+    },
+    "storageIops": {
+      "type": "int",
+      "defaultValue": 360
+    },
+    "storageAutogrow": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_B1ms",
+      "metadata": {
+        "description": "The name of the sku, e.g. Standard_D32ds_v4."
+      }
+    },
+    "backupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7
+    },
+    "geoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ]
+    },
+    "serverName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-psqlserver', parameters('collectiveResourcePrefixLabel'))]"
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-pmysqldb', parameters('collectiveResourcePrefixLabel'))]"
+    },
+    "editorPassword": {
+      "type": "securestring"
     }
+  },
+  "variables": {
+    "sasConfig": {
+      "signedResourceTypes": "cos",
+      "signedPermission": "rwdlacup",
+      "signedServices": "b",
+      "signedExpiry": "2123-01-01T12:00:00Z",
+      "signedProtocol": "https",
+      "keyToSign": "key1"
+    },
+    "hostPort": 3306,
+    "hostURL": "[format('{0}.mysql.database.azure.com', parameters('serverName'))]",
+    "connectionStringMySQL": "[format('mysql://{0}:{1}@{2}:{3}/{4}', parameters('administratorLogin'), parameters('administratorLoginPassword'), variables('hostURL'), variables('hostPort'), parameters('databaseName'))]",
+    "redisName": "[format('{0}-predis', parameters('collectiveResourcePrefixLabel'))]",
+    "appEnvironmentName": "[format('{0}-p-apps-environment', parameters('collectiveResourcePrefixLabel'))]",
+    "containerPort": 3000,
+    "appName": "[format('{0}-p-app', parameters('collectiveResourcePrefixLabel'))]"
   },
   "resources": [
     {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "tags": "[parameters('generalTag')]",
+      "sku": {
+        "name": "Standard_RAGZRS"
+      },
+      "properties": {
+        "accessTier": "Hot",
+        "allowBlobPublicAccess": true,
+        "allowCrossTenantReplication": true,
+        "allowSharedKeyAccess": true,
+        "defaultToOAuthAuthentication": false,
+        "keyPolicy": {
+          "keyExpirationPeriodInDays": 36525
+        },
+        "publicNetworkAccess": "Enabled",
+        "supportsHttpsTrafficOnly": true,
+        "routingPreference": {
+          "routingChoice": "MicrosoftRouting",
+          "publishMicrosoftEndpoints": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+      "properties": {
+        "isVersioningEnabled": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', parameters('storageContainerName'))]",
+      "properties": {
+        "immutableStorageWithVersioning": {
+          "enabled": false
+        },
+        "publicAccess": "Blob"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers",
+      "apiVersion": "2021-12-01-preview",
+      "name": "[parameters('serverName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('serverEdition')]"
+      },
+      "properties": {
+        "version": "[parameters('version')]",
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "availabilityZone": "[parameters('availabilityZone')]",
+        "highAvailability": {
+          "mode": "[parameters('haEnabled')]",
+          "standbyAvailabilityZone": "[parameters('standbyAvailabilityZone')]"
+        },
+        "storage": {
+          "storageSizeGB": "[parameters('storageSizeGB')]",
+          "iops": "[parameters('storageIops')]",
+          "autoGrow": "[parameters('storageAutogrow')]"
+        },
+        "backup": {
+          "backupRetentionDays": "[parameters('backupRetentionDays')]",
+          "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers/databases",
+      "apiVersion": "2021-12-01-preview",
+      "name": "[format('{0}/{1}', parameters('serverName'), parameters('databaseName'))]",
+      "properties": {
+        "charset": "utf8",
+        "collation": "utf8_general_ci"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Cache/redis",
       "apiVersion": "2022-06-01",
-      "name": "prodoc",
+      "name": "[variables('redisName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "channel": "prodoc-quick-deploy"
-      },
+      "tags": "[parameters('generalTag')]",
       "properties": {
         "enableNonSslPort": false,
         "publicNetworkAccess": "Enabled",
@@ -33,6 +268,154 @@
           "name": "Basic"
         }
       }
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('appEnvironmentName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "vnetConfiguration": {
+          "internal": false
+        }
+      }
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2022-11-01-preview",
+      "name": "[variables('appName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('generalTag')]",
+      "properties": {
+        "configuration": {
+          "ingress": {
+            "allowInsecure": false,
+            "targetPort": 3000,
+            "transport": "auto",
+            "external": true
+          }
+        },
+        "environmentId": "[resourceId('Microsoft.App/managedEnvironments', variables('appEnvironmentName'))]",
+        "template": {
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "channel",
+                  "value": "azure"
+                },
+                {
+                  "name": "EDITOR_PASSWORD",
+                  "value": "[parameters('editorPassword')]"
+                },
+                {
+                  "name": "EDITOR_PASSWORD_SIGNING_KEY",
+                  "value": ""
+                },
+                {
+                  "name": "POCKETBASE_DATABASE_CONNECTION_STRING",
+                  "value": ""
+                },
+                {
+                  "name": "PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING",
+                  "value": "[variables('connectionStringMySQL')]"
+                },
+                {
+                  "name": "REDIS_SERVICE_URL",
+                  "value": ""
+                },
+                {
+                  "name": "REDIS_SERVICE_REST_URL",
+                  "value": "[reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName]"
+                },
+                {
+                  "name": "REDIS_SERVICE_REST_TOKEN",
+                  "value": "[listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey]"
+                },
+                {
+                  "name": "NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME",
+                  "value": "[parameters('storageAccountName')]"
+                },
+                {
+                  "name": "NEXT_PUBLIC_AZURE_STORAGE_CONTAINER_NAME",
+                  "value": "[parameters('storageContainerName')]"
+                },
+                {
+                  "name": "NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING",
+                  "value": "[format('BlobEndpoint={0};SharedAccessSignature={1}', reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').primaryEndpoints.blob, listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken)]"
+                },
+                {
+                  "name": "NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY",
+                  "value": ""
+                }
+              ],
+              "image": "docker.io/prodoctech/prodoc:latest",
+              "name": "prodoc-container-instance",
+              "resources": {
+                "cpu": "[json('0.25')]",
+                "memory": "0.5Gi"
+              },
+              "probes": [
+                {
+                  "type": "liveness",
+                  "initialDelaySeconds": 15,
+                  "periodSeconds": 30,
+                  "failureThreshold": 3,
+                  "timeoutSeconds": 1,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                },
+                {
+                  "type": "startup",
+                  "timeoutSeconds": 2,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                },
+                {
+                  "type": "readiness",
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                }
+              ]
+            }
+          ],
+          "scale": {
+            "maxReplicas": 1,
+            "minReplicas": 1
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', variables('appEnvironmentName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Cache/redis', variables('redisName'))]"
+      ]
     }
-  ]
+  ],
+  "outputs": {
+    "accountSasToken": {
+      "type": "string",
+      "value": "[listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken]"
+    },
+    "connectionStringMySQL": {
+      "type": "string",
+      "value": "[variables('connectionStringMySQL')]"
+    },
+    "redisCacheRestUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName]"
+    },
+    "redisCacheKey": {
+      "type": "string",
+      "value": "[listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey]"
+    }
+  }
 }
