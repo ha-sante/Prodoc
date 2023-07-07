@@ -18,5 +18,6 @@ exec(`node server.js`, (err, stdout, stderr) => {
         console.error(err);
         return;
     }
+    console.log("Reached node server.js section")
     console.log(stdout);
 });
