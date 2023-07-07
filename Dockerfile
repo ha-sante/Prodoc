@@ -42,4 +42,4 @@ COPY --from=builder /my-space/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 ENV PORT 3000
-CMD ["prisma", "migrate", "dev", "||", "node", "server.js"]
+CMD ["node", "DockerStartup.js"]
