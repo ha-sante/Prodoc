@@ -13,7 +13,6 @@ FROM base AS builder
 WORKDIR /my-space
 # COPY --from=deps /my-space/node_modules ./node_modules
 COPY . .
-RUN npm i -g prisma
 RUN npm i -g next
 RUN npm install
 RUN npm run build
@@ -35,7 +34,6 @@ COPY --from=builder /my-space/DockerStartup.js .
 
 COPY --from=builder /my-space/src/integrations/prisma ./src/integrations/prisma
 
-
 COPY --from=builder /my-space/next.config.js ./
 COPY --from=builder /my-space/public ./public
 COPY --from=builder /my-space/.next/standalone ./
@@ -44,4 +42,4 @@ COPY --from=builder /my-space/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 ENV PORT 3000
-CMD ["node", "DockerStartup.js"]
+CMD ["prisma", "migrate", "dev", "||", "node", "server.js"]
