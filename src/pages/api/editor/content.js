@@ -1,10 +1,5 @@
-const fauna = require('../../../integrations/services/fauna.js');
-import redis from '../../../integrations/services/redis';
-import utils from '../../../integrations/services/utils';
 import database from '../../../integrations/adapters/database';
 
-let q = fauna.q;
-const _ = require('lodash');
 
 export const config = {
     api: {

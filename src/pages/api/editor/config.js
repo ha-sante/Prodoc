@@ -1,9 +1,4 @@
-const fauna = require('../../../integrations/services/fauna.js');
 import database from '../../../integrations/adapters/database';
-
-
-let q = fauna.q;
-const _ = require('lodash');
 
 export const config = {
     api: {
@@ -13,7 +8,6 @@ export const config = {
         },
     },
 };
-
 
 export default async function handler(req, res) {
     const method = req.method;

@@ -279,6 +279,11 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
             }
 
             {
+              name: 'FAUNA_DATABASE_SERVER_KEY'
+              value: ''
+            }
+
+            {
               name: 'PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING'
               value: connectionStringMySQL
             }

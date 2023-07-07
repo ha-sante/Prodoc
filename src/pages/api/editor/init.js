@@ -1,7 +1,7 @@
 const fauna = require('../../../integrations/services/fauna.js');
 const q = fauna.q;
+
 const redis = require('../../../integrations/services/redis.js');
-// const prisma = require('../../../integrations/services/prisma.js');
 import prisma from "../../../integrations/services/prisma"
 const { BlobServiceClient, StorageSharedKeyCredential } = require("@azure/storage-blob");
 import { fromUrl, uploadFromUrl } from '@uploadcare/upload-client'
@@ -54,6 +54,11 @@ async function RedisDatabaseInitiations() {
     await redis.client.set("configuration", "{}");
 }
 
+
+async function MySQLDatabaseInitiations() {
+    // Execute Prisma migrate
+}
+
 export default async function handler(req, res) {
     const method = req.method;
     const body = req.body;
@@ -65,13 +70,25 @@ export default async function handler(req, res) {
         case "POST":
             // Process a POST request
             if (params.password == process.env.EDITOR_PASSWORD) {
+
+                console.log("Proceeding with initiations")
+
+                // Fauna
                 if (process.env.FAUNA_DATABASE_SERVER_KEY) {
                     FaunaDatabaseInitiations();
                 }
 
+                // Redis
                 if (process.env.REDIS_SERVICE_REST_URL) {
                     RedisDatabaseInitiations();
                 }
+
+
+                // MySQL
+                if (process.env.REDIS_SERVICE_REST_URL) {
+                    MySQLDatabaseInitiations();
+                }
+
 
                 res.status(200).json({ name: 'Initiations Complete' })
             } else {
@@ -144,6 +161,11 @@ export default async function handler(req, res) {
             } else {
                 res.status(404).send({ message: "UnAuthorized" })
             }
+
+            break;
+        case "PATCH":
+            // Process a POST request
+            res.status(200).json({ message: 'I am responding' })
 
             break;
     }
