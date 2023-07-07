@@ -31,6 +31,7 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /my-space/package.json .
 COPY --from=builder /my-space/package-lock.json .
+COPY --from=builder /my-space/DockerStartup.js .
 COPY --from=builder /my-space/next.config.js ./
 COPY --from=builder /my-space/public ./public
 COPY --from=builder /my-space/.next/standalone ./

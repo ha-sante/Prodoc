@@ -19,13 +19,6 @@ Click to confirm and deploy.
 
 
 
-The below options are work in progress buttons.
-
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fhello-world)
-
-
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/next-netlify-starter)
-
 ## Contribute
 - Clone this repo and contribute with pull requests
 - For all types of issues.
