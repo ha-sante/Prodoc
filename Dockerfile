@@ -30,7 +30,7 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /my-space/package.json .
 COPY --from=builder /my-space/package-lock.json .
-COPY --from=builder /my-space/DockerStartup.js .
+COPY --from=builder /my-space/DockerStartup.sh .
 
 COPY --from=builder /my-space/src/integrations/prisma ./src/integrations/prisma
 
@@ -42,4 +42,8 @@ COPY --from=builder /my-space/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 ENV PORT 3000
-CMD ["node", "DockerStartup.js"]
+# CMD ["node", "DockerStartup.js"]
+
+RUN chmod +x /DockerStartup.sh
+
+CMD ["./DockerStartup.sh"]
