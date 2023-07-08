@@ -44,6 +44,6 @@ EXPOSE 3000
 ENV PORT 3000
 # CMD ["node", "DockerStartup.js"]
 
-RUN chmod +x /DockerStartup.sh
+RUN chmod +x ./DockerStartup.sh
 
 CMD ["./DockerStartup.sh"]
