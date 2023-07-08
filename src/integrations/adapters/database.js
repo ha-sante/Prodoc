@@ -1,13 +1,12 @@
 const fauna = require('../services/fauna.js');
-const redis = require('../services/redis.js');
+const mongo = require('../services/mongo.js');
 const utils = require('../services/utils.js');
 
 import prisma from "../services/prisma"
-
+import redis from "../services/redis"
 
 let q = fauna.q;
 const _ = require('lodash');
-
 
 // Database - In use
 const Databased = () => {
@@ -42,7 +41,7 @@ class FaunaPagesDatabaseHandler {
 
             fauna.client.query(request).then(async (result) => {
                 // HANDLE CACHING
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
 
                 // SEND REPLY
                 resolve(result.data)
@@ -71,7 +70,7 @@ class FaunaPagesDatabaseHandler {
                 q.Update(q.Ref(q.Collection('Content'), this.body.id), { data: { ...ready } })
             ).then(async (result) => {
                 // HANDLE CACHING
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
                 console.log("api.content.update.result", result);
 
                 // SEND REPLY
@@ -93,7 +92,7 @@ class FaunaPagesDatabaseHandler {
                 q.Delete(q.Ref(q.Collection('Content'), this.params.id))
             ).then(async (result) => {
                 // HANDLE CACHING
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
 
                 // SEND REPLY
                 resolve(result.data);
@@ -109,7 +108,7 @@ class FaunaPagesDatabaseHandler {
         console.log("exeuction.fauna")
         return new Promise(async (resolve, reject) => {
 
-            let cache_valid = await redis.client.get("content_cache_valid");
+            let cache_valid = await redis.get("content_cache_valid");
             console.log("get.content.cache_valid", cache_valid);
 
             if (cache_valid == false || cache_valid == null) {
@@ -121,8 +120,8 @@ class FaunaPagesDatabaseHandler {
                 ).then(async (result) => {
                     // HANDLE CACHE
                     let pages = result.data.map(page => page.data);
-                    await redis.client.set("content", pages);
-                    await redis.client.set("content_cache_valid", true);
+                    await redis.set("content", pages);
+                    await redis.set("content_cache_valid", true);
 
                     // SEND REPLY
                     resolve(pages);
@@ -131,7 +130,7 @@ class FaunaPagesDatabaseHandler {
                     reject(error)
                 });
             } else if (cache_valid == true) {
-                let pages = await redis.client.get("content");
+                let pages = await redis.get("content");
                 resolve(pages);
             } else {
                 resolve([]);
@@ -235,7 +234,7 @@ class FaunaPagesDatabaseHandler {
 
 
                 // HANDLE CACHING
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
 
                 // SEND REPLY
                 let data = [...updated_chapters, ...pages];
@@ -261,7 +260,7 @@ class PrismaPagesDatabaseHandler {
             try {
                 let page = await prisma.page.create({ data: { ...this.body } })
                 let result = { ...page, id: String(page.id) };
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
                 resolve(result);
             } catch (error) {
                 console.log("sql.pages.create.error", error);
@@ -286,7 +285,7 @@ class PrismaPagesDatabaseHandler {
                 let page = await prisma.page.update({ where: { id: Number(ready.id) }, data: { ...ready } })
                 let result = { ...page, id: String(page.id) };
 
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
                 console.log("sql.pages.create", result);
                 resolve(result);
             } catch (error) {
@@ -304,7 +303,7 @@ class PrismaPagesDatabaseHandler {
                 let page = await prisma.page.delete({ where: { id: Number(this.params.id) } })
                 let result = { ...page, id: String(page.id) };
 
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
                 console.log("sql.pages.create", result);
                 resolve(result);
             } catch (error) {
@@ -318,7 +317,7 @@ class PrismaPagesDatabaseHandler {
     async get() {
         return new Promise(async (resolve, reject) => {
 
-            let cache_valid = await redis.client.get("content_cache_valid");
+            let cache_valid = await redis.get("content_cache_valid");
             console.log("get.content.cache_valid", cache_valid);
 
             if (cache_valid == false || cache_valid == null) {
@@ -327,8 +326,8 @@ class PrismaPagesDatabaseHandler {
                     let pages = raw.map(page => {
                         return ({ ...page, id: String(page.id) })
                     })
-                    await redis.client.set("content", pages);
-                    await redis.client.set("content_cache_valid", true);
+                    await redis.set("content", pages);
+                    await redis.set("content_cache_valid", true);
 
                     resolve(pages);
                 } catch (error) {
@@ -336,7 +335,7 @@ class PrismaPagesDatabaseHandler {
                     reject(error);
                 }
             } else if (cache_valid == true) {
-                let pages = await redis.client.get("content");
+                let pages = await redis.get("content");
                 resolve(pages);
             } else {
                 resolve([]);
@@ -406,7 +405,7 @@ class PrismaPagesDatabaseHandler {
 
 
                 // HANDLE CACHING
-                await redis.client.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", false);
 
                 // SEND REPLY
                 let data = [...updated_chapters, ...pages];
@@ -594,7 +593,6 @@ class PagesDatabaseHandler {
         }
     }
 }
-
 class ConfigDatabaseHandler {
     constructor(body, params) {
         this.database = Databased();
