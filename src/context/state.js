@@ -354,17 +354,16 @@ export async function StorageAPIHandler(file, filename, progress) {
   // NEXTJS SERVERLESS FUNCTIONS ARE LIMITED TO 4.5MB IN BODY SIZES
   // - ALL FILES ARE STORED TO THEIR SERVICES DIRECTLY FROM THE FRONTEND AS A RESULT OF THIS
   // - THIS METHOD SUPPORTS ALL TYPES OF UPLOADER CLIENTS (BIG CLOUD & SERVICES)
-
-  console.log({ file, filename, progress })
+  let config  = await ConfigAPIHandler("GET");
+  console.log({ file, filename, progress, config })
 
   // DETECT WHICH STORAGE OPTION TO USE
   let location = "";
-  if (process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING) {
+  if (config.data.azure_storage.connection_string) {
     location = "azure"
-  } else if (process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY) {
+  } else if (config.data.uploadcare_storage.key) {
     location = "uploadcare"
   }
-
   console.log(`Storage Handler in use is: ${location}`)
 
   // UPLOAD TO THAT CLOUD OPTION - RETURN PUBLIC URL
@@ -372,9 +371,9 @@ export async function StorageAPIHandler(file, filename, progress) {
   switch (location) {
     case "azure":
       // INITIATE THE CONTAINER NAME
-      const storageAccountName = process.env.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME;
-      const containerName = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONTAINER_NAME;
-      const connectionString = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING
+      const storageAccountName = config.data.azure_storage.account_name;
+      const containerName = config.data.azure_storage.container_name;
+      const connectionString = config.data.azure_storage.connection_string;
 
       // INITIATE THE CLIENT
       const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
@@ -399,7 +398,7 @@ export async function StorageAPIHandler(file, filename, progress) {
       // FILEDATA must be `Blob`, `File`, `Buffer`, UUID, CDN URL or Remote URL
       // - CAN BE FORM DATA OR FILE DATA
       const result = await uploadFile(file, {
-        publicKey: process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY,
+        publicKey:  config.data.uploadcare_storage.key,
         store: "auto",
         onProgress: ev => progress && progress(ev, "uploadcare", file)
       })

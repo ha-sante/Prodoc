@@ -603,15 +603,16 @@ export default function Editor() {
 
               <Tabs.Item active title="Integrations" size="sm" className='border' color='light'>
                 <p className="text-sm text-gray-500 dark:text-gray-400"> Activate an integration by inserting it's API key.</p>
-                <div className="flex gap-2 mt-5 items-center">
-                  <div className="flex flex-col gap-2 border rounded p-4 1fr w-[50%]">
-                    <h2 className="text-xl mr-2"> Readme </h2>
+                <div className="flex flex-row gap-2 mt-5 flex-wrap items-start justify-between">
+
+                  <div className="flex flex-col gap-2 border rounded p-4 1fr w-[49%]">
+                    <h2 className="text-md mr-2"> Readme - For Walkthrough Content </h2>
                     <input
                       id={"readme-api-key"}
                       type={"password"}
                       autoComplete="new-password"
                       className='w-[100%] rounded-lg border-gray-300 bg-gray-50'
-                      placeholder={`API KEY`}
+                      placeholder={`Readme API Key`}
                       required={true}
                       value={configuration.readme}
                       onChange={(e) => {
@@ -621,7 +622,7 @@ export default function Editor() {
                       }}
                     />
                   </div>
-
+                  
                 </div>
               </Tabs.Item>
 
