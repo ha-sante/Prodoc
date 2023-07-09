@@ -2,17 +2,28 @@ const fauna = require('../services/fauna.js');
 const utils = require('../services/utils.js');
 
 import prisma from "../services/prisma"
-import redis from "../services/redis"
+import { redis } from "../services/redis"
 import mongo from "../services/mongo"
 
 let q = fauna.q;
 const _ = require('lodash');
+import { ObjectId } from 'mongodb'
 
+
+let config = {
+    accounts: "Accounts",
+    content: "Content",
+    configuration: "Configuration"
+}
 
 // Database - In use
 const Databased = () => {
     if (process.env.FAUNA_DATABASE_SERVER_KEY) {
         return "fauna"
+    }
+
+    if (process.env.MONGO_DATABASE_CONNECTION_STRING) {
+        return "mongo"
     }
 
     if (process.env.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
@@ -420,6 +431,234 @@ class PrismaPagesDatabaseHandler {
 
     }
 }
+class MongoPagesDatabaseHandler {
+    constructor(body, params) {
+        this.body = body;
+        this.params = params;
+    }
+
+    async create() {
+        return new Promise(async (resolve, reject) => {
+            const client = (await mongo).db();
+
+            // Create
+            let result = await client.collection(config.content).insertOne({ ...this.body }).catch((error) => {
+                // Handle the rejection
+                console.log('The promise was rejected:', error);
+                reject(error)
+            });
+
+            // Update
+            let id = result.insertedId;
+            let filter = { _id: id };
+            let update = { $set: { id } };
+            let updated = await client.collection(config.content).updateOne(filter, update).catch((error) => {
+                // Handle the rejection
+                console.log('The promise was rejected:', error);
+                reject(error)
+            });
+
+            // Caching
+            await redis.set("content_cache_valid", false);
+
+            // Resolve
+            console.log(updated)
+            resolve(updated);
+        });
+    }
+
+    async put() {
+        console.log("exeuction.mongo")
+        return new Promise(async (resolve, reject) => {
+            const client = (await mongo).db();
+
+            // ! FOR WHEN WE WANT EDITOR TO BE EMPTY - USING AN EMPTY OBJECT WONT GET ITS CONTENT DELETED (BY FAUNA DB)
+            let ready = this.body;
+            let editor_empty = _.isEmpty(ready?.content?.editor)
+            console.log("is.editor.empty", editor_empty);
+            let editor = editor_empty ? { time: null, blocks: null, version: null } : this.body.content.editor;
+            console.log("here.editor", editor);
+            ready.content.editor = editor;
+
+            // Process a PUT request
+            try {
+                // Remove mongo based id
+                delete ready._id;
+
+                // Update
+                let filter = { _id: this.body.id };
+                let update = { $set: { ...ready } };
+                let options = { returnDocument: 'after' }
+                await client.collection(config.content).updateOne(filter, update, options);
+
+                // Caching
+                await redis.set("content_cache_valid", false);
+
+                // Resolve
+                resolve(ready);
+            } catch (error) {
+                // Handle the rejection
+                console.log("content.put.error", error);
+                reject(error)
+            }
+
+        });
+    }
+
+    async delete() {
+        console.log("exeuction.mongo")
+        return new Promise(async (resolve, reject) => {
+            const client = (await mongo).db();
+
+            // Process a DELETE request
+            try {
+                // Update
+                let filter = { _id: this.params.id };
+                await client.collection(config.content).deleteOne(filter);
+
+                // Caching
+                await redis.set("content_cache_valid", false);
+
+                // Resolve
+                resolve({ id: this.params.id });
+            } catch (error) {
+                // Handle the rejection
+                console.log("content.delete.error", error);
+                reject(error)
+            }
+
+        });
+    }
+
+    async get() {
+        console.log("exeuction.mongo")
+        return new Promise(async (resolve, reject) => {
+
+            let cache_valid = await redis.get("content_cache_valid")
+            console.log("get.content.cache_valid", cache_valid);
+            if (cache_valid == false || cache_valid == null) {
+                let client = (await mongo).db();
+
+                try {
+                    let limit = 1000000000;
+                    let pages = await client.collection(config.content).find().limit(limit).toArray();
+                    await redis.set("content", pages);
+                    await redis.set("content_cache_valid", true);
+                    console.log(pages)
+                    resolve(pages);
+                } catch (error) {
+                    // Handle the rejection
+                    console.log('The promise was rejected:', error);
+                    reject(error)
+                }
+
+            } else if (cache_valid == true) {
+                let pages = await redis.get("content");
+                resolve(pages);
+            } else {
+                resolve([]);
+            }
+
+        });
+    }
+
+    async patch() {
+        console.log("exeuction.fauna")
+
+        return new Promise(async (resolve, reject) => {
+            let client = (await mongo).db();
+
+            // Process a PATCH request
+            // BULK UPLOADING OF CHAPTER & PAGES 
+            // !FOR PROCESSING BULK API CONTENT ONLY
+            let start = performance.now();
+            try {
+
+                // BULK DELETE ALL API PAGES
+                await client.collection(config.content).deleteMany({ type: "api" })
+                console.log("api.patch.deleted", true);
+
+
+                // STORE THE OPEN API SPEC
+                let update = { $set: { ...this.body?.configuration } };
+                await client.collection(config.configuration).updateOne({ _id: 1 }, update);
+
+
+                // CREATE THE FOLDER/PARENT PAGES
+                let chapters = this.body.chapters.map((chap) => {
+                    let id = new ObjectId();
+                    return ({ _id: id, id, ...chap })
+                });
+                console.log("api.patch.chapters", chapters);
+                const options = { ordered: false };
+                await client.collection(config.content).insertMany(chapters, options);
+                console.log("api.patch.chapters", true);
+
+
+                // MAP CHAPTERS TO THEIR PAGES
+                let parented_pages = [];
+                this.body.pages.map((page) => {
+                    let tags = [...page.content.api.tags];
+                    // CHECK IF THE PAGE TAGS
+                    let parents = chapters.filter((chapter) => tags.includes(chapter.title))
+                    let parent_id = parents[0]?.id;
+                    let parent = parent_id != undefined ? parent_id : "chapter"; // TAG THE PAGES PARENT
+                    parented_pages.push({ ...page, parent });
+                })
+
+                // CREATE THE CHILD PAGES
+                let pages = parented_pages.map((chap) => {
+                    let id = new ObjectId();
+                    return ({ _id: id, id, ...chap })
+                });
+                await client.collection(config.content).insertMany(pages, { ordered: false });
+                console.log("api.patch.pages", true);
+
+
+                // UPDATE THE PARENT PAGES WITH IDS OF THEIR CHILDREN
+                let updated_chapters = chapters.map((page) => {
+                    let matches = pages.filter((item) => {
+                        return item?.content?.api?.tags.includes(page.title);
+                    });
+                    let children = matches.map(child => `${child.id}`);
+                    let result = { ...page, children }
+                    return result;
+                });
+                console.log("api.patch.updated_chapters", updated_chapters);
+
+                let mongo_bulk_update_commands = updated_chapters.map((page) => {
+                    let pre = {
+                        filter: {
+                            _id: page.id,
+                        },
+                        update: {
+                            $set: { children: page.children },
+                        },
+                    };
+
+                    let final = { updateOne: pre }
+
+                    return final;
+                });
+                await client.collection(config.content).bulkWrite(mongo_bulk_update_commands, { ordered: false });
+                console.log("api.patch.updated_chapters", true);
+
+                // HANDLE CACHING
+                await redis.set("content_cache_valid", false);
+
+                // SEND REPLY
+                let data = [...updated_chapters, ...pages];
+                resolve(data);
+            } catch (error) {
+                console.log("api.content.patch.error", error);
+                reject(error);
+            }
+
+        });
+
+    }
+}
+
 class FaunaConfigDatabaseHandler {
     constructor(body, params) {
         this.body = body;
@@ -494,7 +733,6 @@ class PagesDatabaseHandler {
         this.body = body;
         this.params = params;
 
-
         console.log("Database adapter is connected to ", this.database);
     }
 
@@ -505,6 +743,12 @@ class PagesDatabaseHandler {
             case "fauna":
                 // USE FAUNA METHOD
                 method = new FaunaPagesDatabaseHandler(this.body, this.params);
+                result = await method.create();
+                return result;
+                break;
+            case "mongo":
+                // USE FAUNA METHOD
+                method = new MongoPagesDatabaseHandler(this.body, this.params);
                 result = await method.create();
                 return result;
                 break;
@@ -527,6 +771,12 @@ class PagesDatabaseHandler {
                 result = await method.put();
                 return result;
                 break;
+            case "mongo":
+                // USE FAUNA METHOD
+                method = new MongoPagesDatabaseHandler(this.body, this.params);
+                result = await method.put();
+                return result;
+                break;
             case "prisma":
                 // USE FAUNA METHOD
                 method = new PrismaPagesDatabaseHandler(this.body, this.params);
@@ -542,6 +792,12 @@ class PagesDatabaseHandler {
             case "fauna":
                 // USE FAUNA METHOD
                 method = new FaunaPagesDatabaseHandler(this.body, this.params);
+                result = await method.get();
+                return result;
+                break;
+            case "mongo":
+                // USE FAUNA METHOD
+                method = new MongoPagesDatabaseHandler(this.body, this.params);
                 result = await method.get();
                 return result;
                 break;
@@ -565,6 +821,12 @@ class PagesDatabaseHandler {
                 result = await method.delete();
                 return result;
                 break;
+            case "mongo":
+                // USE FAUNA METHOD
+                method = new MongoPagesDatabaseHandler(this.body, this.params);
+                result = await method.delete();
+                return result;
+                break;
             case "prisma":
                 // USE FAUNA METHOD
                 method = new PrismaPagesDatabaseHandler(this.body, this.params);
@@ -582,6 +844,12 @@ class PagesDatabaseHandler {
             case "fauna":
                 // USE FAUNA METHOD
                 method = new FaunaPagesDatabaseHandler(this.body, this.params);
+                result = await method.patch();
+                return result;
+                break;
+            case "mongo":
+                // USE FAUNA METHOD
+                method = new MongoPagesDatabaseHandler(this.body, this.params);
                 result = await method.patch();
                 return result;
                 break;

@@ -642,7 +642,8 @@ const EditorSidebarComponent = (props) => {
         let titles = { product: "Product Documentation", api: "API Documentation", walkthroughs: "Product Walkthroughs" };
 
         // GET ALL THE FIRST PARENTS UNDER THIS PAGE
-        let productChapters = content.filter(child => child?.type === navigation && child?.position === 'chapter')
+        console.log("content", content)
+        let productChapters = content?.filter(child => child?.type === navigation && child?.position === 'chapter')
         let book = {
             type: "book",
             id: "book",
@@ -699,12 +700,14 @@ const EditorSidebarComponent = (props) => {
 
     const render = useMemo(() => {
         // This function will only be called if passed in values change
-        return (
-            <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
-                {["product", "api", "walkthroughs"].includes(navigation) && SubPageNavigation()}
-                {["main", "configuration"].includes(navigation) && MainNavigation()}
-            </aside>
-        );
+        if (content) {
+            return (
+                <aside id="default-sidebar" className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
+                    {["product", "api", "walkthroughs"].includes(navigation) && SubPageNavigation()}
+                    {["main", "configuration"].includes(navigation) && MainNavigation()}
+                </aside>
+            );
+        }
     }, [content, navigation]);
 
     return render;

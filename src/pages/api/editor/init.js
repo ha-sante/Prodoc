@@ -6,7 +6,7 @@ import { fromUrl, uploadFromUrl } from '@uploadcare/upload-client'
 
 import mongo from "../../../integrations/services/mongo"
 import prisma from "../../../integrations/services/prisma"
-import redis from "../../../integrations/services/redis"
+import { redis } from "../../../integrations/services/redis"
 import { ObjectId } from "mongodb";
 
 let config = {
@@ -103,7 +103,16 @@ async function MongoDatabaseInitiations() {
     });
 
     // CREATE DEFAULTS
-    await client.collection(config.configuration).insertOne({ state: "Initiated" }).catch((error) => {
+    let result = await client.collection(config.configuration).insertOne({ _id: 1, state: "Initiated" }).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
+
+    let id = result.insertedId;
+    let filter = { _id: id };
+    let update = { $set: { id } };
+    await client.collection(config.configuration).updateOne(filter, update).catch((error) => {
         // Handle the rejection
         console.log('The promise was rejected:', error);
         return undefined;
@@ -146,9 +155,10 @@ export default async function handler(req, res) {
                     if (process.env.MONGO_DATABASE_CONNECTION_STRING) {
                         await MongoDatabaseInitiations();
                     }
-                    res.status(200).json({ name: 'Initiations Complete' })
 
+                    res.status(200).json({ name: 'Initiations Complete' })
                 } catch (error) {
+                    console.log("error", error)
                     res.status(404).send({ message: "Error initializing", error })
                 };
 

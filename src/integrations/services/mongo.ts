@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { MongoClient, ObjectId } from 'mongodb'
 
 if (!process.env.MONGO_DATABASE_CONNECTION_STRING) {
   throw new Error('Invalid environment variable: "MONGO_DATABASE_CONNECTION_STRING"')

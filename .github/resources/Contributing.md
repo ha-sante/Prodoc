@@ -1,0 +1,1 @@
+Schemaless databases are better for this.
