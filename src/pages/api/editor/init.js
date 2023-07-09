@@ -173,63 +173,74 @@ export default async function handler(req, res) {
 
 
                 // Fauna
-                try {
-                    let result = await fauna.client.query(q.ToDate('2018-06-06'))
-                    status.fauna = true;
-                } catch (error) {
-                    status.fauna = error;
+                if (process.env?.FAUNA_DATABASE_SERVER_KEY) {
+                    try {
+                        let result = await fauna.client.query(q.ToDate('2018-06-06'))
+                        status.fauna = true;
+                    } catch (error) {
+                        status.fauna = error;
+                    }
                 }
 
                 // Redis
-                let result = await redis.ping()
-                if (result) {
-                    status.redis = true;
+                if (process.env?.REDIS_SERVICE_CONNECTION_STRING) {
+                    let result = await redis.ping()
+                    if (result) {
+                        status.redis = true;
+                    }
                 }
 
                 // MySQL
-                try {
-                    let result = await prisma.$queryRaw`SELECT 1`
-                    status.mysql = true;
-                } catch (error) {
-                    status.mysql = error;
+                if (process.env?.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
+                    try {
+                        let result = await prisma.$queryRaw`SELECT 1`
+                        status.mysql = true;
+                    } catch (error) {
+                        status.mysql = error;
+                    }
                 }
 
-
                 // AZURE STORAGE
-                try {
-                    const connectionString = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING
-                    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-                    await blobServiceClient.setProperties({ defaultServiceVersion: "2020-02-10" }); // TO ENABLE CONTENT DISPOSITION FEATURES
+                if (process.env?.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING) {
+                    try {
+                        const connectionString = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING
+                        const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+                        await blobServiceClient.setProperties({ defaultServiceVersion: "2020-02-10" }); // TO ENABLE CONTENT DISPOSITION FEATURES
 
-                    let info = await blobServiceClient.getProperties()
-                    status.azure_storage = true;
-                } catch (error) {
-                    status.azure_storage = { code: error.code };
+                        let info = await blobServiceClient.getProperties()
+                        status.azure_storage = true;
+                    } catch (error) {
+                        status.azure_storage = { code: error.code };
+                    }
                 }
 
 
                 // UPLOADCARE
-                try {
-                    let test_url = "https://ui-avatars.com/api/?name=Prodoc";
-                    const result = await fromUrl(test_url, {
-                        publicKey: process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY,
-                        store: "auto",
-                    })
-                    status.uploadcare_storage = true;
-                } catch (error) {
-                    console.log("error", error);
-                    status.uploadcare_storage = `${error}`;
+                if (process.env?.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY) {
+                    try {
+                        let test_url = "https://ui-avatars.com/api/?name=Prodoc";
+                        const result = await fromUrl(test_url, {
+                            publicKey: process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY,
+                            store: "auto",
+                        })
+                        status.uploadcare_storage = true;
+                    } catch (error) {
+                        console.log("error", error);
+                        status.uploadcare_storage = `${error}`;
+                    }
                 }
 
 
                 // Mongo
-                try {
-                    const client = (await mongo).db();
-                    await client.listCollections();
-                    status.mongo = true;
-                } catch (error) {
-                    console.log("error", error);
-                    status.mongo = `${error}`;
+                if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
+                    try {
+                        const client = (await mongo).db();
+                        await client.listCollections();
+                        status.mongo = true;
+                    } catch (error) {
+                        console.log("error", error);
+                        status.mongo = `${error}`;
+                    }
                 }
 
                 res.status(200).json({ ...status })
