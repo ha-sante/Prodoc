@@ -8,7 +8,7 @@ const uri = process.env.MONGO_DATABASE_CONNECTION_STRING
 const options = {}
 
 let client = new MongoClient(uri, options)
-let mongo
+let mongo: Promise<MongoClient>
 
 if (!process.env.MONGO_DATABASE_CONNECTION_STRING) {
   throw new Error('Please add your Mongo URI to .env.local')
@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === 'development') {
     client = new MongoClient(uri, options)
     global._mongoClientPromise = client.connect()
   }
-  
+
   mongo = global._mongoClientPromise
 } else {
   // In production mode, it's best to not use a global variable.

@@ -1,12 +1,13 @@
 const fauna = require('../services/fauna.js');
-const mongo = require('../services/mongo.js');
 const utils = require('../services/utils.js');
 
 import prisma from "../services/prisma"
 import redis from "../services/redis"
+import mongo from "../services/mongo"
 
 let q = fauna.q;
 const _ = require('lodash');
+
 
 // Database - In use
 const Databased = () => {

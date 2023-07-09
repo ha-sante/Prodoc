@@ -2,7 +2,7 @@ let faunadb = require('faunadb');
 let q = faunadb.query;
 
 if (!process.env.FAUNA_DATABASE_SERVER_KEY) {
-    throw new Error('Add FAUNA_DATABASE_SERVER_KEY to environment keys')
+    console.log('Add FAUNA_DATABASE_SERVER_KEY to environment keys')
 }
 
 let client = new faunadb.Client({

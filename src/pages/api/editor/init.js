@@ -7,47 +7,54 @@ import { fromUrl, uploadFromUrl } from '@uploadcare/upload-client'
 import mongo from "../../../integrations/services/mongo"
 import prisma from "../../../integrations/services/prisma"
 import redis from "../../../integrations/services/redis"
+import { ObjectId } from "mongodb";
+
+let config = {
+    accounts: "Accounts",
+    content: "Content",
+    configuration: "Configuration"
+}
 
 
-function FaunaDatabaseInitiations() {
+async function FaunaDatabaseInitiations() {
     // CREACTE COLLECTIONS - ACCOUNTS, CONTENT, CONFIGURATION
-    fauna.client.query(
+    await fauna.client.query(
         fauna.q.CreateCollection({ name: 'Accounts', history_days: 14, ttl_days: 14 })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    ).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
 
-    fauna.client.query(
+    await fauna.client.query(
         fauna.q.CreateCollection({ name: 'Content', history_days: 14, ttl_days: 14 })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    ).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
 
-    fauna.client.query(
+    await fauna.client.query(
         fauna.q.CreateCollection({ name: 'Configuration', history_days: 14, ttl_days: 14 })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    ).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
 
 
     // CREATE INDEXES - find_(object)_by_id
-    fauna.client.query(
+    await fauna.client.query(
         fauna.q.CreateIndex({ name: 'find_account_by_id', source: fauna.q.Collection('Accounts'), terms: [{ field: ['data', 'id'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    ).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
 
-    fauna.client.query(
+    await fauna.client.query(
         fauna.q.CreateIndex({ name: 'find_content_by_id', source: fauna.q.Collection('Content'), terms: [{ field: ['data', 'id'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    ).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
 
-    fauna.client.query(
+    await fauna.client.query(
         fauna.q.CreateIndex({ name: 'find_configuration_by_id', source: fauna.q.Collection('Configuration'), terms: [{ field: ['data', 'id'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    ).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
 
-    fauna.client.query(
+    await fauna.client.query(
         fauna.q.CreateIndex({ name: 'find_content_by_type', source: fauna.q.Collection('Content'), terms: [{ field: ['data', 'type'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    ).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
 
     // CREATE DEFAULTS
-    fauna.client.query(
+    await fauna.client.query(
         q.Let({
             create_id: q.NewId(),
             create: q.Create(q.Ref(q.Collection('Configuration'), 1), { data: {} }),
         }, q.Var("create"))
-    ).then((result) => { console.log(result.data) }).catch(error => { console.error(error) });
+    ).catch(error => { console.error(error) });
 
 }
 async function RedisDatabaseInitiations() {
@@ -57,49 +64,50 @@ async function RedisDatabaseInitiations() {
 async function MySQLDatabaseInitiations() {
     // Execute Prisma migrate
 }
-function MongoDatabaseInitiations() {
+async function MongoDatabaseInitiations() {
+    // CONNECT
+    const client = (await mongo).db();
+
     // CREACTE COLLECTIONS - ACCOUNTS, CONTENT, CONFIGURATION
-    fauna.client.query(
-        fauna.q.CreateCollection({ name: 'Accounts', history_days: 14, ttl_days: 14 })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
-
-    fauna.client.query(
-        fauna.q.CreateCollection({ name: 'Content', history_days: 14, ttl_days: 14 })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
-
-    fauna.client.query(
-        fauna.q.CreateCollection({ name: 'Configuration', history_days: 14, ttl_days: 14 })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
-
-    
-
-    mongo.CreateCollection()
+    await client.createCollection(config.accounts).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
+    await client.createCollection(config.content).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
+    await client.createCollection(config.configuration).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
 
     // CREATE INDEXES - find_(object)_by_id
-    fauna.client.query(
-        fauna.q.CreateIndex({ name: 'find_account_by_id', source: fauna.q.Collection('Accounts'), terms: [{ field: ['data', 'id'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
-
-    fauna.client.query(
-        fauna.q.CreateIndex({ name: 'find_content_by_id', source: fauna.q.Collection('Content'), terms: [{ field: ['data', 'id'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
-
-    fauna.client.query(
-        fauna.q.CreateIndex({ name: 'find_configuration_by_id', source: fauna.q.Collection('Configuration'), terms: [{ field: ['data', 'id'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
-
-    fauna.client.query(
-        fauna.q.CreateIndex({ name: 'find_content_by_type', source: fauna.q.Collection('Content'), terms: [{ field: ['data', 'type'] }] })
-    ).then((ret) => console.log(ret)).catch((err) => console.error('Error: [%s] %s: %s', err.name, err.message, err.errors()[0].description,))
+    await client.createIndex(config.accounts, { "id": 1 }).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
+    await client.createIndex(config.content, { "id": 1 }).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
+    await client.createIndex(config.configuration, { "id": 1, "type": 1 }).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
 
     // CREATE DEFAULTS
-    fauna.client.query(
-        q.Let({
-            create_id: q.NewId(),
-            create: q.Create(q.Ref(q.Collection('Configuration'), 1), { data: {} }),
-        }, q.Var("create"))
-    ).then((result) => { console.log(result.data) }).catch(error => { console.error(error) });
-
+    await client.collection(config.configuration).insertOne({ state: "Initiated" }).catch((error) => {
+        // Handle the rejection
+        console.log('The promise was rejected:', error);
+        return undefined;
+    });
 }
 
 
@@ -118,24 +126,32 @@ export default async function handler(req, res) {
 
                 console.log("Proceeding with initiations")
 
-                // Fauna
-                if (process.env.FAUNA_DATABASE_SERVER_KEY) {
-                    FaunaDatabaseInitiations();
-                }
+                try {
+                    // Fauna
+                    if (process.env.FAUNA_DATABASE_SERVER_KEY) {
+                        await FaunaDatabaseInitiations();
+                    }
 
-                // Redis
-                if (process.env.REDIS_SERVICE_REST_URL) {
-                    RedisDatabaseInitiations();
-                }
+                    // Redis
+                    if (process.env.REDIS_SERVICE_REST_URL) {
+                        await RedisDatabaseInitiations();
+                    }
 
+                    // MySQL
+                    if (process.env.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
+                        await MySQLDatabaseInitiations();
+                    }
 
-                // MySQL
-                if (process.env.REDIS_SERVICE_REST_URL) {
-                    MySQLDatabaseInitiations();
-                }
+                    // Mongo
+                    if (process.env.MONGO_DATABASE_CONNECTION_STRING) {
+                        await MongoDatabaseInitiations();
+                    }
+                    res.status(200).json({ name: 'Initiations Complete' })
 
+                } catch (error) {
+                    res.status(404).send({ message: "Error initializing", error })
+                };
 
-                res.status(200).json({ name: 'Initiations Complete' })
             } else {
                 res.status(404).send({ message: "UnAuthorized" })
             }
@@ -149,9 +165,12 @@ export default async function handler(req, res) {
                     fauna: false,
                     redis: false,
                     mysql: false,
+                    mongo: false,
                     azure_storage: false,
                     uploadcare_storage: false,
                 }
+                const client = (await mongo).db();
+
 
                 // Fauna
                 try {
@@ -200,6 +219,16 @@ export default async function handler(req, res) {
                 } catch (error) {
                     console.log("error", error);
                     status.uploadcare_storage = `${error}`;
+                }
+
+
+                // Mongo
+                try {
+                    await client.listCollections();
+                    status.mongo = true;
+                } catch (error) {
+                    console.log("error", error);
+                    status.mongo = `${error}`;
                 }
 
                 res.status(200).json({ ...status })
