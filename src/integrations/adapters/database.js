@@ -715,6 +715,46 @@ class PrismaConfigDatabaseHandler {
         });
     }
 }
+class MongoConfigDatabaseHandler {
+    constructor(body, params) {
+        this.body = body;
+        this.params = params;
+    }
+
+    async get() {
+        return new Promise(async (resolve, reject) => {
+            const client = (await mongo).db();
+
+            try {
+                let result = await client.collection(config.configuration).findOne({ _id: 1 })
+                resolve(result);
+            } catch (error) {
+                console.log("mongo.configs.get.error", error);
+                reject(error);
+            }
+
+        });
+    }
+
+    async put() {
+        return new Promise(async (resolve, reject) => {
+            const client = (await mongo).db();
+
+            try {
+                const options = { upsert: true, new: true };
+                let update = {
+                    $set: { ...this.body },
+                };
+                let result = await client.collection(config.configuration).findOneAndUpdate({ _id: 1 }, update, options);
+                resolve(result.value);
+            } catch (error) {
+                console.log("api.config.put.error", error);
+                reject(error);
+            }
+
+        });
+    }
+}
 
 
 // HANDLERS
@@ -872,6 +912,12 @@ class ConfigDatabaseHandler {
                 result = await method.get();
                 return result;
                 break;
+            case "mongo":
+                // USE FAUNA METHOD
+                method = new MongoConfigDatabaseHandler(this.body, this.params);
+                result = await method.get();
+                return result;
+                break;
             case "prisma":
                 // USE PRISMA METHOD
                 method = new PrismaConfigDatabaseHandler(this.body, this.params);
@@ -888,6 +934,12 @@ class ConfigDatabaseHandler {
             case "fauna":
                 // USE FAUNA METHOD
                 method = new FaunaConfigDatabaseHandler(this.body, this.params);
+                result = await method.put();
+                return result;
+                break;
+            case "mongo":
+                // USE MONGO METHOD
+                method = new MongoConfigDatabaseHandler(this.body, this.params);
                 result = await method.put();
                 return result;
                 break;

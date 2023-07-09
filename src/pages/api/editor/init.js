@@ -103,16 +103,7 @@ async function MongoDatabaseInitiations() {
     });
 
     // CREATE DEFAULTS
-    let result = await client.collection(config.configuration).insertOne({ _id: 1, state: "Initiated" }).catch((error) => {
-        // Handle the rejection
-        console.log('The promise was rejected:', error);
-        return undefined;
-    });
-
-    let id = result.insertedId;
-    let filter = { _id: id };
-    let update = { $set: { id } };
-    await client.collection(config.configuration).updateOne(filter, update).catch((error) => {
+    await client.collection(config.configuration).insertOne({ _id: 1, id: 1, state: "Initiated" }).catch((error) => {
         // Handle the rejection
         console.log('The promise was rejected:', error);
         return undefined;
