@@ -531,6 +531,9 @@ export default function Editor() {
 
                   {/* LOGO_ONLY, LOGO_LABEL_LIGHT_MODE, LOGO_LABEL_DARK_MODE, 
                   TITLE, DESCRIPTION */}
+                  <p className="text-xs w-90"> {configuration?.logo_only} </p>
+                  <p className="text-xs w-90"> {configuration?.logo_label_light_mode} </p>
+                  <p className="text-xs w-90"> {configuration?.logo_label_dark_mode} </p>
 
                   {configuration != null &&
                     <div className='flex justify-between gap-5 border p-5 w-[auto]'>
@@ -551,6 +554,7 @@ export default function Editor() {
                             }
                           }}
                           init={configuration?.logo_only} />
+
                       </div>
 
                       <div class="w-1/2">
@@ -591,7 +595,6 @@ export default function Editor() {
                             }
                           }}
                           init={configuration?.logo_label_dark_mode} />
-                        {/* {configuration?.logo_label_dark_mode} */}
                       </div>
                     </div>}
 
