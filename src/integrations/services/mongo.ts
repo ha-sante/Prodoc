@@ -6,11 +6,10 @@ if (!process.env?.MONGO_DATABASE_CONNECTION_STRING) {
 
 const uri = process.env?.MONGO_DATABASE_CONNECTION_STRING
 const options = {}
-
-let client = new MongoClient(uri, options)
-let mongo: Promise<MongoClient>
+let mongo: Promise<MongoClient>;
 
 if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
+  let client = new MongoClient(uri, options)
   console.log('Please add your Mongo URI to .env.local')
 
   if (process.env.NODE_ENV === 'development') {
@@ -27,7 +26,7 @@ if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
     mongo = client.connect()
   }
 
-}else{
+} else {
   mongo = null;
 }
 
