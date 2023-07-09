@@ -442,17 +442,9 @@ class MongoPagesDatabaseHandler {
             const client = (await mongo).db();
 
             // Create
-            let result = await client.collection(config.content).insertOne({ ...this.body }).catch((error) => {
-                // Handle the rejection
-                console.log('The promise was rejected:', error);
-                reject(error)
-            });
-
-            // Update
-            let id = result.insertedId;
-            let filter = { _id: id };
-            let update = { $set: { id } };
-            let updated = await client.collection(config.content).updateOne(filter, update).catch((error) => {
+            let id = new ObjectId();
+            let data = { _id: id, id, ...this.body };
+            let result = await client.collection(config.content).insertOne(data).catch((error) => {
                 // Handle the rejection
                 console.log('The promise was rejected:', error);
                 reject(error)
@@ -462,8 +454,8 @@ class MongoPagesDatabaseHandler {
             await redis.set("content_cache_valid", false);
 
             // Resolve
-            console.log(updated)
-            resolve(updated);
+            console.log(result)
+            resolve(data);
         });
     }
 
@@ -544,7 +536,7 @@ class MongoPagesDatabaseHandler {
                     let pages = await client.collection(config.content).find().limit(limit).toArray();
                     await redis.set("content", pages);
                     await redis.set("content_cache_valid", true);
-                    console.log(pages)
+                    // console.log(pages)
                     resolve(pages);
                 } catch (error) {
                     // Handle the rejection
@@ -655,7 +647,6 @@ class MongoPagesDatabaseHandler {
             }
 
         });
-
     }
 }
 
