@@ -18,19 +18,19 @@ let config = {
 
 // Database - In use
 const Databased = () => {
-    if (process.env.FAUNA_DATABASE_SERVER_KEY) {
+    if (process.env?.FAUNA_DATABASE_SERVER_KEY) {
         return "fauna"
     }
 
-    if (process.env.MONGO_DATABASE_CONNECTION_STRING) {
+    if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
         return "mongo"
     }
 
-    if (process.env.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
+    if (process.env?.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
         return "prisma"
     }
 
-    if (process.env.POCKETBASE_DATABASE_CONNECTION_STRING) {
+    if (process.env?.POCKETBASE_DATABASE_CONNECTION_STRING) {
         return "pocketbase"
     }
 }

@@ -128,22 +128,22 @@ export default async function handler(req, res) {
 
                 try {
                     // Fauna
-                    if (process.env.FAUNA_DATABASE_SERVER_KEY) {
+                    if (process.env?.FAUNA_DATABASE_SERVER_KEY) {
                         await FaunaDatabaseInitiations();
                     }
 
                     // Redis
-                    if (process.env.REDIS_SERVICE_REST_URL) {
+                    if (process.env?.REDIS_SERVICE_REST_URL) {
                         await RedisDatabaseInitiations();
                     }
 
                     // MySQL
-                    if (process.env.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
+                    if (process.env?.PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING) {
                         await MySQLDatabaseInitiations();
                     }
 
                     // Mongo
-                    if (process.env.MONGO_DATABASE_CONNECTION_STRING) {
+                    if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
                         await MongoDatabaseInitiations();
                     }
 
