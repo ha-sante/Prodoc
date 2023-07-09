@@ -218,12 +218,16 @@ export default function Editor() {
     // CALL THE API HANDLER TO SAVE
     let toastId = toast.loading('Saving portal configuration...');
     console.log("configuration.to.save", { configuration });
+
     ConfigAPIHandler('PUT', configuration).then(response => {
       console.log("response.data", { response_herny: response.data })
-      setConfiguration(response.data);
+      setConfiguration(configuration);
+
       setEdited(false);
+
       toast.dismiss(toastId);
       toast.success("Portal Configuration Saved")
+
     }).catch(error => {
       logger.log('error', error);
       toast.dismiss(toastId);
@@ -516,7 +520,7 @@ export default function Editor() {
 
               <div className='flex flex-row items-center gap-2'>
                 {/* <p>Edited ({edited ? "edited" : ""})</p> */}
-                <Button size={"sm"} className='' color={edited ? "warning" : "info"} onClick={() => { SavePortalConfiguration() }}>
+                <Button size={"sm"} className='' color={edited ? "warning" : "info"} onClick={() => { SavePortalConfiguration(configuration) }}>
                   Save Configuration <TickSquare className='ml-3' size="16" color="#fff" />
                 </Button>
               </div>
@@ -531,9 +535,9 @@ export default function Editor() {
 
                   {/* LOGO_ONLY, LOGO_LABEL_LIGHT_MODE, LOGO_LABEL_DARK_MODE, 
                   TITLE, DESCRIPTION */}
-                  <p className="text-xs w-90"> {configuration?.logo_only} </p>
+                  {/* <p className="text-xs w-90"> {configuration?.logo_only} </p>
                   <p className="text-xs w-90"> {configuration?.logo_label_light_mode} </p>
-                  <p className="text-xs w-90"> {configuration?.logo_label_dark_mode} </p>
+                  <p className="text-xs w-90"> {configuration?.logo_label_dark_mode} </p> */}
 
                   {configuration != null &&
                     <div className='flex justify-between gap-5 border p-5 w-[auto]'>
@@ -632,7 +636,7 @@ export default function Editor() {
         </div>
       </div>
     )
-  }, [navigation, configuration]);
+  }, [navigation, configuration, edited]);
 
   function Navigation() {
     // logger.log("editor.navigation.bar.rendered")
