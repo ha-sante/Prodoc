@@ -183,7 +183,7 @@ export default async function handler(req, res) {
                 }
 
                 // Redis
-                if (process.env?.REDIS_SERVICE_CONNECTION_STRING) {
+                if (process.env?.REDIS_SERVICE_REST_URL) {
                     let result = await redis.ping()
                     if (result) {
                         status.redis = true;
