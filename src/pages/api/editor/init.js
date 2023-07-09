@@ -170,7 +170,6 @@ export default async function handler(req, res) {
                     azure_storage: false,
                     uploadcare_storage: false,
                 }
-                const client = (await mongo).db();
 
 
                 // Fauna
@@ -225,6 +224,7 @@ export default async function handler(req, res) {
 
                 // Mongo
                 try {
+                    const client = (await mongo).db();
                     await client.listCollections();
                     status.mongo = true;
                 } catch (error) {
