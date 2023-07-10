@@ -41,5 +41,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: prodoctech/prodoc:staging
+          tags: prodoctech/prodoc:latest
           labels: ${{ steps.meta.outputs.labels }}
