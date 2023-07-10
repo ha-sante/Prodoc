@@ -5,12 +5,11 @@ if (!process.env?.MONGO_DATABASE_CONNECTION_STRING) {
 }
 
 const uri = process.env?.MONGO_DATABASE_CONNECTION_STRING
-const options = {}
+const options = { }
 let mongo: Promise<MongoClient>;
 
 if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
   let client = new MongoClient(uri, options)
-  console.log('Please add your Mongo URI to .env.local')
 
   if (process.env.NODE_ENV === 'development') {
     // In development mode, use a global variable so that the value
@@ -21,9 +20,13 @@ if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
     }
 
     mongo = global._mongoClientPromise
+
+    console.log('Mongo service connected')
+
   } else {
     // In production mode, it's best to not use a global variable.
     mongo = client.connect()
+    console.log('Mongo service connected')
   }
 
 } else {

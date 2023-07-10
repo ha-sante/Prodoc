@@ -53,7 +53,7 @@ class FaunaPagesDatabaseHandler {
 
             fauna.client.query(request).then(async (result) => {
                 // HANDLE CACHING
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", "no");
 
                 // SEND REPLY
                 resolve(result.data)
@@ -82,7 +82,7 @@ class FaunaPagesDatabaseHandler {
                 q.Update(q.Ref(q.Collection('Content'), this.body.id), { data: { ...ready } })
             ).then(async (result) => {
                 // HANDLE CACHING
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", "no");
                 console.log("api.content.update.result", result);
 
                 // SEND REPLY
@@ -104,7 +104,7 @@ class FaunaPagesDatabaseHandler {
                 q.Delete(q.Ref(q.Collection('Content'), this.params.id))
             ).then(async (result) => {
                 // HANDLE CACHING
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", "no");
 
                 // SEND REPLY
                 resolve(result.data);
@@ -123,7 +123,7 @@ class FaunaPagesDatabaseHandler {
             let cache_valid = await redis.get("content_cache_valid");
             console.log("get.content.cache_valid", cache_valid);
 
-            if (cache_valid == false || cache_valid == null) {
+            if (cache_valid == 'no' || cache_valid == null) {
                 fauna.client.query(
                     q.Map(
                         q.Paginate(q.Documents(q.Collection("Content")), { size: 99999 }),
@@ -132,8 +132,8 @@ class FaunaPagesDatabaseHandler {
                 ).then(async (result) => {
                     // HANDLE CACHE
                     let pages = result.data.map(page => page.data);
-                    await redis.set("content", pages);
-                    await redis.set("content_cache_valid", true);
+                    await redis.set("content", JSON.stringify(pages));
+                    await redis.set("content_cache_valid", 'yes');
 
                     // SEND REPLY
                     resolve(pages);
@@ -141,8 +141,9 @@ class FaunaPagesDatabaseHandler {
                     console.log("get.content.error", error);
                     reject(error)
                 });
-            } else if (cache_valid == true) {
-                let pages = await redis.get("content");
+            } else if (cache_valid == 'yes') {
+                let result = await redis.get("content");
+                let pages = JSON.parse(result);
                 resolve(pages);
             } else {
                 resolve([]);
@@ -246,7 +247,7 @@ class FaunaPagesDatabaseHandler {
 
 
                 // HANDLE CACHING
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
 
                 // SEND REPLY
                 let data = [...updated_chapters, ...pages];
@@ -272,7 +273,7 @@ class PrismaPagesDatabaseHandler {
             try {
                 let page = await prisma.page.create({ data: { ...this.body } })
                 let result = { ...page, id: String(page.id) };
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
                 resolve(result);
             } catch (error) {
                 console.log("sql.pages.create.error", error);
@@ -297,7 +298,8 @@ class PrismaPagesDatabaseHandler {
                 let page = await prisma.page.update({ where: { id: Number(ready.id) }, data: { ...ready } })
                 let result = { ...page, id: String(page.id) };
 
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
+
                 console.log("sql.pages.create", result);
                 resolve(result);
             } catch (error) {
@@ -315,7 +317,8 @@ class PrismaPagesDatabaseHandler {
                 let page = await prisma.page.delete({ where: { id: Number(this.params.id) } })
                 let result = { ...page, id: String(page.id) };
 
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
+
                 console.log("sql.pages.create", result);
                 resolve(result);
             } catch (error) {
@@ -332,22 +335,23 @@ class PrismaPagesDatabaseHandler {
             let cache_valid = await redis.get("content_cache_valid");
             console.log("get.content.cache_valid", cache_valid);
 
-            if (cache_valid == false || cache_valid == null) {
+            if (cache_valid == 'no' || cache_valid == null) {
                 try {
                     let raw = await prisma.page.findMany()
                     let pages = raw.map(page => {
                         return ({ ...page, id: String(page.id) })
                     })
-                    await redis.set("content", pages);
-                    await redis.set("content_cache_valid", true);
+                    await redis.set("content", JSON.stringify(pages));
+                    await redis.set("content_cache_valid", "yes");
 
                     resolve(pages);
                 } catch (error) {
                     console.log("sql.pages.create.error", error);
                     reject(error);
                 }
-            } else if (cache_valid == true) {
-                let pages = await redis.get("content");
+            } else if (cache_valid == 'yes') {
+                let result = await redis.get("content");
+                let pages = JSON.parse(result);
                 resolve(pages);
             } else {
                 resolve([]);
@@ -417,7 +421,8 @@ class PrismaPagesDatabaseHandler {
 
 
                 // HANDLE CACHING
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
+
 
                 // SEND REPLY
                 let data = [...updated_chapters, ...pages];
@@ -451,7 +456,8 @@ class MongoPagesDatabaseHandler {
             });
 
             // Caching
-            await redis.set("content_cache_valid", false);
+            await redis.set("content_cache_valid", 'no');
+
 
             // Resolve
             console.log(result)
@@ -484,7 +490,8 @@ class MongoPagesDatabaseHandler {
                 await client.collection(config.content).updateOne(filter, update, options);
 
                 // Caching
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
+
 
                 // Resolve
                 resolve(ready);
@@ -509,7 +516,8 @@ class MongoPagesDatabaseHandler {
                 await client.collection(config.content).deleteOne(filter);
 
                 // Caching
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
+
 
                 // Resolve
                 resolve({ id: this.params.id });
@@ -525,30 +533,38 @@ class MongoPagesDatabaseHandler {
     async get() {
         console.log("exeuction.mongo")
         return new Promise(async (resolve, reject) => {
+            // await redis.connect();
 
-            let cache_valid = await redis.get("content_cache_valid")
-            console.log("get.content.cache_valid", cache_valid);
-            if (cache_valid == false || cache_valid == null) {
-                let client = (await mongo).db();
+            try {
+                let cache_valid = await redis.get("content_cache_valid")
+                console.log("get.content.cache_valid", cache_valid);
+                if (cache_valid == 'no' || cache_valid == null) {
+                    let client = (await mongo).db();
 
-                try {
-                    let limit = 1000000000;
-                    let pages = await client.collection(config.content).find().limit(limit).toArray();
-                    await redis.set("content", pages);
-                    await redis.set("content_cache_valid", true);
-                    // console.log(pages)
+                    try {
+                        let limit = 1000000000;
+                        let pages = await client.collection(config.content).find().limit(limit).toArray();
+                        await redis.set("content", JSON.stringify(pages));
+                        await redis.set("content_cache_valid", "yes");
+                        // console.log(pages)
+                        resolve(pages);
+                    } catch (error) {
+                        // Handle the rejection
+                        console.log('The promise was rejected:', error);
+                        reject(error)
+                    }
+
+                } else if (cache_valid == 'yes') {
+                    let result = await redis.get("content");
+                    let pages = JSON.parse(result);
                     resolve(pages);
-                } catch (error) {
-                    // Handle the rejection
-                    console.log('The promise was rejected:', error);
-                    reject(error)
+                } else {
+                    resolve([]);
                 }
-
-            } else if (cache_valid == true) {
-                let pages = await redis.get("content");
-                resolve(pages);
-            } else {
-                resolve([]);
+            } catch (error) {
+                // Handle the rejection
+                console.log('The promise was rejected:', error);
+                reject(error)
             }
 
         });
@@ -636,7 +652,8 @@ class MongoPagesDatabaseHandler {
                 console.log("api.patch.updated_chapters", true);
 
                 // HANDLE CACHING
-                await redis.set("content_cache_valid", false);
+                await redis.set("content_cache_valid", 'no');
+
 
                 // SEND REPLY
                 let data = [...updated_chapters, ...pages];

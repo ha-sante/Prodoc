@@ -9,12 +9,12 @@ import prisma from "../../../integrations/services/prisma"
 import { redis } from "../../../integrations/services/redis"
 import { ObjectId } from "mongodb";
 
+
 let config = {
     accounts: "Accounts",
     content: "Content",
     configuration: "Configuration"
 }
-
 
 async function FaunaDatabaseInitiations() {
     // CREACTE COLLECTIONS - ACCOUNTS, CONTENT, CONFIGURATION
@@ -171,7 +171,6 @@ export default async function handler(req, res) {
                     uploadcare_storage: false,
                 }
 
-
                 // Fauna
                 if (process.env?.FAUNA_DATABASE_SERVER_KEY) {
                     try {
@@ -183,10 +182,16 @@ export default async function handler(req, res) {
                 }
 
                 // Redis
-                if (process.env?.REDIS_SERVICE_REST_URL) {
-                    let result = await redis.ping()
-                    if (result) {
+                if (process.env?.REDIS_SERVICE_CONNECTION_STRING) {
+                    let cache_valid = await redis.get("content_cache_valid")
+                    console.log(cache_valid)
+                    try {
+                        let result = await redis.set("content", JSON.stringify([]))
+                        console.log(result)
                         status.redis = true;
+                    } catch (error) {
+                        console.log(error)
+                        status.redis = error;
                     }
                 }
 
@@ -214,7 +219,6 @@ export default async function handler(req, res) {
                     }
                 }
 
-
                 // UPLOADCARE
                 if (process.env?.UPLOADCARE_SERVICE_PUBLIC_KEY) {
                     try {
@@ -229,7 +233,6 @@ export default async function handler(req, res) {
                         status.uploadcare_storage = `${error}`;
                     }
                 }
-
 
                 // Mongo
                 if (process.env?.MONGO_DATABASE_CONNECTION_STRING) {
