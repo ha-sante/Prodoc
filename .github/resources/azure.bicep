@@ -102,8 +102,6 @@ var accountSasToken = prodoc_storage_account.listAccountSas(prodoc_storage_accou
 var connectionStringSAS = 'BlobEndpoint=${prodoc_storage_account.properties.primaryEndpoints.blob};SharedAccessSignature=${accountSasToken}'
 output accountSasToken string = accountSasToken
 
-
-
 // 2.
 // Mongo ISNTANCE
 param serverVersion string = '4.2'
@@ -157,10 +155,10 @@ resource mongoDatabase 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2
     }
   }
 }
-var mongoConnectionString = mongoDatabase.listConnectionStrings().connectionStrings[0].connectionString
-output mongoConnectionString string = mongoConnectionString
-
-
+// var mongoConnectionString = mongoDatabase.listConnectionStrings().connectionStrings[0]
+// var mongoConnectionString = listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', mongoDatabase.name), '2022-05-15').connectionStrings[0].connectionString
+var mongoConnectionString = listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', mongoDatabase.name), '2022-05-15').connectionStrings
+output mongoConnectionString array = mongoConnectionString
 
 // 3.
 // REDIS INSTANCE
@@ -186,8 +184,6 @@ var redisCacheKey = redis_instance.listKeys().primaryKey
 // output redisCacheKey string = redisCacheKey
 var redisConnectionString = 'rediss://${redisCacheKey}@${redis_instance.properties.hostName}:6380'
 output redisConnectionString string = redisConnectionString
-
-
 
 // 4.
 // CONTAINER PRE-SETUP INSTANCES
@@ -249,7 +245,7 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
             }
             {
               name: 'MONGO_DATABASE_CONNECTION_STRING'
-              value: mongoConnectionString
+              value: ''
             }
             {
               name: 'REDIS_SERVICE_CONNECTION_STRING'

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "1567634641871339404"
+      "templateHash": "1097665630464220939"
     }
   },
   "parameters": {
@@ -256,7 +256,7 @@
                 },
                 {
                   "name": "MONGO_DATABASE_CONNECTION_STRING",
-                  "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName')), '2022-05-15').connectionStrings[0].connectionString]"
+                  "value": ""
                 },
                 {
                   "name": "REDIS_SERVICE_CONNECTION_STRING",
@@ -321,7 +321,6 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.App/managedEnvironments', variables('appEnvironmentName'))]",
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
         "[resourceId('Microsoft.Cache/redis', variables('redisName'))]"
       ]
@@ -333,8 +332,8 @@
       "value": "[listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken]"
     },
     "mongoConnectionString": {
-      "type": "string",
-      "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName')), '2022-05-15').connectionStrings[0].connectionString]"
+      "type": "array",
+      "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('mongoDatabaseName')), '2022-05-15').connectionStrings]"
     },
     "redisConnectionString": {
       "type": "string",
