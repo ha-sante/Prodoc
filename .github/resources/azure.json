@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "1097665630464220939"
+      "templateHash": "3131360802702466962"
     }
   },
   "parameters": {
@@ -330,10 +330,6 @@
     "accountSasToken": {
       "type": "string",
       "value": "[listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken]"
-    },
-    "mongoConnectionString": {
-      "type": "array",
-      "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('mongoDatabaseName')), '2022-05-15').connectionStrings]"
     },
     "redisConnectionString": {
       "type": "string",

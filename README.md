@@ -15,7 +15,7 @@ Prodoc is an open source product and API documentation tool. It enables you to o
 ## Deploy
 Click to confirm and deploy.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fha-sante%2FPricinHub%2Fmain%2Fazure-deploy-ultimate13.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fha-sante%2FPricinHub%2Fmain%2Fazure-deploy-ultimate14.json)
 
 
 

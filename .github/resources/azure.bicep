@@ -157,8 +157,8 @@ resource mongoDatabase 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2
 }
 // var mongoConnectionString = mongoDatabase.listConnectionStrings().connectionStrings
 // var mongoConnectionString = listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', mongoDatabase.name), '2022-05-15').connectionStrings[0].connectionString
-var mongoConnectionString = listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', mongoDatabase.name), '2022-05-15').connectionStrings
-output mongoConnectionString array = mongoConnectionString
+// var mongoConnectionString = listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', mongoDatabase.name), '2022-05-15').connectionStrings
+// output mongoConnectionString array = mongoConnectionString
 
 // 3.
 // REDIS INSTANCE
