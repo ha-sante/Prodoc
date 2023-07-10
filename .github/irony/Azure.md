@@ -24,3 +24,6 @@ Prodoc offers one click deploy that utilizes Azures ARM to deploy the following 
 - Firewall rules can be set on services to limit them only the resources that use them.
 - CORs rules can be set on services to limit them to only the resources that use them.
 
+
+Thank you for using Prodoc.
+

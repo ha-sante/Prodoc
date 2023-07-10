@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "17187112988907507338"
+      "templateHash": "1567634641871339404"
     }
   },
   "parameters": {
@@ -113,7 +113,14 @@
                 "*"
               ],
               "allowedMethods": [
-                "*"
+                "DELETE",
+                "GET",
+                "HEAD",
+                "MERGE",
+                "OPTIONS",
+                "PATCH",
+                "POST",
+                "PUT"
               ],
               "allowedOrigins": [
                 "*"
@@ -121,7 +128,7 @@
               "exposedHeaders": [
                 "*"
               ],
-              "maxAgeInSeconds": 60
+              "maxAgeInSeconds": 0
             }
           ]
         }
@@ -167,7 +174,7 @@
         "locations": [
           {
             "locationName": "[parameters('location')]",
-            "failoverPriority": 1,
+            "failoverPriority": 0,
             "isZoneRedundant": false
           }
         ]

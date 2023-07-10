@@ -59,7 +59,14 @@ resource prodoc_storage_account_blob_service 'Microsoft.Storage/storageAccounts/
             '*'
           ]
           allowedMethods: [
-            '*'
+            'DELETE'
+            'GET'
+            'HEAD'
+            'MERGE'
+            'OPTIONS'
+            'PATCH'
+            'POST'
+            'PUT'
           ]
           allowedOrigins: [
             '*'
@@ -67,7 +74,7 @@ resource prodoc_storage_account_blob_service 'Microsoft.Storage/storageAccounts/
           exposedHeaders: [
             '*'
           ]
-          maxAgeInSeconds: 60
+          maxAgeInSeconds: 0
         }
       ]
     }
@@ -130,7 +137,7 @@ resource MongoDatabaseAccount 'Microsoft.DocumentDB/databaseAccounts@2022-05-15'
     locations: [
       {
         locationName: location
-        failoverPriority: 1
+        failoverPriority: 0
         isZoneRedundant: false
       }
     ]
