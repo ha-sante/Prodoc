@@ -66,11 +66,11 @@ export default function PageEditor(props) {
           config: {
             uploader: {
               async uploadByFile(fileData) {
-                logger.log("supposed.to.upload.file", fileData);
+                console.log("supposed.to.upload.file", fileData);
 
                 // UPLOAD THE FILE
                 const blob = new Blob([fileData], { type: fileData.type });
-                let url = await StorageAPIHandler(blob, blob?.name, null);
+                let url = await StorageAPIHandler(blob, fileData?.name, null);
                 logger.log(`URL: ${url}`)
 
                 // RETURN THE URL OF THE UPLOADED FILE
