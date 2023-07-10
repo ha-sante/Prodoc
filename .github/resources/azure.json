@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "11530756541682329346"
+      "templateHash": "14930672198580183505"
     }
   },
   "parameters": {
@@ -24,6 +24,14 @@
       "defaultValue": {
         "channel": "prodoc-quick-deploy"
       }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('{0}pstorage', parameters('collectiveResourcePrefixLabel'))]"
+    },
+    "storageContainerName": {
+      "type": "string",
+      "defaultValue": "files"
     },
     "serverVersion": {
       "type": "string",
@@ -45,9 +53,104 @@
     "mongoDatabaseName": {
       "type": "string",
       "defaultValue": "[format('{0}-p-mongodb', parameters('collectiveResourcePrefixLabel'))]"
+    },
+    "editorPassword": {
+      "type": "securestring"
     }
   },
+  "variables": {
+    "sasConfig": {
+      "signedResourceTypes": "cos",
+      "signedPermission": "rwdlacup",
+      "signedServices": "b",
+      "signedExpiry": "2123-01-01T12:00:00Z",
+      "signedProtocol": "https",
+      "keyToSign": "key1"
+    },
+    "redisName": "[format('{0}-predis', parameters('collectiveResourcePrefixLabel'))]",
+    "appEnvironmentName": "[format('{0}-p-apps-environment', parameters('collectiveResourcePrefixLabel'))]",
+    "containerPort": 3000,
+    "appName": "[format('{0}-p-app', parameters('collectiveResourcePrefixLabel'))]"
+  },
   "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "tags": "[parameters('generalTag')]",
+      "sku": {
+        "name": "Standard_RAGZRS"
+      },
+      "properties": {
+        "accessTier": "Hot",
+        "allowBlobPublicAccess": true,
+        "allowCrossTenantReplication": true,
+        "allowSharedKeyAccess": true,
+        "defaultToOAuthAuthentication": false,
+        "keyPolicy": {
+          "keyExpirationPeriodInDays": 36525
+        },
+        "publicNetworkAccess": "Enabled",
+        "supportsHttpsTrafficOnly": true,
+        "routingPreference": {
+          "routingChoice": "MicrosoftRouting",
+          "publishMicrosoftEndpoints": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+      "properties": {
+        "isVersioningEnabled": false,
+        "cors": {
+          "corsRules": [
+            {
+              "allowedHeaders": [
+                "*"
+              ],
+              "allowedMethods": [
+                "DELETE",
+                "GET",
+                "HEAD",
+                "MERGE",
+                "OPTIONS",
+                "PATCH",
+                "POST",
+                "PUT"
+              ],
+              "allowedOrigins": [
+                "*"
+              ],
+              "exposedHeaders": [
+                "*"
+              ],
+              "maxAgeInSeconds": 0
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', parameters('storageContainerName'))]",
+      "properties": {
+        "immutableStorageWithVersioning": {
+          "enabled": false
+        },
+        "publicAccess": "Blob"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+      ]
+    },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "apiVersion": "2022-05-15",
@@ -94,12 +197,148 @@
       "dependsOn": [
         "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('mongoAccountName')))]"
       ]
+    },
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2022-06-01",
+      "name": "[variables('redisName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('generalTag')]",
+      "properties": {
+        "enableNonSslPort": false,
+        "publicNetworkAccess": "Enabled",
+        "redisVersion": "latest",
+        "sku": {
+          "capacity": 0,
+          "family": "C",
+          "name": "Basic"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('appEnvironmentName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "vnetConfiguration": {
+          "internal": false
+        }
+      }
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2022-11-01-preview",
+      "name": "[variables('appName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('generalTag')]",
+      "properties": {
+        "configuration": {
+          "ingress": {
+            "allowInsecure": false,
+            "targetPort": 3000,
+            "transport": "auto",
+            "external": true
+          }
+        },
+        "environmentId": "[resourceId('Microsoft.App/managedEnvironments', variables('appEnvironmentName'))]",
+        "template": {
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "channel",
+                  "value": "azure"
+                },
+                {
+                  "name": "EDITOR_PASSWORD",
+                  "value": "[parameters('editorPassword')]"
+                },
+                {
+                  "name": "MONGO_DATABASE_CONNECTION_STRING",
+                  "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('mongoAccountName'))), '2019-12-12').connectionStrings[0].connectionString]"
+                },
+                {
+                  "name": "REDIS_SERVICE_CONNECTION_STRING",
+                  "value": "[format('rediss://{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
+                },
+                {
+                  "name": "AZURE_STORAGE_ACCOUNT_NAME",
+                  "value": "[parameters('storageAccountName')]"
+                },
+                {
+                  "name": "AZURE_STORAGE_CONTAINER_NAME",
+                  "value": "[parameters('storageContainerName')]"
+                },
+                {
+                  "name": "AZURE_SERVICE_CONNECTION_STRING",
+                  "value": "[format('BlobEndpoint={0};SharedAccessSignature={1}', reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').primaryEndpoints.blob, listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken)]"
+                }
+              ],
+              "image": "docker.io/prodoctech/prodoc:latest",
+              "name": "prodoc-container-instance",
+              "resources": {
+                "cpu": "[json('0.25')]",
+                "memory": "0.5Gi"
+              },
+              "probes": [
+                {
+                  "type": "liveness",
+                  "initialDelaySeconds": 15,
+                  "periodSeconds": 30,
+                  "failureThreshold": 3,
+                  "timeoutSeconds": 1,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                },
+                {
+                  "type": "startup",
+                  "timeoutSeconds": 2,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                },
+                {
+                  "type": "readiness",
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "port": "[variables('containerPort')]",
+                    "path": "/"
+                  }
+                }
+              ]
+            }
+          ],
+          "scale": {
+            "maxReplicas": 1,
+            "minReplicas": 1
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', variables('appEnvironmentName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('mongoAccountName')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Cache/redis', variables('redisName'))]"
+      ]
     }
   ],
   "outputs": {
+    "accountSasToken": {
+      "type": "string",
+      "value": "[listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken]"
+    },
     "mongoConnectionString": {
-      "type": "array",
+      "type": "string",
       "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('mongoAccountName'))), '2019-12-12').connectionStrings[0].connectionString]"
+    },
+    "redisConnectionString": {
+      "type": "string",
+      "value": "[format('rediss://{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
     }
   }
 }
