@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "1097665630464220939"
+      "templateHash": "6334820573793082619"
     }
   },
   "parameters": {
@@ -333,7 +333,7 @@
     },
     "mongoConnectionString": {
       "type": "array",
-      "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('mongoDatabaseName')), '2022-05-15').connectionStrings]"
+      "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName')), '2022-05-15').connectionStrings]"
     },
     "redisConnectionString": {
       "type": "string",
