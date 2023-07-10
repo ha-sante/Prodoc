@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "15940686394325372188"
+      "templateHash": "17187112988907507338"
     }
   },
   "parameters": {
@@ -33,109 +33,26 @@
       "type": "string",
       "defaultValue": "files"
     },
-    "administratorLogin": {
+    "serverVersion": {
       "type": "string",
-      "metadata": {
-        "description": "Provide the administrator login name for the MySQL server."
-      }
+      "defaultValue": "4.2"
     },
-    "administratorLoginPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Provide the administrator login password for the MySQL server."
-      }
-    },
-    "serverEdition": {
-      "type": "string",
-      "defaultValue": "Burstable",
-      "allowedValues": [
-        "Burstable",
-        "Generalpurpose",
-        "MemoryOptimized"
-      ],
-      "metadata": {
-        "description": "The tier of the particular SKU. High Availability is available only for GeneralPurpose and MemoryOptimized sku."
-      }
-    },
-    "version": {
-      "type": "string",
-      "defaultValue": "8.0.21",
-      "allowedValues": [
-        "5.7",
-        "8.0.21"
-      ],
-      "metadata": {
-        "description": "Server version"
-      }
-    },
-    "availabilityZone": {
-      "type": "string",
-      "defaultValue": "1",
-      "metadata": {
-        "description": "Availability Zone information of the server. (Leave blank for No Preference)."
-      }
-    },
-    "haEnabled": {
-      "type": "string",
-      "defaultValue": "Disabled",
-      "allowedValues": [
-        "Disabled",
-        "SameZone",
-        "ZoneRedundant"
-      ],
-      "metadata": {
-        "description": "High availability mode for a server : Disabled, SameZone, or ZoneRedundant"
-      }
-    },
-    "standbyAvailabilityZone": {
-      "type": "string",
-      "defaultValue": "2",
-      "metadata": {
-        "description": "Availability zone of the standby server."
-      }
-    },
-    "storageSizeGB": {
+    "sharedAutoscaleMaxThroughput": {
       "type": "int",
-      "defaultValue": 20
-    },
-    "storageIops": {
-      "type": "int",
-      "defaultValue": 360
-    },
-    "storageAutogrow": {
-      "type": "string",
-      "defaultValue": "Enabled",
-      "allowedValues": [
-        "Enabled",
-        "Disabled"
-      ]
-    },
-    "skuName": {
-      "type": "string",
-      "defaultValue": "Standard_B1ms",
+      "defaultValue": 1000,
+      "maxValue": 1000000,
+      "minValue": 1000,
       "metadata": {
-        "description": "The name of the sku, e.g. Standard_D32ds_v4."
+        "description": "Maximum autoscale throughput for the database shared with up to 25 collections"
       }
     },
-    "backupRetentionDays": {
-      "type": "int",
-      "defaultValue": 7
-    },
-    "geoRedundantBackup": {
+    "mongoAccountName": {
       "type": "string",
-      "defaultValue": "Disabled",
-      "allowedValues": [
-        "Disabled",
-        "Enabled"
-      ]
+      "defaultValue": "[format('{0}-p-mongo', parameters('collectiveResourcePrefixLabel'))]"
     },
-    "serverName": {
+    "mongoDatabaseName": {
       "type": "string",
-      "defaultValue": "[format('{0}-psqlserver', parameters('collectiveResourcePrefixLabel'))]"
-    },
-    "databaseName": {
-      "type": "string",
-      "defaultValue": "[format('{0}-pmysqldb', parameters('collectiveResourcePrefixLabel'))]"
+      "defaultValue": "[format('{0}-p-mongodb', parameters('collectiveResourcePrefixLabel'))]"
     },
     "editorPassword": {
       "type": "securestring"
@@ -150,9 +67,6 @@
       "signedProtocol": "https",
       "keyToSign": "key1"
     },
-    "hostPort": 3306,
-    "hostURL": "[format('{0}.mysql.database.azure.com', parameters('serverName'))]",
-    "connectionStringMySQL": "[format('mysql://{0}:{1}@{2}:{3}/{4}', parameters('administratorLogin'), parameters('administratorLoginPassword'), variables('hostURL'), variables('hostPort'), parameters('databaseName'))]",
     "redisName": "[format('{0}-predis', parameters('collectiveResourcePrefixLabel'))]",
     "appEnvironmentName": "[format('{0}-p-apps-environment', parameters('collectiveResourcePrefixLabel'))]",
     "containerPort": 3000,
@@ -191,7 +105,26 @@
       "apiVersion": "2022-09-01",
       "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
       "properties": {
-        "isVersioningEnabled": false
+        "isVersioningEnabled": false,
+        "cors": {
+          "corsRules": [
+            {
+              "allowedHeaders": [
+                "*"
+              ],
+              "allowedMethods": [
+                "*"
+              ],
+              "allowedOrigins": [
+                "*"
+              ],
+              "exposedHeaders": [
+                "*"
+              ],
+              "maxAgeInSeconds": 60
+            }
+          ]
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
@@ -212,44 +145,50 @@
       ]
     },
     {
-      "type": "Microsoft.DBforMySQL/flexibleServers",
-      "apiVersion": "2021-12-01-preview",
-      "name": "[parameters('serverName')]",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2022-05-15",
+      "name": "[toLower(parameters('mongoAccountName'))]",
       "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('skuName')]",
-        "tier": "[parameters('serverEdition')]"
-      },
+      "kind": "MongoDB",
+      "tags": "[parameters('generalTag')]",
       "properties": {
-        "version": "[parameters('version')]",
-        "administratorLogin": "[parameters('administratorLogin')]",
-        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
-        "availabilityZone": "[parameters('availabilityZone')]",
-        "highAvailability": {
-          "mode": "[parameters('haEnabled')]",
-          "standbyAvailabilityZone": "[parameters('standbyAvailabilityZone')]"
+        "capacity": {
+          "totalThroughputLimit": -1
         },
-        "storage": {
-          "storageSizeGB": "[parameters('storageSizeGB')]",
-          "iops": "[parameters('storageIops')]",
-          "autoGrow": "[parameters('storageAutogrow')]"
+        "databaseAccountOfferType": "Standard",
+        "apiProperties": {
+          "serverVersion": "[parameters('serverVersion')]"
         },
-        "backup": {
-          "backupRetentionDays": "[parameters('backupRetentionDays')]",
-          "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
-        }
+        "capabilities": [
+          {
+            "name": "DisableRateLimitingResponses"
+          }
+        ],
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 1,
+            "isZoneRedundant": false
+          }
+        ]
       }
     },
     {
-      "type": "Microsoft.DBforMySQL/flexibleServers/databases",
-      "apiVersion": "2021-12-01-preview",
-      "name": "[format('{0}/{1}', parameters('serverName'), parameters('databaseName'))]",
+      "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases",
+      "apiVersion": "2022-05-15",
+      "name": "[format('{0}/{1}', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName'))]",
       "properties": {
-        "charset": "utf8",
-        "collation": "utf8_general_ci"
+        "resource": {
+          "id": "[parameters('mongoDatabaseName')]"
+        },
+        "options": {
+          "autoscaleSettings": {
+            "maxThroughput": "[parameters('sharedAutoscaleMaxThroughput')]"
+          }
+        }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', toLower(parameters('mongoAccountName')))]"
       ]
     },
     {
@@ -263,7 +202,7 @@
         "publicNetworkAccess": "Enabled",
         "redisVersion": "latest",
         "sku": {
-          "capacity": 1,
+          "capacity": 0,
           "family": "C",
           "name": "Basic"
         }
@@ -309,32 +248,12 @@
                   "value": "[parameters('editorPassword')]"
                 },
                 {
-                  "name": "EDITOR_PASSWORD_SIGNING_KEY",
-                  "value": ""
+                  "name": "MONGO_DATABASE_CONNECTION_STRING",
+                  "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName')), '2022-05-15').connectionStrings[0].connectionString]"
                 },
                 {
-                  "name": "POCKETBASE_DATABASE_CONNECTION_STRING",
-                  "value": ""
-                },
-                {
-                  "name": "FAUNA_DATABASE_SERVER_KEY",
-                  "value": ""
-                },
-                {
-                  "name": "PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING",
-                  "value": "[variables('connectionStringMySQL')]"
-                },
-                {
-                  "name": "REDIS_SERVICE_URL",
-                  "value": ""
-                },
-                {
-                  "name": "REDIS_SERVICE_REST_URL",
-                  "value": "[reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName]"
-                },
-                {
-                  "name": "REDIS_SERVICE_REST_TOKEN",
-                  "value": "[listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey]"
+                  "name": "REDIS_SERVICE_CONNECTION_STRING",
+                  "value": "[format('rediss://{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
                 },
                 {
                   "name": "AZURE_STORAGE_ACCOUNT_NAME",
@@ -347,10 +266,6 @@
                 {
                   "name": "AZURE_SERVICE_CONNECTION_STRING",
                   "value": "[format('BlobEndpoint={0};SharedAccessSignature={1}', reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').primaryEndpoints.blob, listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken)]"
-                },
-                {
-                  "name": "UPLOADCARE_SERVICE_PUBLIC_KEY",
-                  "value": ""
                 }
               ],
               "image": "docker.io/prodoctech/prodoc:latest",
@@ -399,6 +314,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.App/managedEnvironments', variables('appEnvironmentName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
         "[resourceId('Microsoft.Cache/redis', variables('redisName'))]"
       ]
@@ -409,17 +325,13 @@
       "type": "string",
       "value": "[listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken]"
     },
-    "connectionStringMySQL": {
+    "mongoConnectionString": {
       "type": "string",
-      "value": "[variables('connectionStringMySQL')]"
+      "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', toLower(parameters('mongoAccountName')), parameters('mongoDatabaseName')), '2022-05-15').connectionStrings[0].connectionString]"
     },
-    "redisCacheRestUrl": {
+    "redisConnectionString": {
       "type": "string",
-      "value": "[format('https://{0}', reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
-    },
-    "redisCacheKey": {
-      "type": "string",
-      "value": "[listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey]"
+      "value": "[format('rediss://{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
     }
   }
 }

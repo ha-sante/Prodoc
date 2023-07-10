@@ -18,6 +18,8 @@ param generalTag object = { channel: 'prodoc-quick-deploy' }
 // STORAGE ACCOUNT INSTANCE
 // STORAGE ACCOUNT - BLOB SERVICE
 // STORAGE ACCOUNT - CONTAINER
+// STORAGE ACCOUNT - SHARED ACCESS SIGNATURE
+// STORAGE ACCOUNT - CONNECTION STRINGS FOR UPLOADS
 param storageAccountName string = '${collectiveResourcePrefixLabel}pstorage'
 param storageContainerName string = 'files'
 resource prodoc_storage_account 'Microsoft.Storage/storageAccounts@2022-09-01' = {
@@ -81,8 +83,6 @@ resource prodoc_storage_account_container 'Microsoft.Storage/storageAccounts/blo
     publicAccess: 'Blob'
   }
 }
-
-// STORAGE ACCOUNT - SHARED ACCESS SIGNATURE
 var sasConfig = {
   signedResourceTypes: 'cos'
   signedPermission: 'rwdlacup'
@@ -91,11 +91,11 @@ var sasConfig = {
   signedProtocol: 'https'
   keyToSign: 'key1'
 }
-// STORAGE ACCOUNT - CONNECTION STRINGS FOR UPLOADS
 var accountSasToken = prodoc_storage_account.listAccountSas(prodoc_storage_account.apiVersion, sasConfig).accountSasToken
 var connectionStringSAS = 'BlobEndpoint=${prodoc_storage_account.properties.primaryEndpoints.blob};SharedAccessSignature=${accountSasToken}'
-
 output accountSasToken string = accountSasToken
+
+
 
 // 2.
 // Mongo ISNTANCE
@@ -136,7 +136,6 @@ resource MongoDatabaseAccount 'Microsoft.DocumentDB/databaseAccounts@2022-05-15'
     ]
   }
 }
-
 resource mongoDatabase 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
   parent: MongoDatabaseAccount
   name: mongoDatabaseName
@@ -151,9 +150,10 @@ resource mongoDatabase 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2
     }
   }
 }
-var mongoConnectionString = listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', MongoDatabaseAccount.name), '2015-04-08').connectionStrings[0].connectionString
-
+var mongoConnectionString = mongoDatabase.listConnectionStrings().connectionStrings[0].connectionString
 output mongoConnectionString string = mongoConnectionString
+
+
 
 // 3.
 // REDIS INSTANCE
@@ -173,13 +173,14 @@ resource redis_instance 'Microsoft.Cache/redis@2022-06-01' = {
     }
   }
 }
-var redisCacheRestUrl = 'https://${redis_instance.properties.hostName}'
-// var redisPort = redis_instance.properties.sslPort
+// var redisCacheRestUrl = 'https://${redis_instance.properties.hostName}'
 var redisCacheKey = redis_instance.listKeys().primaryKey
-// var redisCacheKey = redis_instance.properties.accessKeys.primaryKey
+// output redisCacheRestUrl string = redisCacheRestUrl
+// output redisCacheKey string = redisCacheKey
+var redisConnectionString = 'rediss://${redisCacheKey}@${redis_instance.properties.hostName}:6380'
+output redisConnectionString string = redisConnectionString
 
-output redisCacheRestUrl string = redisCacheRestUrl
-output redisCacheKey string = redisCacheKey
+
 
 // 4.
 // CONTAINER PRE-SETUP INSTANCES
@@ -240,40 +241,13 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
               value: editorPassword
             }
             {
-              name: 'EDITOR_PASSWORD_SIGNING_KEY'
-              value: ''
-            }
-            {
-              name: 'POCKETBASE_DATABASE_CONNECTION_STRING'
-              value: ''
-            }
-
-            {
-              name: 'FAUNA_DATABASE_SERVER_KEY'
-              value: ''
-            }
-
-            {
-              name: 'PRISMA_SQL_DATABASE_SERVICE_CONNECTION_STRING'
-              value: ''
-            }
-            {
               name: 'MONGO_DATABASE_CONNECTION_STRING'
               value: mongoConnectionString
             }
             {
-              name: 'REDIS_SERVICE_URL'
-              value: ''
+              name: 'REDIS_SERVICE_CONNECTION_STRING'
+              value: redisConnectionString
             }
-            {
-              name: 'REDIS_SERVICE_REST_URL'
-              value: redisCacheRestUrl
-            }
-            {
-              name: 'REDIS_SERVICE_REST_TOKEN'
-              value: redisCacheKey
-            }
-
             {
               name: 'AZURE_STORAGE_ACCOUNT_NAME'
               value: storageAccountName
@@ -285,11 +259,6 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
             {
               name: 'AZURE_SERVICE_CONNECTION_STRING'
               value: connectionStringSAS
-            }
-
-            {
-              name: 'UPLOADCARE_SERVICE_PUBLIC_KEY'
-              value: ''
             }
           ]
           image: 'docker.io/prodoctech/prodoc:latest'
