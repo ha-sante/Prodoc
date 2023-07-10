@@ -201,9 +201,9 @@ export default async function handler(req, res) {
                 }
 
                 // AZURE STORAGE
-                if (process.env?.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING) {
+                if (process.env?.AZURE_STORAGE_CONNECTION_STRING) {
                     try {
-                        const connectionString = process.env.NEXT_PUBLIC_AZURE_STORAGE_CONNECTION_STRING
+                        const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING
                         const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
                         await blobServiceClient.setProperties({ defaultServiceVersion: "2020-02-10" }); // TO ENABLE CONTENT DISPOSITION FEATURES
 
@@ -216,11 +216,11 @@ export default async function handler(req, res) {
 
 
                 // UPLOADCARE
-                if (process.env?.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY) {
+                if (process.env?.UPLOADCARE_SERVICE_PUBLIC_KEY) {
                     try {
                         let test_url = "https://ui-avatars.com/api/?name=Prodoc";
                         const result = await fromUrl(test_url, {
-                            publicKey: process.env.NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY,
+                            publicKey: process.env.UPLOADCARE_SERVICE_PUBLIC_KEY,
                             store: "auto",
                         })
                         status.uploadcare_storage = true;

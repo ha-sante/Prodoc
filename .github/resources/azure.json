@@ -337,19 +337,19 @@
                   "value": "[listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey]"
                 },
                 {
-                  "name": "NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME",
+                  "name": "AZURE_STORAGE_ACCOUNT_NAME",
                   "value": "[parameters('storageAccountName')]"
                 },
                 {
-                  "name": "NEXT_PUBLIC_AZURE_STORAGE_CONTAINER_NAME",
+                  "name": "AZURE_STORAGE_CONTAINER_NAME",
                   "value": "[parameters('storageContainerName')]"
                 },
                 {
-                  "name": "NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING",
+                  "name": "AZURE_SERVICE_CONNECTION_STRING",
                   "value": "[format('BlobEndpoint={0};SharedAccessSignature={1}', reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').primaryEndpoints.blob, listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken)]"
                 },
                 {
-                  "name": "NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY",
+                  "name": "UPLOADCARE_SERVICE_PUBLIC_KEY",
                   "value": ""
                 }
               ],

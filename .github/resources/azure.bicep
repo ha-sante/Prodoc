@@ -302,20 +302,20 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
             }
 
             {
-              name: 'NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME'
+              name: 'AZURE_STORAGE_ACCOUNT_NAME'
               value: storageAccountName
             }
             {
-              name: 'NEXT_PUBLIC_AZURE_STORAGE_CONTAINER_NAME'
+              name: 'AZURE_STORAGE_CONTAINER_NAME'
               value: storageContainerName
             }
             {
-              name: 'NEXT_PUBLIC_AZURE_SERVICE_CONNECTION_STRING'
+              name: 'AZURE_SERVICE_CONNECTION_STRING'
               value: connectionStringSAS
             }
 
             {
-              name: 'NEXT_PUBLIC_UPLOADCARE_SERVICE_PUBLIC_KEY'
+              name: 'UPLOADCARE_SERVICE_PUBLIC_KEY'
               value: ''
             }
           ]
