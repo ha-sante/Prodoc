@@ -350,6 +350,19 @@ export function ConfigAPIHandler(option, data) {
   }
 }
 
+export function InitAPIHandler(option, data) {
+  let password = typeof window !== undefined && localStorage.getItem("password");
+
+  switch (option) {
+    case 'GET':
+      return axios.get(`/api/editor/init?password=${password}`);
+      break;
+    case 'POST':
+      return axios.post(`/api/editor/init?password=${password}`, data);
+      break;
+  }
+}
+
 export async function StorageAPIHandler(file, filename, progress) {
   // NEXTJS SERVERLESS FUNCTIONS ARE LIMITED TO 4.5MB IN BODY SIZES
   // - ALL FILES ARE STORED TO THEIR SERVICES DIRECTLY FROM THE FRONTEND AS A RESULT OF THIS

@@ -20,7 +20,7 @@ import Uploader from '@/components/editor/utilities/uploader';
 import {
   store, contentAtom, pageAtom, builderAtom, paginationAtom, configureAtom,
   editedAtom, authenticatedAtom, permissionAtom, definitionsAtom, codeAtom, navigationAtom, pageIdAtom, ContentAPIHandler, StorageHandler, logger, configurationAtom,
-  ConfigAPIHandler, AuthAPIHandler
+  ConfigAPIHandler, AuthAPIHandler, InitAPIHandler
 } from '../../context/state';
 import { useStore, useAtom, useSetAtom } from "jotai";
 
@@ -74,15 +74,31 @@ export default function Editor() {
   const authenticate = () => {
     let toastId = toast.loading('Authenticating...');
     AuthAPIHandler('POST', { password }).then(response => {
+
+      typeof window !== undefined && localStorage.setItem("password", password);
+      typeof window !== undefined && localStorage.setItem("authenticated", true);
+
       toast.dismiss(toastId);
       toast.success("Welcome 👋🏄‍♂️👍");
-      typeof window !== undefined && localStorage.setItem("authenticated", true);
+
       setAuthenticated(true);
     }).catch(error => {
       logger.error(error);
       toast.error('Invalid auth details.');
       toast.dismiss(toastId);
       setAuthenticated(false);
+    });
+  };
+
+  const Init = () => {
+    let toastId = toast.loading('Initing...');
+    InitAPIHandler('POST').then(response => {
+      toast.dismiss(toastId);
+      toast.success("Inited 👍 - You can go on with normal app operations now");
+    }).catch(error => {
+      logger.error(error);
+      toast.error('Invalid init details.');
+      toast.dismiss(toastId);
     });
   };
 
@@ -626,7 +642,21 @@ export default function Editor() {
                       }}
                     />
                   </div>
-                  
+
+                </div>
+              </Tabs.Item>
+
+              <Tabs.Item active title="Commands" size="sm" className='border' color='light'>
+                <p className="text-sm text-gray-500 dark:text-gray-400"> These are temporary buttons to perform app administration initiations - they wil be moved to a different place later.</p>
+                <div className="flex flex-row gap-2 mt-5 flex-wrap items-start justify-between">
+
+                  <div className="gap-2 border rounded p-4 1fr w-[49%]">
+                    <h2 className="text-md mr-2"> Init the database & caching collections, indexes and initial placeholder content </h2>
+                    <Button size={"sm"} className='mt-3 border' color={"none"} onClick={() => { Init() }}>
+                      Click to Init 
+                    </Button>
+                  </div>
+
                 </div>
               </Tabs.Item>
 
