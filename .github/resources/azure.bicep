@@ -180,7 +180,7 @@ resource redis_instance 'Microsoft.Cache/redis@2022-06-01' = {
 var redisCacheKey = redis_instance.listKeys().primaryKey
 // output redisCacheRestUrl string = redisCacheRestUrl
 // output redisCacheKey string = redisCacheKey
-var redisConnectionString = 'rediss://${redisCacheKey}@${redis_instance.properties.hostName}:6380'
+var redisConnectionString = 'rediss://default:${redisCacheKey}@${redis_instance.properties.hostName}:6380'
 output redisConnectionString string = redisConnectionString
 
 // 4.
