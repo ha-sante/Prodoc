@@ -258,7 +258,7 @@ resource prodoc_container_app_instance 'Microsoft.App/containerApps@2022-11-01-p
               value: storageContainerName
             }
             {
-              name: 'AZURE_SERVICE_CONNECTION_STRING'
+              name: 'AZURE_STORAGE_CONNECTION_STRING'
               value: connectionStringSAS
             }
           ]

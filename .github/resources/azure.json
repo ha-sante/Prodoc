@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "14930672198580183505"
+      "templateHash": "4967865511097465106"
     }
   },
   "parameters": {
@@ -260,7 +260,7 @@
                 },
                 {
                   "name": "REDIS_SERVICE_CONNECTION_STRING",
-                  "value": "[format('rediss://{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
+                  "value": "[format('rediss://default:{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
                 },
                 {
                   "name": "AZURE_STORAGE_ACCOUNT_NAME",
@@ -271,7 +271,7 @@
                   "value": "[parameters('storageContainerName')]"
                 },
                 {
-                  "name": "AZURE_SERVICE_CONNECTION_STRING",
+                  "name": "AZURE_STORAGE_CONNECTION_STRING",
                   "value": "[format('BlobEndpoint={0};SharedAccessSignature={1}', reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').primaryEndpoints.blob, listAccountSas(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01', variables('sasConfig')).accountSasToken)]"
                 }
               ],
@@ -338,7 +338,7 @@
     },
     "redisConnectionString": {
       "type": "string",
-      "value": "[format('rediss://{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
+      "value": "[format('rediss://default:{0}@{1}:6380', listKeys(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2022-06-01').hostName)]"
     }
   }
 }

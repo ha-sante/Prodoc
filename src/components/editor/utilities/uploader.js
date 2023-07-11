@@ -17,6 +17,7 @@ import 'filepond/dist/filepond.min.css'
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css'
+import toast, { Toaster } from 'react-hot-toast';
 
 // Register the plugins
 registerPlugin(FilePondPluginImageExifOrientation)
@@ -88,13 +89,18 @@ export default function Uploader(props) {
                 }
             }
 
-            let url = await StorageAPIHandler(file, file.name, handleProgress);
+            try{
+                let url = await StorageAPIHandler(file, file.name, handleProgress);
 
-            if (file.type.includes("image")) {
-                setImage(url);
+                if (file.type.includes("image")) {
+                    setImage(url);
+                }
+                // console.log("file.uploaded", { url });
+                props?.events({ type: "uploaded", url });
+            }catch(error){
+                toast.error("Failed to upload this file", { position: "bottom-center" })
             }
-            // console.log("file.uploaded", { url });
-            props?.events({ type: "uploaded", url });
+         
         } else {
             alert("Not an image file")
         }

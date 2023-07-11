@@ -17,7 +17,11 @@ export default async function handler(req, res) {
 
     switch (method) {
         case "GET":
-            res.status(200).send({ message: "Hello", env: process.env })
+            if (params.password == process.env.EDITOR_PASSWORD) {
+                res.status(200).send({ message: "Hello", env: process.env })
+            } else {
+                res.status(404).send({ message: "UnAuthorized" })
+            }
             break;
     }
 }
