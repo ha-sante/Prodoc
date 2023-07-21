@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.18.4.5664",
-      "templateHash": "4967865511097465106"
+      "version": "0.19.5.34762",
+      "templateHash": "9252885827404546289"
     }
   },
   "parameters": {
@@ -15,6 +15,7 @@
     },
     "collectiveResourcePrefixLabel": {
       "type": "string",
+      "maxLength": 10,
       "metadata": {
         "description": "Provide a prefix for creating resource names. - E.G Company Name"
       }
@@ -68,7 +69,7 @@
       "keyToSign": "key1"
     },
     "redisName": "[format('{0}-predis', parameters('collectiveResourcePrefixLabel'))]",
-    "appEnvironmentName": "[format('{0}-p-apps-environment', parameters('collectiveResourcePrefixLabel'))]",
+    "appEnvironmentName": "[format('{0}-p-apps-env', parameters('collectiveResourcePrefixLabel'))]",
     "containerPort": 3000,
     "appName": "[format('{0}-p-app', parameters('collectiveResourcePrefixLabel'))]"
   },

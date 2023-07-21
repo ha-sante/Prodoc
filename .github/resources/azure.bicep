@@ -11,6 +11,7 @@ param location string = resourceGroup().location
 
 // GENERAL INFORMATION
 @description('Provide a prefix for creating resource names. - E.G Company Name')
+@maxLength(10)
 param collectiveResourcePrefixLabel string
 param generalTag object = { channel: 'prodoc-quick-deploy' }
 
@@ -186,7 +187,7 @@ output redisConnectionString string = redisConnectionString
 // 4.
 // CONTAINER PRE-SETUP INSTANCES
 // param appNamePostFix string = 'p-app'
-var appEnvironmentName = '${collectiveResourcePrefixLabel}-p-apps-environment'
+var appEnvironmentName = '${collectiveResourcePrefixLabel}-p-apps-env'
 // var logAnalyticsWorkspaceName = '${appNamePostFix}-logs-workspace'
 var containerPort = 3000
 
