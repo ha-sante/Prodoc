@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
-    "@autharmor/sdk": "^4.0.0-alpha.3",
     "@azure/storage-blob": "^12.14.0",
     "@blocknote/core": "^0.6.2",
     "@blocknote/react": "^0.6.2",
