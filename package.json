@@ -56,7 +56,7 @@
     "loglevel": "^1.8.1",
     "mime-types": "^2.1.35",
     "mongodb": "^5.7.0",
-    "next": "13.3.1",
+    "next": "13.5.1",
     "next-mdx-remote": "^4.4.1",
     "object-sizeof": "^2.6.1",
     "postcss": "8.4.23",
